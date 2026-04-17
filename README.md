@@ -1,6 +1,17 @@
-# Pure Audit: Intelligence Terminal
+# InteresIt: Terminal Financiera
 
-**Pure Audit** es una herramienta financiera avanzada (y visualmente elegante) diseñada para proyectar el crecimiento de tu capital a través del tiempo, aprovechando el poder del interés compuesto. Fue construida para contrastar, de un solo vistazo, la diferencia de rendimientos entre múltiples estrategias, como un **Escenario Conservador** frente a un **Escenario Optimizado**.
+**InteresIt** es una herramienta financiera avanzada (y visualmente elegante) diseñada para proyectar el crecimiento de tu capital a través del tiempo, aprovechando el poder del interés compuesto. Fue construida para contrastar, de un solo vistazo, la diferencia de rendimientos entre múltiples estrategias, como un **Escenario Conservador** frente a un **Escenario Optimizado**.
+
+
+## 📸 Vistazo a la Interfaz
+
+La aplicación cuenta con un diseño premium y soporta nativamente ambos temas visuales para adaptarse a tus preferencias:
+
+### Modo Oscuro
+![Vista en Modo Oscuro](imgs/Evidencia_modo_oscuro.png)
+
+### Modo Claro
+![Vista en Modo Claro](imgs/Evidencia_modo_claro.png)
 
 ## 🎯 ¿Qué te permite hacer?
 
