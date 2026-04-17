@@ -105,14 +105,30 @@
                             </div>
                         </div>
                         
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-[10px] font-black uppercase text-slate-400 mb-3 ml-1">Desde</label>
-                                <input type="date" id="fechaInicio" onchange="calcular()" class="w-full bg-slate-50 dark:bg-darkBg/50 p-4 rounded-xl border border-transparent focus:border-blue-500/50 focus:ring-0 text-sm font-bold transition-all text-slate-700 dark:text-slate-300">
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[10px] font-black uppercase text-slate-400 mb-3 ml-1">Desde</label>
+                                    <input type="date" id="fechaInicio" onchange="calcular()" class="w-full bg-slate-50 dark:bg-darkBg/50 p-4 rounded-xl border border-transparent focus:border-blue-500/50 focus:ring-0 text-sm font-bold transition-all text-slate-700 dark:text-slate-300">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-black uppercase text-slate-400 mb-3 ml-1">Hasta</label>
+                                    <input type="date" id="fechaFin" onchange="calcular()" class="w-full bg-slate-50 dark:bg-darkBg/50 p-4 rounded-xl border border-transparent focus:border-blue-500/50 focus:ring-0 text-sm font-bold transition-all text-slate-700 dark:text-slate-300">
+                                </div>
                             </div>
                             <div>
-                                <label class="block text-[10px] font-black uppercase text-slate-400 mb-3 ml-1">Hasta</label>
-                                <input type="date" id="fechaFin" onchange="calcular()" class="w-full bg-slate-50 dark:bg-darkBg/50 p-4 rounded-xl border border-transparent focus:border-blue-500/50 focus:ring-0 text-sm font-bold transition-all text-slate-700 dark:text-slate-300">
+                                <label class="block text-[10px] font-black uppercase text-slate-400 mb-2 ml-1" title="Día del mes para el corte de los intereses">Día de Corte Mensual</label>
+                                <input type="number" id="diaCorte" min="1" max="31" value="1" oninput="calcular()" class="w-full bg-slate-50 dark:bg-darkBg/50 p-4 rounded-xl border border-transparent focus:border-blue-500/50 focus:ring-0 text-xl font-black transition-all text-slate-700 dark:text-slate-300">
+                                
+                                <label class="flex items-center gap-2 mt-4 cursor-pointer group">
+                                    <div class="relative flex items-center justify-center">
+                                        <input type="checkbox" id="omitirPrimerCorte" onchange="calcular()" class="peer appearance-none w-4 h-4 border-2 border-slate-300 dark:border-slate-600 rounded checked:bg-blue-500 checked:border-blue-500 transition-all cursor-pointer">
+                                        <svg class="absolute w-2.5 h-2.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                    </div>
+                                    <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300 transition-colors cursor-pointer">Omitir 1º corte (Mes de inicio)</span>
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -217,17 +233,34 @@
             let current = new Date(fechaInicio);
             let totalPMT = 0;
 
+            const cutDay = parseInt(document.getElementById('diaCorte').value) || 1;
+            const omitirPrimerCorteCheckbox = document.getElementById('omitirPrimerCorte');
+            const omitirPrimerCorte = omitirPrimerCorteCheckbox ? omitirPrimerCorteCheckbox.checked : false;
+
             while (current < fechaFin) {
                 const year = current.getFullYear();
                 const month = current.getMonth();
                 const daysInYear = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0) ? 366 : 365;
-                const nombreMes = `${mesesNombres[month]} ${year}`;
+                const isFirstIteration = (current.getTime() === fechaInicio.getTime());
 
-                const nextMonthStart = new Date(year, month + 1, 1);
-                const stepEnd = nextMonthStart < fechaFin ? nextMonthStart : fechaFin;
+                let thisMonthCutDay = Math.min(cutDay, new Date(year, month + 1, 0).getDate());
+                let thisMonthCut = new Date(year, month, thisMonthCutDay);
+
+                let nextStepEnd;
+                if (current < thisMonthCut && !(isFirstIteration && omitirPrimerCorte)) {
+                    nextStepEnd = thisMonthCut;
+                } else {
+                    let nextMonthCutDay = Math.min(cutDay, new Date(year, month + 2, 0).getDate());
+                    nextStepEnd = new Date(year, month + 1, nextMonthCutDay);
+                }
+
+                const stepEnd = nextStepEnd < fechaFin ? nextStepEnd : fechaFin;
                 const daysInPeriod = Math.round((stepEnd - current) / (1000 * 60 * 60 * 24));
                 
-                const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
+                let displayDate = new Date(stepEnd.getTime() - 1);
+                const nombreMes = `${mesesNombres[displayDate.getMonth()]} ${displayDate.getFullYear()}`;
+                
+                const totalDaysInMonth = new Date(displayDate.getFullYear(), displayDate.getMonth() + 1, 0).getDate();
                 const proporcionMes = daysInPeriod / totalDaysInMonth;
                 const aporteProporcional = PMT * proporcionMes;
 
@@ -263,9 +296,17 @@
         }
 
         // Auto-calculo
-        ['montoInicial', 'aporteMensual', 'interes1', 'interes2', 'fechaInicio', 'fechaFin'].forEach(id => {
+        ['montoInicial', 'aporteMensual', 'interes1', 'interes2', 'fechaInicio', 'fechaFin', 'diaCorte'].forEach(id => {
             const el = document.getElementById(id);
             if(el) el.addEventListener('input', calcular);
+        });
+
+        document.getElementById('fechaInicio').addEventListener('change', (e) => {
+            const d = new Date(e.target.value + 'T00:00:00');
+            if (!isNaN(d.getDate())) {
+                document.getElementById('diaCorte').value = d.getDate();
+                calcular();
+            }
         });
 
         window.onload = () => {
@@ -276,6 +317,7 @@
             
             document.getElementById('fechaInicio').value = desde;
             document.getElementById('fechaFin').value = hasta;
+            document.getElementById('diaCorte').value = hoy.getDate();
             
             calcular();
         };
