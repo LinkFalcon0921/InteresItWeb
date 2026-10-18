@@ -192,6 +192,18 @@
                                 <input type="number" id="diaCorte" min="1" max="31" value="1"
                                     class="w-full bg-slate-50 dark:bg-darkBg/50 p-4 rounded-xl border border-transparent focus:border-blue-500/50 focus:ring-0 text-xl font-black transition-all text-slate-700 dark:text-slate-300">
 
+
+                                <label class="flex items-center gap-2 mt-4 cursor-pointer group">
+                                    <div class="relative flex items-center justify-center">
+                                        <input type="checkbox" id="aplicarImpuesto" onchange="handleChange()" checked
+                                            class="peer appearance-none w-4 h-4 border-2 border-slate-300 dark:border-slate-600 rounded checked:bg-blue-500 checked:border-blue-500 transition-all cursor-pointer">
+                                        <svg class="absolute w-2.5 h-2.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </div>
+                                    <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300 transition-colors cursor-pointer">Reducción por ley (10%)</span>
+                                </label>
                                 <label class="flex items-center gap-2 mt-4 cursor-pointer group">
                                     <div class="relative flex items-center justify-center">
                                         <input type="checkbox" id="omitirPrimerCorte" onchange="calcular()"
@@ -214,36 +226,7 @@
             <main class="lg:col-span-8 space-y-6">
 
 
-                <div id="tour-escenarios" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="group">
-                        <div
-                            class="bg-white dark:bg-darkCard p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all hover:border-blue-500/30">
-                            <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Escenario
-                                Conservador</p>
-                            <h2 class="text-5xl font-black text-slate-800 dark:text-white" id="resumen1">$0.00</h2>
-
-                            <div
-                                class="mt-8 pt-6 border-t border-slate-50 dark:border-slate-800 flex justify-between items-center">
-                                <span class="text-[10px] font-black uppercase text-slate-400">Rendimiento Neto</span>
-                                <span class="text-xl font-black text-blue-500" id="ganancia1">+$0.00</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="group">
-                        <div
-                            class="bg-white dark:bg-darkCard p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all hover:border-emerald-500/30">
-                            <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Escenario
-                                Optimizado</p>
-                            <h2 class="text-5xl font-black text-slate-800 dark:text-white" id="resumen2">$0.00</h2>
-
-                            <div
-                                class="mt-8 pt-6 border-t border-slate-50 dark:border-slate-800 flex justify-between items-center">
-                                <span class="text-[10px] font-black uppercase text-slate-400">Rendimiento Neto</span>
-                                <span class="text-xl font-black text-emerald-500" id="ganancia2">+$0.00</span>
-                            </div>
-                        </div>
-                    </div>
+                <div id="tour-escenarios" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="escenariosContainer">
                 </div>
 
                 <div id="tour-tabla"
@@ -256,14 +239,9 @@
                     <div class="overflow-x-auto">
                         <table class="w-full">
                             <thead>
-                                <tr
-                                    class="text-[9px] font-black uppercase text-slate-400 border-b border-slate-50 dark:border-slate-800">
-                                    <th class="p-5 text-left">Mes</th>
-                                    <th class="p-5 text-right">E1 Balance</th>
-                                    <th class="p-5 text-right">E1 Int.</th>
-                                    <th class="p-5 text-right border-l border-slate-50 dark:border-slate-800">E2 Balance
-                                    </th>
-                                    <th class="p-5 text-right">E2 Int.</th>
+
+                                <tr id="tablaHeaders" class="text-[9px] font-black uppercase text-slate-400 border-b border-slate-50 dark:border-slate-800">
+                                    <!-- Dynamic headers will go here -->
                                 </tr>
                             </thead>
                             <tbody id="tablaBody" class="divide-y divide-slate-50 dark:divide-slate-800/50">
@@ -288,19 +266,67 @@
             const el = document.getElementById(id);
             let val = parseFloat(el.value) || 0;
             el.value = Math.max(0, val + amount);
+            renderInversiones();
             calcular();
         }
 
-        function calcular() {
+
+        let inversiones = [
+            { id: 'inv_1', nombre: 'Escenario Conservador', tasa: 0.1 },
+            { id: 'inv_2', nombre: 'Escenario Optimizado', tasa: 3.0 }
+        ];
+
+        function renderInversiones() {
+            const container = document.getElementById('inversionesContainer');
+            if(!container) return;
+            let html = '';
+            inversiones.forEach((inv, index) => {
+                html += `
+                    <div class="bg-slate-50 dark:bg-darkBg/50 p-4 rounded-2xl relative group">
+                        <div class="flex justify-between items-center mb-2">
+                            <input type="text" value="${inv.nombre}" onchange="updateInversion('${inv.id}', 'nombre', this.value)" class="bg-transparent border-none p-0 text-[10px] font-black uppercase text-slate-500 w-full focus:ring-0">
+                            ${inversiones.length > 1 ? `<button onclick="eliminarInversion('${inv.id}')" class="text-red-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>` : ''}
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="number" step="0.1" value="${inv.tasa}" oninput="updateInversion('${inv.id}', 'tasa', this.value)" class="w-full bg-transparent border-none p-0 font-black text-xl text-slate-800 dark:text-white focus:ring-0">
+                            <span class="text-xs font-black text-slate-400">%</span>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function agregarInversion() {
+            if(inversiones.length >= 20) return alert('Máximo 20 inversiones permitidas.');
+            const id = 'inv_' + Date.now();
+            inversiones.push({ id, nombre: 'Nueva Inversión', tasa: 5.0 });
+            renderInversiones();
+            handleChange();
+        }
+
+        function updateInversion(id, field, value) {
+            const inv = inversiones.find(i => i.id === id);
+            if(inv) {
+                if(field === 'tasa') inv[field] = parseFloat(value) || 0;
+                else inv[field] = value;
+                handleChange();
+            }
+        }
+
+        function eliminarInversion(id) {
+            inversiones = inversiones.filter(i => i.id !== id);
+            renderInversiones();
+            handleChange();
+        }
+
+        // We completely replace the calcular function
+function calcular() {
             const P = parseFloat(document.getElementById('montoInicial').value) || 0;
             const PMT = parseFloat(document.getElementById('aporteMensual').value) || 0;
-            const rate1Anual = parseFloat(document.getElementById('interes1').value) / 100;
-            const rate2Anual = parseFloat(document.getElementById('interes2').value) / 100;
+            const aplicarImpuesto = document.getElementById('aplicarImpuesto') ? document.getElementById('aplicarImpuesto').checked : true;
 
-            let b1 = P, b2 = P;
-            let html = '';
             const fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 });
-
             const fechaInicioStr = document.getElementById('fechaInicio').value;
             const fechaFinStr = document.getElementById('fechaFin').value;
 
@@ -308,15 +334,23 @@
 
             const fechaInicio = new Date(fechaInicioStr + 'T00:00:00');
             const fechaFin = new Date(fechaFinStr + 'T00:00:00');
+            const tablaBody = document.getElementById('tablaBody');
+            const tablaHeaders = document.getElementById('tablaHeaders');
+            const escenariosContainer = document.getElementById('tour-escenarios');
 
             if (fechaInicio >= fechaFin) {
-                document.getElementById('tablaBody').innerHTML = '<tr><td colspan="5" class="p-5 text-center text-slate-400 text-xs font-black">La fecha "Desde" debe ser menor a "Hasta".</td></tr>';
-                document.getElementById('resumen1').innerText = "$0.00";
-                document.getElementById('resumen2').innerText = "$0.00";
-                document.getElementById('ganancia1').innerText = "+$0.00";
-                document.getElementById('ganancia2').innerText = "+$0.00";
+                if(tablaBody) tablaBody.innerHTML = '<tr><td colspan="100%" class="p-5 text-center text-slate-400 text-xs font-black">La fecha "Desde" debe ser menor a "Hasta".</td></tr>';
+                if(escenariosContainer) escenariosContainer.innerHTML = '';
                 return;
             }
+
+            // Headers for table
+            let headersHtml = '<th class="p-5 text-left">Mes</th>';
+            inversiones.forEach(inv => {
+                headersHtml += `<th class="p-5 text-right border-l border-slate-50 dark:border-slate-800">${inv.nombre} <br><span class="opacity-50">Balance</span></th>`;
+                headersHtml += `<th class="p-5 text-right">${inv.nombre} <br><span class="opacity-50">Int.</span></th>`;
+            });
+            if(tablaHeaders) tablaHeaders.innerHTML = headersHtml;
 
             const mesesNombres = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
             let current = new Date(fechaInicio);
@@ -325,6 +359,10 @@
             const cutDay = parseInt(document.getElementById('diaCorte').value) || 1;
             const omitirPrimerCorteCheckbox = document.getElementById('omitirPrimerCorte');
             const omitirPrimerCorte = omitirPrimerCorteCheckbox ? omitirPrimerCorteCheckbox.checked : false;
+
+            // Initialize balances
+            let balances = inversiones.map(() => P);
+            let htmlTable = '';
 
             while (current < fechaFin) {
                 const year = current.getFullYear();
@@ -353,35 +391,54 @@
                 const proporcionMes = daysInPeriod / totalDaysInMonth;
                 const aporteProporcional = PMT * proporcionMes;
 
-                let i1 = b1 * (rate1Anual / daysInYear) * daysInPeriod;
-                let i2 = b2 * (rate2Anual / daysInYear) * daysInPeriod;
-
-                b1 += i1 + aporteProporcional;
-                b2 += i2 + aporteProporcional;
                 totalPMT += aporteProporcional;
 
-                html += `
-                    <tr class="text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
-                        <td class="p-5 text-slate-400 font-black italic whitespace-nowrap">
-                            ${nombreMes} <span class="text-[9px] opacity-60 font-normal ml-1">(${daysInPeriod}d)</span>
-                        </td>
-                        <td class="p-5 text-right font-black">${fmt.format(b1)}</td>
-                        <td class="p-5 text-right text-blue-500/80 font-black">+${fmt.format(i1)}</td>
-                        <td class="p-5 text-right font-black border-l border-slate-50 dark:border-slate-800">${fmt.format(b2)}</td>
-                        <td class="p-5 text-right text-emerald-500/80 font-black">+${fmt.format(i2)}</td>
-                    </tr>
-                `;
+                let rowHtml = `<td class="p-5 text-slate-400 font-black italic whitespace-nowrap">${nombreMes} <span class="text-[9px] opacity-60 font-normal ml-1">(${daysInPeriod}d)</span></td>`;
 
+                inversiones.forEach((inv, idx) => {
+                    let tasaAnual = inv.tasa / 100;
+                    let interesGanado = balances[idx] * (tasaAnual / daysInYear) * daysInPeriod;
+
+                    // Lógica de Impuestos (Retención del 10% por ley RD)
+                    if (aplicarImpuesto && interesGanado > 0) {
+                        interesGanado = interesGanado * 0.90; // Retiene el 10%
+                    }
+
+                    balances[idx] += interesGanado + aporteProporcional;
+
+                    rowHtml += `<td class="p-5 text-right font-black border-l border-slate-50 dark:border-slate-800">${fmt.format(balances[idx])}</td>`;
+                    rowHtml += `<td class="p-5 text-right text-blue-500/80 font-black">+${fmt.format(interesGanado)}</td>`;
+                });
+
+                htmlTable += `<tr class="text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">${rowHtml}</tr>`;
                 current = stepEnd;
             }
 
-            document.getElementById('tablaBody').innerHTML = html;
-            document.getElementById('resumen1').innerText = fmt.format(b1);
-            document.getElementById('resumen2').innerText = fmt.format(b2);
+            if(tablaBody) tablaBody.innerHTML = htmlTable;
 
+            // Build Escenarios Cards
             const totalInvertido = P + totalPMT;
-            document.getElementById('ganancia1').innerText = `+${fmt.format(b1 - totalInvertido)}`;
-            document.getElementById('ganancia2').innerText = `+${fmt.format(b2 - totalInvertido)}`;
+            if(escenariosContainer) {
+                let cardsHtml = '';
+                const colors = ['blue', 'emerald', 'purple', 'amber', 'rose', 'cyan'];
+                inversiones.forEach((inv, idx) => {
+                    const c = colors[idx % colors.length];
+                    const ganancia = balances[idx] - totalInvertido;
+                    cardsHtml += `
+                    <div class="group">
+                        <div class="bg-white dark:bg-darkCard p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all hover:border-${c}-500/30">
+                            <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 truncate">${inv.nombre}</p>
+                            <h2 class="text-4xl font-black text-slate-800 dark:text-white">${fmt.format(balances[idx])}</h2>
+                            <div class="mt-8 pt-6 border-t border-slate-50 dark:border-slate-800 flex justify-between items-center">
+                                <span class="text-[10px] font-black uppercase text-slate-400">Rendimiento Neto</span>
+                                <span class="text-xl font-black text-${c}-500">+${fmt.format(ganancia)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                });
+                escenariosContainer.innerHTML = cardsHtml;
+            }
         }
 
         // IndexedDB Manager
@@ -418,8 +475,8 @@
                 id: 'current',
                 montoInicial: document.getElementById('montoInicial').value,
                 aporteMensual: document.getElementById('aporteMensual').value,
-                interes1: document.getElementById('interes1').value,
-                interes2: document.getElementById('interes2').value,
+                inversiones: inversiones,
+                aplicarImpuesto: document.getElementById('aplicarImpuesto') ? document.getElementById('aplicarImpuesto').checked : true,
                 fechaInicio: document.getElementById('fechaInicio').value,
                 fechaFin: document.getElementById('fechaFin').value,
                 diaCorte: document.getElementById('diaCorte').value,
@@ -444,8 +501,15 @@
                         const s = request.result;
                         document.getElementById('montoInicial').value = s.montoInicial || 185;
                         document.getElementById('aporteMensual').value = s.aporteMensual || 0;
-                        document.getElementById('interes1').value = s.interes1 || 0.1;
-                        document.getElementById('interes2').value = s.interes2 || 3.0;
+
+                        if(s.inversiones && s.inversiones.length > 0) {
+                            inversiones = s.inversiones;
+                        }
+                        if(s.aplicarImpuesto !== undefined && document.getElementById('aplicarImpuesto')) {
+                            document.getElementById('aplicarImpuesto').checked = s.aplicarImpuesto;
+                        }
+                        renderInversiones();
+
                         if(s.fechaInicio) document.getElementById('fechaInicio').value = s.fechaInicio;
                         if(s.fechaFin) document.getElementById('fechaFin').value = s.fechaFin;
                         if(s.diaCorte) document.getElementById('diaCorte').value = s.diaCorte;
