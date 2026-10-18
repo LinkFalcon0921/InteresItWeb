@@ -7,6 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InteresIt</title>
     <link rel="icon" type="image/webp" href="./imgs/app_logo.webp">
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#3b82f6">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -171,20 +173,20 @@
                                 <div>
                                     <label
                                         class="block text-[10px] font-black uppercase text-slate-400 mb-3 ml-1">Desde</label>
-                                    <input type="date" id="fechaInicio" onchange="calcular()"
+                                    <input type="date" id="fechaInicio"
                                         class="w-full bg-slate-50 dark:bg-darkBg/50 p-4 rounded-xl border border-transparent focus:border-blue-500/50 focus:ring-0 text-sm font-bold transition-all text-slate-700 dark:text-slate-300">
                                 </div>
                                 <div>
                                     <label
                                         class="block text-[10px] font-black uppercase text-slate-400 mb-3 ml-1">Hasta</label>
-                                    <input type="date" id="fechaFin" onchange="calcular()"
+                                    <input type="date" id="fechaFin"
                                         class="w-full bg-slate-50 dark:bg-darkBg/50 p-4 rounded-xl border border-transparent focus:border-blue-500/50 focus:ring-0 text-sm font-bold transition-all text-slate-700 dark:text-slate-300">
                                 </div>
                             </div>
                             <div>
                                 <label class="block text-[10px] font-black uppercase text-slate-400 mb-2 ml-1"
                                     title="Día del mes para el corte de los intereses">Día de Corte Mensual</label>
-                                <input type="number" id="diaCorte" min="1" max="31" value="1" oninput="calcular()"
+                                <input type="number" id="diaCorte" min="1" max="31" value="1"
                                     class="w-full bg-slate-50 dark:bg-darkBg/50 p-4 rounded-xl border border-transparent focus:border-blue-500/50 focus:ring-0 text-xl font-black transition-all text-slate-700 dark:text-slate-300">
 
                                 <label class="flex items-center gap-2 mt-4 cursor-pointer group">
@@ -379,29 +381,147 @@
             document.getElementById('ganancia2').innerText = `+${fmt.format(b2 - totalInvertido)}`;
         }
 
-        // Auto-calculo
+        // IndexedDB Manager
+        const dbName = 'InteresItDB';
+        const dbVersion = 1;
+        let db;
+
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(dbName, dbVersion);
+
+                request.onerror = (event) => {
+                    console.error("Database error:", event.target.error);
+                    reject(event.target.error);
+                };
+
+                request.onsuccess = (event) => {
+                    db = event.target.result;
+                    resolve(db);
+                };
+
+                request.onupgradeneeded = (event) => {
+                    db = event.target.result;
+                    if (!db.objectStoreNames.contains('settings')) {
+                        db.createObjectStore('settings', { keyPath: 'id' });
+                    }
+                };
+            });
+        }
+
+        function saveSettings() {
+            if (!db) return;
+            const settings = {
+                id: 'current',
+                montoInicial: document.getElementById('montoInicial').value,
+                aporteMensual: document.getElementById('aporteMensual').value,
+                interes1: document.getElementById('interes1').value,
+                interes2: document.getElementById('interes2').value,
+                fechaInicio: document.getElementById('fechaInicio').value,
+                fechaFin: document.getElementById('fechaFin').value,
+                diaCorte: document.getElementById('diaCorte').value,
+                omitirPrimerCorte: document.getElementById('omitirPrimerCorte').checked,
+                isDarkMode: document.documentElement.classList.contains('dark')
+            };
+
+            const transaction = db.transaction(['settings'], 'readwrite');
+            const store = transaction.objectStore('settings');
+            store.put(settings);
+        }
+
+        function loadSettings() {
+            return new Promise((resolve) => {
+                if (!db) { resolve(false); return; }
+                const transaction = db.transaction(['settings'], 'readonly');
+                const store = transaction.objectStore('settings');
+                const request = store.get('current');
+
+                request.onsuccess = (event) => {
+                    if (request.result) {
+                        const s = request.result;
+                        document.getElementById('montoInicial').value = s.montoInicial || 185;
+                        document.getElementById('aporteMensual').value = s.aporteMensual || 0;
+                        document.getElementById('interes1').value = s.interes1 || 0.1;
+                        document.getElementById('interes2').value = s.interes2 || 3.0;
+                        if(s.fechaInicio) document.getElementById('fechaInicio').value = s.fechaInicio;
+                        if(s.fechaFin) document.getElementById('fechaFin').value = s.fechaFin;
+                        if(s.diaCorte) document.getElementById('diaCorte').value = s.diaCorte;
+                        document.getElementById('omitirPrimerCorte').checked = s.omitirPrimerCorte || false;
+
+                        if (s.isDarkMode) {
+                            document.documentElement.classList.add('dark');
+                            document.getElementById('theme-icon').innerText = '☀️';
+                        } else {
+                            document.documentElement.classList.remove('dark');
+                            document.getElementById('theme-icon').innerText = '🌙';
+                        }
+                        resolve(true);
+                    } else {
+                        resolve(false);
+                    }
+                };
+                request.onerror = () => resolve(false);
+            });
+        }
+
+        // Auto-calculo and save
+        function handleChange() {
+            calcular();
+            saveSettings();
+        }
+
         ['montoInicial', 'aporteMensual', 'interes1', 'interes2', 'fechaInicio', 'fechaFin', 'diaCorte'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.addEventListener('input', calcular);
+            if (el) el.addEventListener('input', handleChange);
         });
+
+        const omitirCheckbox = document.getElementById('omitirPrimerCorte');
+        if(omitirCheckbox) {
+            // Remove previous inline onchange to attach standard listener that also saves
+            omitirCheckbox.removeAttribute('onchange');
+            omitirCheckbox.addEventListener('change', handleChange);
+        }
 
         document.getElementById('fechaInicio').addEventListener('change', (e) => {
             const d = new Date(e.target.value + 'T00:00:00');
             if (!isNaN(d.getDate())) {
                 document.getElementById('diaCorte').value = d.getDate();
-                calcular();
+                handleChange();
             }
         });
 
-        window.onload = () => {
-            const hoy = new Date();
-            const desde = hoy.toISOString().split('T')[0];
-            const mesesDespues = new Date(hoy.getFullYear(), hoy.getMonth() + 7, hoy.getDate());
-            const hasta = mesesDespues.toISOString().split('T')[0];
+        // Modificando toggleDarkMode para que guarde también
+        const originalToggleDarkMode = toggleDarkMode;
+        window.toggleDarkMode = function() {
+            originalToggleDarkMode();
+            saveSettings();
+        }
 
-            document.getElementById('fechaInicio').value = desde;
-            document.getElementById('fechaFin').value = hasta;
-            document.getElementById('diaCorte').value = hoy.getDate();
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').then(registration => {
+                    console.log('SW registered: ', registration);
+                }).catch(registrationError => {
+                    console.log('SW registration failed: ', registrationError);
+                });
+            });
+        }
+
+        window.onload = async () => {
+            await initDB();
+            const hasSettings = await loadSettings();
+
+            if (!hasSettings) {
+                const hoy = new Date();
+                const desde = hoy.toISOString().split('T')[0];
+                const mesesDespues = new Date(hoy.getFullYear(), hoy.getMonth() + 7, hoy.getDate());
+                const hasta = mesesDespues.toISOString().split('T')[0];
+
+                document.getElementById('fechaInicio').value = desde;
+                document.getElementById('fechaFin').value = hasta;
+                document.getElementById('diaCorte').value = hoy.getDate();
+            }
 
             calcular();
 
