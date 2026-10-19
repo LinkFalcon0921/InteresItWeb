@@ -125,7 +125,7 @@
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <aside class="lg:col-span-4 space-y-6">
+            <aside class="lg:col-span-4 space-y-6 h-full">
                 <div id="tour-data"
                     class="bg-white dark:bg-darkCard p-7 rounded-[2.5rem] shadow-2xl shadow-slate-200/60 dark:shadow-none border border-slate-100 dark:border-slate-800/50">
                     <h2 class="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-8 flex items-center">
@@ -188,7 +188,7 @@
                                     Añadir
                                 </button>
                             </div>
-                            <div id="inversionesContainer" class="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+                            <div id="inversionesContainer" class="space-y-3 pr-2">
                                 <!-- Inversiones dinámicas aquí -->
                             </div>
                         </div>
@@ -596,18 +596,35 @@
         }
 
 
-        function exportToPDF() {
+
+        async function exportToPDF() {
             const element = document.getElementById('tour-tabla'); // The container with the table
+            if (!element) {
+                console.error("PDF target element not found.");
+                return;
+            }
+
+            // Add a temporary class to ensure it's visible or has a white background for the PDF
+            element.classList.add('bg-white');
+
             const opt = {
-                margin:       1,
+                margin:       [0.5, 0.5, 0.5, 0.5],
                 filename:     'Reporte_Mensual_InteresIt.pdf',
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2 },
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+                html2canvas:  { scale: 2, useCORS: true, logging: true },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
 
-            html2pdf().set(opt).from(element).save();
+            try {
+                await html2pdf().set(opt).from(element).save();
+                console.log("PDF exported successfully.");
+            } catch (err) {
+                console.error("Error exporting PDF:", err);
+            } finally {
+                element.classList.remove('bg-white');
+            }
         }
+
 
                 window.onload = async () => {
             await initDB();
