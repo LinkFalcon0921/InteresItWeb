@@ -11,6 +11,28 @@
     <meta name="theme-color" content="#3b82f6">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
+
+        let db;
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('InteresItDB', 1);
+                request.onupgradeneeded = (event) => {
+                    db = event.target.result;
+                    if (!db.objectStoreNames.contains('settings')) {
+                        db.createObjectStore('settings', { keyPath: 'id' });
+                    }
+                };
+                request.onsuccess = (event) => {
+                    db = event.target.result;
+                    resolve(db);
+                };
+                request.onerror = (event) => {
+                    console.error('IndexedDB error:', event.target.errorCode);
+                    reject(event.target.errorCode);
+                };
+            });
+        }
+
         tailwind.config = {
             darkMode: 'class',
             theme: {
@@ -74,6 +96,7 @@
             color: white;
         }
     </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 
 <body class="bg-slate-50 dark:bg-darkBg text-slate-900 dark:text-slate-100 min-h-screen">
@@ -215,34 +238,7 @@
 
 
                 <div id="tour-escenarios" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="group">
-                        <div
-                            class="bg-white dark:bg-darkCard p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all hover:border-blue-500/30">
-                            <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Escenario
-                                Conservador</p>
-                            <h2 class="text-5xl font-black text-slate-800 dark:text-white" id="resumen1">$0.00</h2>
 
-                            <div
-                                class="mt-8 pt-6 border-t border-slate-50 dark:border-slate-800 flex justify-between items-center">
-                                <span class="text-[10px] font-black uppercase text-slate-400">Rendimiento Neto</span>
-                                <span class="text-xl font-black text-blue-500" id="ganancia1">+$0.00</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="group">
-                        <div
-                            class="bg-white dark:bg-darkCard p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all hover:border-emerald-500/30">
-                            <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Escenario
-                                Optimizado</p>
-                            <h2 class="text-5xl font-black text-slate-800 dark:text-white" id="resumen2">$0.00</h2>
-
-                            <div
-                                class="mt-8 pt-6 border-t border-slate-50 dark:border-slate-800 flex justify-between items-center">
-                                <span class="text-[10px] font-black uppercase text-slate-400">Rendimiento Neto</span>
-                                <span class="text-xl font-black text-emerald-500" id="ganancia2">+$0.00</span>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -250,20 +246,23 @@
                     class="bg-white dark:bg-darkCard rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800">
                     <div
                         class="p-7 bg-slate-50/50 dark:bg-slate-800/20 border-b border-slate-100 dark:border-slate-800">
-                        <h3 class="font-black text-[11px] uppercase tracking-[0.2em] text-slate-500">Proyección de
-                            Capitalización Mensual</h3>
+
+<div class="flex justify-between items-center w-full">
+    <h3 class="font-black text-[11px] uppercase tracking-[0.2em] text-slate-500">Proyección de Capitalización Mensual</h3>
+    <div class="flex gap-2">
+        <button id="btn-export-pdf" class="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all" onclick="exportToPDF()">PDF</button>
+        <button id="btn-export-excel" class="bg-emerald-500/10 text-emerald-500 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider opacity-50 cursor-not-allowed" title="Próximamente">Excel</button>
+        <button id="btn-export-img" class="bg-blue-500/10 text-blue-500 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider opacity-50 cursor-not-allowed" title="Próximamente">Imagen</button>
+    </div>
+</div>
+
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full">
                             <thead>
-                                <tr
-                                    class="text-[9px] font-black uppercase text-slate-400 border-b border-slate-50 dark:border-slate-800">
+                                <tr id="tablaHeader" class="text-[9px] font-black uppercase text-slate-400 border-b border-slate-50 dark:border-slate-800">
                                     <th class="p-5 text-left">Mes</th>
-                                    <th class="p-5 text-right">E1 Balance</th>
-                                    <th class="p-5 text-right">E1 Int.</th>
-                                    <th class="p-5 text-right border-l border-slate-50 dark:border-slate-800">E2 Balance
-                                    </th>
-                                    <th class="p-5 text-right">E2 Int.</th>
+                                    <!-- Dynamic headers here -->
                                 </tr>
                             </thead>
                             <tbody id="tablaBody" class="divide-y divide-slate-50 dark:divide-slate-800/50">
@@ -288,18 +287,87 @@
             const el = document.getElementById(id);
             let val = parseFloat(el.value) || 0;
             el.value = Math.max(0, val + amount);
+            renderInversiones();
             calcular();
+        }
+
+
+        let inversiones = [
+            { nombre: 'Escenario Conservador', tasa: 0.1, color: 'blue' },
+            { nombre: 'Escenario Optimizado', tasa: 3.0, color: 'emerald' }
+        ];
+
+        function renderInversiones() {
+            const container = document.getElementById('inversionesContainer');
+            if (!container) return;
+
+            let html = '';
+            inversiones.forEach((inv, index) => {
+                html += `
+                    <div class="bg-slate-50 dark:bg-darkBg/50 p-4 rounded-2xl border border-transparent transition-all group hover:border-${inv.color}-500/30">
+                        <div class="flex justify-between items-center mb-2">
+                            <input type="text" value="${inv.nombre}"
+                                onchange="updateInversion(${index}, 'nombre', this.value)"
+                                class="bg-transparent border-none p-0 text-[10px] font-black uppercase text-${inv.color}-500 focus:ring-0 w-2/3 truncate">
+                            ${inversiones.length > 1 ? `
+                                <button onclick="removeInversion(${index})" class="text-slate-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            ` : ''}
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="number" step="0.1" value="${inv.tasa}"
+                                oninput="updateInversion(${index}, 'tasa', this.value)"
+                                class="w-full bg-transparent border-none p-0 font-black text-xl focus:ring-0">
+                            <span class="text-sm font-bold text-slate-400">%</span>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function agregarInversion() {
+            if (inversiones.length >= 20) {
+                alert("Límite máximo de 20 inversiones alcanzado.");
+                return;
+            }
+            const colors = ['blue', 'emerald', 'purple', 'amber', 'rose', 'cyan'];
+            const color = colors[inversiones.length % colors.length];
+            inversiones.push({
+                nombre: `Escenario ${inversiones.length + 1}`,
+                tasa: 1.0,
+                color: color
+            });
+            renderInversiones();
+            handleChange();
+        }
+
+        function updateInversion(index, field, value) {
+            if (field === 'tasa') {
+                inversiones[index][field] = parseFloat(value) || 0;
+            } else {
+                inversiones[index][field] = value;
+            }
+            handleChange();
+        }
+
+        function removeInversion(index) {
+            inversiones.splice(index, 1);
+            renderInversiones();
+            handleChange();
         }
 
         function calcular() {
             const P = parseFloat(document.getElementById('montoInicial').value) || 0;
             const PMT = parseFloat(document.getElementById('aporteMensual').value) || 0;
-            const rate1Anual = parseFloat(document.getElementById('interes1').value) / 100;
-            const rate2Anual = parseFloat(document.getElementById('interes2').value) / 100;
 
-            let b1 = P, b2 = P;
+            let balances = inversiones.map(() => P);
             let html = '';
             const fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 });
+
 
             const fechaInicioStr = document.getElementById('fechaInicio').value;
             const fechaFinStr = document.getElementById('fechaFin').value;
@@ -308,108 +376,111 @@
 
             const fechaInicio = new Date(fechaInicioStr + 'T00:00:00');
             const fechaFin = new Date(fechaFinStr + 'T00:00:00');
+            const tablaBody = document.getElementById('tablaBody');
+            const tablaHeader = document.getElementById('tablaHeader');
+            const escenariosContainer = document.getElementById('tour-escenarios');
 
             if (fechaInicio >= fechaFin) {
-                document.getElementById('tablaBody').innerHTML = '<tr><td colspan="5" class="p-5 text-center text-slate-400 text-xs font-black">La fecha "Desde" debe ser menor a "Hasta".</td></tr>';
-                document.getElementById('resumen1').innerText = "$0.00";
-                document.getElementById('resumen2').innerText = "$0.00";
-                document.getElementById('ganancia1').innerText = "+$0.00";
-                document.getElementById('ganancia2').innerText = "+$0.00";
+                if(tablaBody) tablaBody.innerHTML = '<tr><td colspan="10" class="p-5 text-center text-slate-400 text-xs font-black">La fecha "Desde" debe ser menor a "Hasta".</td></tr>';
+                if(escenariosContainer) escenariosContainer.innerHTML = '';
                 return;
             }
 
-            const mesesNombres = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
-            let current = new Date(fechaInicio);
-            let totalPMT = 0;
+            const diaCorte = parseInt(document.getElementById('diaCorte').value) || 1;
+            const omitirPrimer = document.getElementById('omitirPrimerCorte').checked;
 
-            const cutDay = parseInt(document.getElementById('diaCorte').value) || 1;
-            const omitirPrimerCorteCheckbox = document.getElementById('omitirPrimerCorte');
-            const omitirPrimerCorte = omitirPrimerCorteCheckbox ? omitirPrimerCorteCheckbox.checked : false;
+            let current = new Date(fechaInicio);
+            let meses = 0;
+            let totalPMT = 0;
+            let htmlTable = '';
+
+            // Render table header
+            if(tablaHeader) {
+                let thHtml = '<th class="p-5 text-left">Mes</th>';
+                inversiones.forEach((inv, idx) => {
+                    const bl = idx > 0 ? 'border-l border-slate-50 dark:border-slate-800' : '';
+                    thHtml += `<th class="p-5 text-right ${bl}">${inv.nombre} Bal.</th><th class="p-5 text-right text-${inv.color}-500">${inv.nombre} Int.</th>`;
+                });
+                tablaHeader.innerHTML = thHtml;
+            }
+
+            const aplicarImpuesto = document.getElementById('aplicarImpuesto') ? document.getElementById('aplicarImpuesto').checked : true;
 
             while (current < fechaFin) {
-                const year = current.getFullYear();
-                const month = current.getMonth();
-                const daysInYear = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0) ? 366 : 365;
-                const isFirstIteration = (current.getTime() === fechaInicio.getTime());
-
-                let thisMonthCutDay = Math.min(cutDay, new Date(year, month + 1, 0).getDate());
-                let thisMonthCut = new Date(year, month, thisMonthCutDay);
-
-                let nextStepEnd;
-                if (current < thisMonthCut && !(isFirstIteration && omitirPrimerCorte)) {
-                    nextStepEnd = thisMonthCut;
-                } else {
-                    let nextMonthCutDay = Math.min(cutDay, new Date(year, month + 2, 0).getDate());
-                    nextStepEnd = new Date(year, month + 1, nextMonthCutDay);
+                let stepEnd = new Date(current.getFullYear(), current.getMonth() + 1, diaCorte);
+                if (stepEnd <= current) {
+                    stepEnd.setMonth(stepEnd.getMonth() + 1);
                 }
+                if (stepEnd > fechaFin) stepEnd = fechaFin;
 
-                const stepEnd = nextStepEnd < fechaFin ? nextStepEnd : fechaFin;
-                const daysInPeriod = Math.round((stepEnd - current) / (1000 * 60 * 60 * 24));
+                const days = (stepEnd - current) / (1000 * 60 * 60 * 24);
+                let rowHtml = `<td class="p-5 text-left text-xs font-black text-slate-500">${stepEnd.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' }).toUpperCase()}</td>`;
 
-                let displayDate = new Date(stepEnd.getTime() - 1);
-                const nombreMes = `${mesesNombres[displayDate.getMonth()]} ${displayDate.getFullYear()}`;
+                inversiones.forEach((inv, idx) => {
+                    const isFirstMonth = (meses === 0);
+                    let isSkipped = false;
 
-                const totalDaysInMonth = new Date(displayDate.getFullYear(), displayDate.getMonth() + 1, 0).getDate();
-                const proporcionMes = daysInPeriod / totalDaysInMonth;
-                const aporteProporcional = PMT * proporcionMes;
+                    if (isFirstMonth) {
+                        const daysInMonth = new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate();
+                        const diasHastaCorte = (stepEnd - current) / (1000 * 60 * 60 * 24);
+                        if (omitirPrimer && diasHastaCorte < daysInMonth) {
+                            isSkipped = true;
+                        }
+                    }
 
-                let i1 = b1 * (rate1Anual / daysInYear) * daysInPeriod;
-                let i2 = b2 * (rate2Anual / daysInYear) * daysInPeriod;
+                    const rateMensual = (inv.tasa / 100) / 12;
+                    let i = 0;
 
-                b1 += i1 + aporteProporcional;
-                b2 += i2 + aporteProporcional;
-                totalPMT += aporteProporcional;
+                    if (!isSkipped) {
+                        i = balances[idx] * rateMensual * (days / 30.4167);
+                        if (aplicarImpuesto) {
+                            i = i * 0.90; // Retención 10% RD
+                        }
+                    }
 
-                html += `
-                    <tr class="text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
-                        <td class="p-5 text-slate-400 font-black italic whitespace-nowrap">
-                            ${nombreMes} <span class="text-[9px] opacity-60 font-normal ml-1">(${daysInPeriod}d)</span>
-                        </td>
-                        <td class="p-5 text-right font-black">${fmt.format(b1)}</td>
-                        <td class="p-5 text-right text-blue-500/80 font-black">+${fmt.format(i1)}</td>
-                        <td class="p-5 text-right font-black border-l border-slate-50 dark:border-slate-800">${fmt.format(b2)}</td>
-                        <td class="p-5 text-right text-emerald-500/80 font-black">+${fmt.format(i2)}</td>
-                    </tr>
-                `;
+                    balances[idx] += i;
+                    if (meses > 0 || isFirstMonth) {
+                        balances[idx] += PMT;
+                        if(idx === 0) totalPMT += PMT;
+                    }
 
+                    const bl = idx > 0 ? 'border-l border-slate-50 dark:border-slate-800' : '';
+                    rowHtml += `<td class="p-5 text-right font-black text-slate-700 dark:text-slate-300 ${bl}">${fmt.format(balances[idx])}</td>`;
+                    if (isSkipped) {
+                        rowHtml += `<td class="p-5 text-right font-black text-slate-400 italic text-[10px]">Omitido</td>`;
+                    } else {
+                        rowHtml += `<td class="p-5 text-right font-black text-${inv.color}-500">+${fmt.format(i)}</td>`;
+                    }
+                });
+
+                meses++;
+                htmlTable += `<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors group">${rowHtml}</tr>`;
                 current = stepEnd;
             }
 
-            document.getElementById('tablaBody').innerHTML = html;
-            document.getElementById('resumen1').innerText = fmt.format(b1);
-            document.getElementById('resumen2').innerText = fmt.format(b2);
+            if(tablaBody) tablaBody.innerHTML = htmlTable;
 
+            // Build Escenarios Cards
             const totalInvertido = P + totalPMT;
-            document.getElementById('ganancia1').innerText = `+${fmt.format(b1 - totalInvertido)}`;
-            document.getElementById('ganancia2').innerText = `+${fmt.format(b2 - totalInvertido)}`;
-        }
-
-        // IndexedDB Manager
-        const dbName = 'InteresItDB';
-        const dbVersion = 1;
-        let db;
-
-        function initDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(dbName, dbVersion);
-
-                request.onerror = (event) => {
-                    console.error("Database error:", event.target.error);
-                    reject(event.target.error);
-                };
-
-                request.onsuccess = (event) => {
-                    db = event.target.result;
-                    resolve(db);
-                };
-
-                request.onupgradeneeded = (event) => {
-                    db = event.target.result;
-                    if (!db.objectStoreNames.contains('settings')) {
-                        db.createObjectStore('settings', { keyPath: 'id' });
-                    }
-                };
-            });
+            if(escenariosContainer) {
+                let cardsHtml = '';
+                inversiones.forEach((inv, idx) => {
+                    const ganancia = balances[idx] - totalInvertido;
+                    cardsHtml += `
+                    <div class="group">
+                        <div class="bg-white dark:bg-darkCard p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all hover:border-${inv.color}-500/30">
+                            <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 truncate">${inv.nombre}</p>
+                            <h2 class="text-4xl font-black text-slate-800 dark:text-white">${fmt.format(balances[idx])}</h2>
+                            <div class="mt-8 pt-6 border-t border-slate-50 dark:border-slate-800 flex justify-between items-center">
+                                <span class="text-[10px] font-black uppercase text-slate-400">Rendimiento Neto</span>
+                                <span class="text-xl font-black text-${inv.color}-500">+${fmt.format(ganancia)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                });
+                escenariosContainer.innerHTML = cardsHtml;
+            }
         }
 
         function saveSettings() {
@@ -418,12 +489,12 @@
                 id: 'current',
                 montoInicial: document.getElementById('montoInicial').value,
                 aporteMensual: document.getElementById('aporteMensual').value,
-                interes1: document.getElementById('interes1').value,
-                interes2: document.getElementById('interes2').value,
+                inversiones: inversiones,
                 fechaInicio: document.getElementById('fechaInicio').value,
                 fechaFin: document.getElementById('fechaFin').value,
                 diaCorte: document.getElementById('diaCorte').value,
                 omitirPrimerCorte: document.getElementById('omitirPrimerCorte').checked,
+                aplicarImpuesto: document.getElementById('aplicarImpuesto') ? document.getElementById('aplicarImpuesto').checked : true,
                 isDarkMode: document.documentElement.classList.contains('dark')
             };
 
@@ -444,12 +515,25 @@
                         const s = request.result;
                         document.getElementById('montoInicial').value = s.montoInicial || 185;
                         document.getElementById('aporteMensual').value = s.aporteMensual || 0;
-                        document.getElementById('interes1').value = s.interes1 || 0.1;
-                        document.getElementById('interes2').value = s.interes2 || 3.0;
+                        if (s.inversiones && s.inversiones.length > 0) {
+                            inversiones = s.inversiones;
+                        }
+                        renderInversiones();
+
                         if(s.fechaInicio) document.getElementById('fechaInicio').value = s.fechaInicio;
                         if(s.fechaFin) document.getElementById('fechaFin').value = s.fechaFin;
                         if(s.diaCorte) document.getElementById('diaCorte').value = s.diaCorte;
+
+                        if (!document.getElementById('fechaInicio').value) {
+                            const hoy = new Date();
+                            document.getElementById('fechaInicio').value = hoy.toISOString().split('T')[0];
+                            const mesesDespues = new Date(hoy.getFullYear(), hoy.getMonth() + 7, hoy.getDate());
+                            document.getElementById('fechaFin').value = mesesDespues.toISOString().split('T')[0];
+                            document.getElementById('diaCorte').value = hoy.getDate();
+                        }
+
                         document.getElementById('omitirPrimerCorte').checked = s.omitirPrimerCorte || false;
+                        if (s.hasOwnProperty('aplicarImpuesto') && document.getElementById('aplicarImpuesto')) document.getElementById('aplicarImpuesto').checked = s.aplicarImpuesto;
 
                         if (s.isDarkMode) {
                             document.documentElement.classList.add('dark');
@@ -473,7 +557,7 @@
             saveSettings();
         }
 
-        ['montoInicial', 'aporteMensual', 'interes1', 'interes2', 'fechaInicio', 'fechaFin', 'diaCorte'].forEach(id => {
+        ['montoInicial', 'aporteMensual', 'fechaInicio', 'fechaFin', 'diaCorte'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.addEventListener('input', handleChange);
         });
@@ -511,7 +595,21 @@
             });
         }
 
-        window.onload = async () => {
+
+        function exportToPDF() {
+            const element = document.getElementById('tour-tabla'); // The container with the table
+            const opt = {
+                margin:       1,
+                filename:     'Reporte_Mensual_InteresIt.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+        }
+
+                window.onload = async () => {
             await initDB();
             const hasSettings = await loadSettings();
 
@@ -524,6 +622,20 @@
                 document.getElementById('fechaInicio').value = desde;
                 document.getElementById('fechaFin').value = hasta;
                 document.getElementById('diaCorte').value = hoy.getDate();
+                renderInversiones();
+            } else {
+                if (!document.getElementById('fechaInicio').value) {
+                    const hoy = new Date();
+                    document.getElementById('fechaInicio').value = hoy.toISOString().split('T')[0];
+                    const mesesDespues = new Date(hoy.getFullYear(), hoy.getMonth() + 7, hoy.getDate());
+                    document.getElementById('fechaFin').value = mesesDespues.toISOString().split('T')[0];
+                    document.getElementById('diaCorte').value = hoy.getDate();
+                }
+            }
+
+            // Fallback in case renderInversiones was not called somehow
+            if (document.getElementById('inversionesContainer') && document.getElementById('inversionesContainer').innerHTML.trim() === '') {
+                renderInversiones();
             }
 
             calcular();
