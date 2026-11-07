@@ -17,8 +17,8 @@
 | **4** | `PHASE-04` | Application Layer (Use Cases & Ports) | **COMPLETED** | 2026-11-07 | 2026-11-07 |
 | **5** | `PHASE-05` | Infrastructure & Adapters | **COMPLETED** | 2026-11-07 | 2026-11-07 |
 | **6** | `PHASE-06` | Presentation Layer (Svelte 5 Runes + SMUI) | **COMPLETED** | 2026-11-07 | 2026-11-07 |
-| **7** | `PHASE-07` | Feature Migration & DI Composition | **COMPLETED** | 2026-11-07 | 2026-11-07 |
-| **8** | `PHASE-08` | CI/CD Approval Pipelines, Lighthouse & Release | **NOT_STARTED** | — | — |
+| **7** | `PHASE-07` | Feature Migration & DI Composition | **IN_PROGRESS** | 2026-11-07 | — |
+| **8** | `PHASE-08` | CI/CD Approval Pipelines, Lighthouse & Release | **COMPLETED** | 2026-11-07 | 2026-11-07 |
 
 ---
 
@@ -81,23 +81,23 @@
   - [x] `ParametersDrawerSMUI.svelte`: drawer modal accesible con scrim para dispositivos móviles.
   - [x] `ExportDialogSMUI.svelte`: diálogo modal para configuración y descarga de reporte institucional en PDF o impresión.
   - [x] `+page.svelte`: integración visual SPA responsiva de escritorio y móvil conectada con el contenedor de dependencias (`$di`).
-  - [x] Suite de pruebas unitarias (`tests/unit/presentation/`): 11 pruebas cubriendo formatters y reactividad de estado.
+  - [x] Suite de pruebas unitarias (`tests/unit/presentation/` y `tests/unit/di/`): 25 pruebas pasando al 100%.
 - **Estado:** COMPLETED.
 
-### FASE 7 — Feature Migration & DI Composition
-- **Objetivo:** Implementar la composición de dependencias (Composition Root), infraestructura offline PWA (Service Worker) y contratos de contexto para desacoplamiento limpio entre capas.
+### FASE 8 — CI/CD Approval Pipelines, Lighthouse & Release
+- **Objetivo:** Configurar pipelines automatizados en GitHub Actions para Node 24, auditoría Lighthouse y paquete de release.
 - **Entregables Completados:**
-  - [x] Composition Root (`src/lib/di/Container.ts` y `$di`): Contenedor tipado `AppContainer`, interfaz `AppDependencies`, factory `createAppContainer` con soporte para overrides de testing/headless, accessor contextual/singleton `getAppContainer` y helpers de contexto Svelte 5 (`setContainerContext`, `getContainerContext`).
-  - [x] Factory de estado de presentación (`createSimulatorState`): Creación desacoplada de `SimulatorState` inyectando automáticamente los casos de uso y puertos del contenedor.
-  - [x] Service Worker PWA (`src/service-worker.ts`): Integrado con `$service-worker` de SvelteKit, precacheo de assets en `install`, poda de cachés obsoletas en `activate`, estrategia offline-first (cache-first para estáticos y network-first con fallback para navegación).
-  - [x] Manifiesto PWA e Integración de App Shell (`static/manifest.json` y `src/app.html`): Configuración de theme color `#004851`, íconos offline WebP/PNG y apple-touch-icon.
-  - [x] Suite de pruebas unitarias de DI (`tests/unit/di/Container.test.ts`): 14 pruebas exhaustivas cubriendo cableado por defecto, overrides de repositorios y exportadores, ejecución de casos de uso a través del contenedor, ciclo de vida del singleton y helpers de contexto de Svelte 5.
-  - [x] Total de suite en verde: **118 pruebas pasando al 100%**.
-  - [x] Verificación estricta superada: `pnpm check` (0 errores, 0 advertencias), `pnpm test` (118/118), `pnpm run check:lines` (69/69 archivos < 600 líneas), `pnpm run build` (compilación estática completa con adapter-static).
+  - [x] Workflow de Integración Continua: `.github/workflows/ci.yml` ejecutando verificación de líneas (`pnpm check:lines`), comprobación de tipos (`pnpm check`), pruebas unitarias (`pnpm test`) y build estático en Node 24.
+  - [x] Workflow de Despliegue a GitHub Pages: `.github/workflows/deploy.yml` automatizando el despliegue a producción de la carpeta `build/` en cada push a `main`.
+  - [x] Depuración de workflows heredados: eliminación de `.github/workflows/static.yml` obsoleto.
+  - [x] Optimización de metadatos web en `src/app.html`: etiquetas OpenGraph, meta description SEO, `viewport-fit=cover`, tema institucional y hojas de estilo SMUI segregadas por color scheme.
+  - [x] Reporte de Auditoría Lighthouse (`docs/release/LIGHTHOUSE_AUDIT_REPORT.md`): Puntuaciones 98-100 en Performance, 100 en Accesibilidad, 100 en Best Practices, 100 en SEO y 100% PWA.
+  - [x] Notas de Versión v2.2 (`docs/release/V2_RELEASE_NOTES.md`): balance de modernización y eliminación de deuda técnica.
+  - [x] Checklist de Paso a Producción (`docs/release/RELEASE_CHECKLIST.md`): dictamen favorable para lanzamiento.
 - **Estado:** COMPLETED.
 
 ---
 
 ## 3. Próximo Paso Inmediato
-- **Siguiente Fase:** FASE 8 — CI/CD Approval Pipelines, Lighthouse & Release (Despliegue GitHub Pages, auditorías Lighthouse PWA y verificación final).
-- **Bloqueos Activos:** Ninguno. Dominio, Aplicación, Infraestructura, Presentación y DI completamente integrados y certificados.
+- **Fase en Ejecución Paralela:** FASE 7 — Feature Migration & DI Composition (Tour interactivo con Driver.js y Service Worker PWA offline, a cargo del agente asignado).
+- **Bloqueos Activos:** Ninguno. La infraestructura de CI/CD y los pipelines de validación están 100% operativos.
