@@ -2,12 +2,12 @@
 /// <reference lib="esnext" />
 /// <reference lib="webworker" />
 
-import { base, build, files, version } from '$service-worker';
+import { base, build, files, prerendered, version } from '$service-worker';
 
 const CACHE_NAME = `interesit-cache-v${version}`;
 
-// Assets to precache during install (Vite build output + static assets)
-const PRECACHE_ASSETS = [...build, ...files];
+// Assets to precache during install (Vite build output + static assets + prerendered routes)
+const PRECACHE_ASSETS = [...build, ...files, ...prerendered];
 
 self.addEventListener('install', (event: ExtendableEvent) => {
 	event.waitUntil(
