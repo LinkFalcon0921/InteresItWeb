@@ -1,21 +1,28 @@
 import {
 	compararParesEscenarios,
 	err,
-	Money,
+	FinancialInputParser,
 	ok,
+	ParseInputError,
+	ScenarioRole,
 	type Result,
 	type ScenarioSummary
 } from '$domain';
 import type { PairMatrixDTO, PairScenarioComparisonDTO } from '../dtos/PairMatrixDTO';
 import type { ScenarioSummaryDTO, SimulationOutputDTO } from '../dtos/SimulationOutputDTO';
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null;
+}
+
 export type PairMatrixInput =
 	| readonly ScenarioSummaryDTO[]
 	| { readonly resumenes: readonly ScenarioSummaryDTO[] }
-	| SimulationOutputDTO;
+	| SimulationOutputDTO
+	| unknown;
 
 export class CalculatePairMatrixUseCase {
-	public execute(input: PairMatrixInput): Result<PairMatrixDTO, Error> {
+	public execute(input: unknown): Result<PairMatrixDTO, Error> {
 		if (!input) {
 			return ok({ comparaciones: [], totalPares: 0 });
 		}
@@ -28,14 +35,44 @@ export class CalculatePairMatrixUseCase {
 		try {
 			const domainSummaries: ScenarioSummary[] = [];
 
-			for (const s of rawSummaries) {
+			for (let i = 0; i < rawSummaries.length; i++) {
+				const s = rawSummaries[i];
+				if (!isRecord(s)) {
+					return err(new ParseInputError(`resumenes[${i}]`, 'El resumen del escenario debe ser un objeto válido.'));
+				}
+
+				const id = typeof s['escenarioId'] === 'string' ? s['escenarioId'].trim() : '';
+				if (id.length === 0) {
+					return err(new ParseInputError(`resumenes[${i}].escenarioId`, 'El identificador del escenario no puede estar vacío.'));
+				}
+
+				const nombre = typeof s['nombre'] === 'string' ? s['nombre'].trim() : '';
+				if (nombre.length === 0) {
+					return err(new ParseInputError(`resumenes[${i}].nombre`, 'El nombre del escenario no puede estar vacío.'));
+				}
+
+				const balResult = FinancialInputParser.parseMoney(s['balanceFinal'], `resumenes[${i}].balanceFinal`);
+				if (!balResult.ok) return balResult;
+
+				const intNetoResult = FinancialInputParser.parseMoney(s['interesTotalNeto'], `resumenes[${i}].interesTotalNeto`);
+				if (!intNetoResult.ok) return intNetoResult;
+
+				const rendNetoResult = FinancialInputParser.parseMoney(s['rendimientoNeto'], `resumenes[${i}].rendimientoNeto`);
+				if (!rendNetoResult.ok) return rendNetoResult;
+
+				const rawRol = s['rol'];
+				const rol =
+					rawRol === ScenarioRole.Leader || rawRol === ScenarioRole.Challenger || rawRol === ScenarioRole.Neutral
+						? rawRol
+						: ScenarioRole.Neutral;
+
 				domainSummaries.push({
-					escenarioId: s.escenarioId,
-					nombre: s.nombre,
-					balanceFinal: Money.fromNumber(s.balanceFinal),
-					interesTotalNeto: Money.fromNumber(s.interesTotalNeto),
-					rendimientoNeto: Money.fromNumber(s.rendimientoNeto),
-					rol: s.rol
+					escenarioId: id,
+					nombre,
+					balanceFinal: balResult.value,
+					interesTotalNeto: intNetoResult.value,
+					rendimientoNeto: rendNetoResult.value,
+					rol
 				});
 			}
 
@@ -74,15 +111,17 @@ export class CalculatePairMatrixUseCase {
 		}
 	}
 
-	private extractSummaries(input: PairMatrixInput): readonly ScenarioSummaryDTO[] {
+	private extractSummaries(input: unknown): readonly unknown[] {
 		if (Array.isArray(input)) {
 			return input;
 		}
-		if ('resumenPorEscenario' in input && Array.isArray(input.resumenPorEscenario)) {
-			return input.resumenPorEscenario;
-		}
-		if ('resumenes' in input && Array.isArray(input.resumenes)) {
-			return input.resumenes;
+		if (isRecord(input)) {
+			if ('resumenPorEscenario' in input && Array.isArray(input['resumenPorEscenario'])) {
+				return input['resumenPorEscenario'];
+			}
+			if ('resumenes' in input && Array.isArray(input['resumenes'])) {
+				return input['resumenes'];
+			}
 		}
 		return [];
 	}

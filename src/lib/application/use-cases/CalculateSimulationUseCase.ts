@@ -1,6 +1,7 @@
 import {
 	err,
 	FinancialInputParser,
+	InvalidDateRangeError,
 	InvalidScenarioError,
 	InvestmentScenario,
 	ok,
@@ -12,54 +13,88 @@ import {
 import type { SimulationInputDTO } from '../dtos/SimulationInputDTO';
 import type { PeriodCalculationDTO, ScenarioPeriodResultDTO, ScenarioSummaryDTO, SimulationOutputDTO } from '../dtos/SimulationOutputDTO';
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null;
+}
+
 export class CalculateSimulationUseCase {
-	public execute(input: SimulationInputDTO): Result<SimulationOutputDTO, Error> {
-		if (!input || typeof input !== 'object') {
+	public execute(input: unknown): Result<SimulationOutputDTO, Error> {
+		if (!isRecord(input)) {
 			return err(new ParseInputError('simulationInput', 'Parámetros de simulación inválidos.'));
 		}
 
-		const capitalResult = FinancialInputParser.parseMoney(input.capitalInicial, 'capitalInicial');
+		const capitalResult = FinancialInputParser.parseMoney(input['capitalInicial'], 'capitalInicial');
 		if (!capitalResult.ok) return capitalResult;
 
-		const aporteResult = FinancialInputParser.parseMoney(input.aporteMensual, 'aporteMensual');
+		const aporteResult = FinancialInputParser.parseMoney(input['aporteMensual'], 'aporteMensual');
 		if (!aporteResult.ok) return aporteResult;
 
-		const fechaInicioResult = FinancialInputParser.parseCalendarDate(input.fechaInicio, 'fechaInicio');
+		const fechaInicioResult = FinancialInputParser.parseCalendarDate(input['fechaInicio'], 'fechaInicio');
 		if (!fechaInicioResult.ok) return fechaInicioResult;
 
-		const fechaFinResult = FinancialInputParser.parseCalendarDate(input.fechaFin, 'fechaFin');
+		const fechaFinResult = FinancialInputParser.parseCalendarDate(input['fechaFin'], 'fechaFin');
 		if (!fechaFinResult.ok) return fechaFinResult;
 
-		const diaCorteResult = FinancialInputParser.parseCutoffDay(input.diaCorte, 'diaCorte');
+		if (!fechaInicioResult.value.isBefore(fechaFinResult.value)) {
+			return err(new InvalidDateRangeError('La fecha de inicio debe ser anterior a la fecha de fin.'));
+		}
+
+		const diaCorteResult = FinancialInputParser.parseCutoffDay(input['diaCorte'], 'diaCorte');
 		if (!diaCorteResult.ok) return diaCorteResult;
 
-		const omitirResult = FinancialInputParser.parseBoolean(input.omitirPrimerCorte, 'omitirPrimerCorte', false);
+		const omitirResult = FinancialInputParser.parseBoolean(input['omitirPrimerCorte'], 'omitirPrimerCorte', false);
 		if (!omitirResult.ok) return omitirResult;
 
-		const impuestoResult = FinancialInputParser.parseBoolean(input.aplicarImpuestoRD, 'aplicarImpuestoRD', true);
+		const impuestoResult = FinancialInputParser.parseBoolean(input['aplicarImpuestoRD'], 'aplicarImpuestoRD', true);
 		if (!impuestoResult.ok) return impuestoResult;
 
-		if (!input.escenarios || input.escenarios.length === 0) {
+		const rawEscenarios = input['escenarios'];
+		if (!Array.isArray(rawEscenarios) || rawEscenarios.length === 0) {
 			return err(new InvalidScenarioError('Debe proporcionar al menos un escenario de inversión.'));
 		}
-		if (input.escenarios.length > 20) {
+		if (rawEscenarios.length > 20) {
 			return err(new InvalidScenarioError('No se pueden simular más de 20 escenarios de inversión simultáneos.'));
 		}
 
 		const domainEscenarios: InvestmentScenario[] = [];
-		for (let i = 0; i < input.escenarios.length; i++) {
-			const sc = input.escenarios[i];
-			if (!sc) continue;
+		const seenIds = new Set<string>();
 
-			const rateResult = FinancialInputParser.parseInterestRate(sc.tasaAnual, `escenarios[${i}].tasaAnual`);
+		for (let i = 0; i < rawEscenarios.length; i++) {
+			const sc = rawEscenarios[i];
+			if (!isRecord(sc)) {
+				return err(new InvalidScenarioError(`El escenario en la posición ${i + 1} es inválido.`));
+			}
+
+			const rawId = typeof sc['id'] === 'string' ? sc['id'].trim() : '';
+			if (rawId.length === 0) {
+				return err(new InvalidScenarioError(`El identificador del escenario en la posición ${i + 1} no puede estar vacío.`));
+			}
+			if (seenIds.has(rawId)) {
+				return err(new InvalidScenarioError(`El identificador de escenario '${rawId}' está duplicado.`));
+			}
+			seenIds.add(rawId);
+
+			const rawNombre = typeof sc['nombre'] === 'string' ? sc['nombre'].trim() : '';
+			if (rawNombre.length === 0) {
+				return err(new InvalidScenarioError(`El nombre del escenario en la posición ${i + 1} no puede estar vacío.`));
+			}
+
+			const rateResult = FinancialInputParser.parseInterestRate(sc['tasaAnual'], `escenarios[${i}].tasaAnual`);
 			if (!rateResult.ok) return rateResult;
 
+			const rawColor =
+				typeof sc['color'] === 'string' && sc['color'].trim().length > 0 ? sc['color'].trim() : 'emerald';
+
 			try {
-				domainEscenarios.push(InvestmentScenario.create(sc.id, sc.nombre, rateResult.value, sc.color));
+				domainEscenarios.push(InvestmentScenario.create(rawId, rawNombre, rateResult.value, rawColor));
 			} catch (e) {
 				const msg = e instanceof Error ? e.message : 'Error creando escenario de inversión.';
 				return err(new InvalidScenarioError(msg));
 			}
+		}
+
+		if (domainEscenarios.length === 0) {
+			return err(new InvalidScenarioError('Debe proporcionar al menos un escenario de inversión válido.'));
 		}
 
 		try {

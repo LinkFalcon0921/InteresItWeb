@@ -88,10 +88,14 @@ describe('CalculateSimulationUseCase Unit Tests', () => {
 	});
 
 	it('returns error when input object is missing or invalid', () => {
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
-		const result = useCase.execute(null);
-		expect(result.ok).toBe(false);
+		const resultNull = useCase.execute(null);
+		expect(resultNull.ok).toBe(false);
+
+		const resultString = useCase.execute('invalid-string');
+		expect(resultString.ok).toBe(false);
+
+		const resultNumber = useCase.execute(12345);
+		expect(resultNumber.ok).toBe(false);
 	});
 
 	it('returns error when capitalInicial is negative', () => {
@@ -139,15 +143,21 @@ describe('CalculateSimulationUseCase Unit Tests', () => {
 		expect(resultTooHigh.ok).toBe(false);
 	});
 
-	it('returns error when escenarios array is empty', () => {
-		const result = useCase.execute({
+	it('returns error when escenarios is not an array or is empty', () => {
+		const resultEmpty = useCase.execute({
 			...baseValidInput,
 			escenarios: []
 		});
-		expect(result.ok).toBe(false);
-		if (!result.ok) {
-			expect(result.error.message).toContain('al menos un escenario');
+		expect(resultEmpty.ok).toBe(false);
+		if (!resultEmpty.ok) {
+			expect(resultEmpty.error.message).toContain('al menos un escenario');
 		}
+
+		const resultNotArray = useCase.execute({
+			...baseValidInput,
+			escenarios: 'not-an-array'
+		});
+		expect(resultNotArray.ok).toBe(false);
 	});
 
 	it('returns error when more than 20 scenarios are provided', () => {
@@ -165,6 +175,31 @@ describe('CalculateSimulationUseCase Unit Tests', () => {
 		expect(result.ok).toBe(false);
 		if (!result.ok) {
 			expect(result.error.message).toContain('No se pueden simular más de 20');
+		}
+	});
+
+	it('returns error when scenario has duplicate id', () => {
+		const resultDuplicate = useCase.execute({
+			...baseValidInput,
+			escenarios: [
+				{ id: 'inv-1', nombre: 'Escenario A', tasaAnual: 10, color: 'emerald' },
+				{ id: 'inv-1', nombre: 'Escenario B', tasaAnual: 12, color: 'blue' }
+			]
+		});
+		expect(resultDuplicate.ok).toBe(false);
+		if (!resultDuplicate.ok) {
+			expect(resultDuplicate.error.message).toContain('duplicado');
+		}
+	});
+
+	it('returns error when scenario entry is null or not an object', () => {
+		const resultInvalidEntry = useCase.execute({
+			...baseValidInput,
+			escenarios: [null]
+		});
+		expect(resultInvalidEntry.ok).toBe(false);
+		if (!resultInvalidEntry.ok) {
+			expect(resultInvalidEntry.error.message).toContain('inválido');
 		}
 	});
 

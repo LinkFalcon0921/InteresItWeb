@@ -143,4 +143,57 @@ describe('CalculatePairMatrixUseCase Unit Tests', () => {
 
 		expect(result.value.totalPares).toBe(3);
 	});
+
+	it('safely handles non-object primitive inputs without crashing', () => {
+		const resultString = useCase.execute('invalid-primitive');
+		expect(resultString.ok).toBe(true);
+		if (resultString.ok) {
+			expect(resultString.value.totalPares).toBe(0);
+		}
+
+		const resultNumber = useCase.execute(999);
+		expect(resultNumber.ok).toBe(true);
+		if (resultNumber.ok) {
+			expect(resultNumber.value.totalPares).toBe(0);
+		}
+
+		const resultBool = useCase.execute(true);
+		expect(resultBool.ok).toBe(true);
+		if (resultBool.ok) {
+			expect(resultBool.value.totalPares).toBe(0);
+		}
+	});
+
+	it('returns error when a summary item is null or non-object', () => {
+		const result = useCase.execute([summaryA, null]);
+		expect(result.ok).toBe(false);
+	});
+
+	it('returns error when a summary item has empty id or name', () => {
+		const resultEmptyId = useCase.execute([
+			summaryA,
+			{ ...summaryB, escenarioId: '' }
+		]);
+		expect(resultEmptyId.ok).toBe(false);
+
+		const resultEmptyName = useCase.execute([
+			summaryA,
+			{ ...summaryB, nombre: '   ' }
+		]);
+		expect(resultEmptyName.ok).toBe(false);
+	});
+
+	it('returns error when a summary item contains NaN or negative monetary values', () => {
+		const resultNaN = useCase.execute([
+			summaryA,
+			{ ...summaryB, balanceFinal: NaN }
+		]);
+		expect(resultNaN.ok).toBe(false);
+
+		const resultNegative = useCase.execute([
+			summaryA,
+			{ ...summaryB, balanceFinal: -50 }
+		]);
+		expect(resultNegative.ok).toBe(false);
+	});
 });

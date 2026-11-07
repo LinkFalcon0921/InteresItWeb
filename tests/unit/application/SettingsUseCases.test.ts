@@ -12,9 +12,14 @@ class InMemorySettingsRepositoryStub implements SettingsRepositoryPort {
 	public storedSettings: SettingsDTO | null = null;
 	public shouldFailLoad = false;
 	public shouldFailSave = false;
+	public shouldThrowOnLoad = false;
+	public shouldThrowOnSave = false;
 	public error = new Error('Database connection failed');
 
 	async loadSettings(): Promise<Result<SettingsDTO, Error>> {
+		if (this.shouldThrowOnLoad) {
+			throw new Error('Catastrophic DB crash on load');
+		}
 		if (this.shouldFailLoad) {
 			return err(this.error);
 		}
@@ -22,6 +27,9 @@ class InMemorySettingsRepositoryStub implements SettingsRepositoryPort {
 	}
 
 	async saveSettings(settings: SettingsDTO): Promise<Result<void, Error>> {
+		if (this.shouldThrowOnSave) {
+			throw new Error('Catastrophic DB crash on save');
+		}
 		if (this.shouldFailSave) {
 			return err(this.error);
 		}
@@ -87,6 +95,16 @@ describe('Settings Use Cases (LoadSettingsUseCase & SaveSettingsUseCase)', () =>
 				expect(result.error.message).toBe('Database connection failed');
 			}
 		});
+
+		it('catches and wraps unexpected repository rejections during load', async () => {
+			repository.shouldThrowOnLoad = true;
+
+			const result = await loadUseCase.execute();
+			expect(result.ok).toBe(false);
+			if (!result.ok) {
+				expect(result.error.message).toContain('Catastrophic DB crash on load');
+			}
+		});
 	});
 
 	describe('SaveSettingsUseCase', () => {
@@ -114,6 +132,18 @@ describe('Settings Use Cases (LoadSettingsUseCase & SaveSettingsUseCase)', () =>
 			expect(repository.storedSettings?.aporteMensual).toBe(200);
 			expect(repository.storedSettings?.diaCorte).toBe(20);
 			expect(repository.storedSettings?.inversiones.length).toBe(1);
+			expect(repository.storedSettings?.id).toBe('current');
+		});
+
+		it('preserves custom preset id if present in input', async () => {
+			const customPresetSettings = {
+				...validSettings,
+				id: 'preset-aggressive'
+			};
+
+			const result = await saveUseCase.execute(customPresetSettings);
+			expect(result.ok).toBe(true);
+			expect(repository.storedSettings?.id).toBe('preset-aggressive');
 		});
 
 		it('validates and rejects settings with reversed date range (fechaInicio >= fechaFin)', async () => {
@@ -160,6 +190,16 @@ describe('Settings Use Cases (LoadSettingsUseCase & SaveSettingsUseCase)', () =>
 			expect(result.ok).toBe(false);
 			if (!result.ok) {
 				expect(result.error.message).toBe('Database connection failed');
+			}
+		});
+
+		it('catches and wraps unexpected repository rejections during save', async () => {
+			repository.shouldThrowOnSave = true;
+
+			const result = await saveUseCase.execute(validSettings);
+			expect(result.ok).toBe(false);
+			if (!result.ok) {
+				expect(result.error.message).toContain('Catastrophic DB crash on save');
 			}
 		});
 	});
