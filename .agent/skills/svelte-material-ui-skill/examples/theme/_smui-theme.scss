@@ -1,0 +1,17 @@
+@use '@smui/common/theme/color-palette';
+
+$background: #ffffff;
+
+@use '@smui/common/theme/index' as theme with (
+  $primary: color-palette.$blue-600,
+  $secondary: color-palette.$teal-600,
+  $surface: #ffffff,
+  $background: $background,
+  $error: #b00020
+);
+
+html,
+body {
+  background-color: $background;
+  color: if(theme.contrast-tone($background) == 'dark', #000000, #ffffff);
+}
