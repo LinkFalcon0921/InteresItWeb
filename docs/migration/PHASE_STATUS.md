@@ -43,7 +43,7 @@
   - [x] Errores tipados de dominio: `DomainErrors`.
   - [x] Lógica financiera pura: `finance/simular.ts` (fechas exactas en UTC, base 365, día de corte bancario con clamping mensual, retención fiscal del 10% ley dominicana, omisión condicional de primer corte, proyección de balances y aportes $PMT$).
   - [x] Comparativa combinatorial: `finance/pares.ts` (generación $n(n-1)/2$ y comparación matricial).
-  - [x] Suite de caracterización en Vitest (`tests/unit/domain/`) con 40 pruebas unitarias pasando al 100%, validando con exactitud al centavo las referencias oficiales de ADR-004.
+  - [x] Suite de caracterización en Vitest (`tests/unit/domain/`) con 43 pruebas unitarias pasando al 100%, validando con exactitud al centavo las referencias oficiales de ADR-004.
 - **Estado de Fase 3:** COMPLETED.
 
 ---
