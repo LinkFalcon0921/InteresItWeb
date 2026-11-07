@@ -55,7 +55,7 @@
   - [x] Caso de uso `CalculateSimulationUseCase`: orquestación multiescenario, detección de líder, cálculo de ventaja monetaria y desglose mensual.
   - [x] Caso de uso `CalculatePairMatrixUseCase`: cálculo de diferencias matriciales de pares y asignación de ventaja por escenario.
   - [x] Casos de uso de configuración: `LoadSettingsUseCase` y `SaveSettingsUseCase` con validación mediante parsers de dominio.
-  - [x] Suite de pruebas unitarias (`tests/unit/application/`): 26 pruebas adicionales cubriendo los casos de uso con mocks de puertos.
+  - [x] Suite de pruebas unitarias (`tests/unit/application/`): 35 pruebas cubriendo los casos de uso con mocks de puertos y validaciones de bordes.
 - **Estado:** COMPLETED.
 
 ### FASE 5 — Infrastructure & Adapters
@@ -64,7 +64,7 @@
   - [x] `IndexedDBSettingsRepository.ts`: repositorio asíncrono sobre `InteresItDB` con compatibilidad para los datos existentes.
   - [x] `PrintExportAdapter.ts`: adaptador para emisión y visualización del reporte ejecutivo A4 de 2 páginas con estilos `@media print`.
   - [x] Suite de pruebas unitarias y de integración (`tests/unit/infrastructure/`): 15 pruebas cubriendo IndexedDB con `fake-indexeddb` y el adaptador de impresión con mock de window.
-  - [x] Total de suite en verde: **84 pruebas pasando al 100%**.
+  - [x] Total de suite en verde: **93 pruebas pasando al 100%**.
 - **Estado:** COMPLETED.
 
 ---
