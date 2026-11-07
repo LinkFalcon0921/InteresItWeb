@@ -9,7 +9,7 @@
 ## 1. Tabla de Seguimiento de Fases
 
 | Fase | Identificador | Nombre de Fase | Estado | Fecha de Inicio | Fecha de Cierre |
-| :---: | :--- | :--- | :--- | :---: | :---: |
+| :---: | :--- | :--- | :---: | :---: | :---: |
 | **0** | `PHASE-00` | Discovery & Legacy Audit | **COMPLETED** | 2026-11-07 | 2026-11-07 |
 | **1** | `PHASE-01` | Architecture & Technical Decisions | **COMPLETED** | 2026-11-07 | 2026-11-07 |
 | **2** | `PHASE-02` | Project Foundation & Quality Tooling | **COMPLETED** | 2026-11-07 | 2026-11-07 |
@@ -59,18 +59,16 @@
 - **Estado:** COMPLETED.
 
 ### FASE 5 — Infrastructure & Adapters
-- **Objetivo:** Implementar adaptadores concretos para persistencia offline e impresión/reportes.
+- **Objetivo:** Implementar adaptadores de persistencia y servicios externos.
 - **Entregables Completados:**
-  - [x] Adaptador de persistencia: `src/lib/infrastructure/persistence/IndexedDBSettingsRepository.ts`, implementando `SettingsRepositoryPort` con API nativa de IndexedDB (`InteresItDB`, versión 1, store `settings`, clave `'current'`), 100% retrocompatible con el formato legacy de `index.html`.
-  - [x] Validación y resiliencia en repositorio: parseo automático con `SettingsParser` y recuperación transparente (`DEFAULT_SETTINGS_DTO`) ante registros ausentes o datos corruptos.
-  - [x] Adaptador de exportación/impresión: `src/lib/infrastructure/export/PrintExportAdapter.ts`, implementando `ReportExportPort` con manejo seguro de títulos dinámicos de documento para impresión y exportación A4 a PDF mediante `window.print()`.
-  - [x] Barrel export unificado: `src/lib/infrastructure/index.ts`.
-  - [x] Suite de pruebas unitarias e integración en Vitest (`tests/unit/infrastructure/`): 15 pruebas cubriendo ciclo de vida de base de datos, retrocompatibilidad legacy, resiliencia ante errores, y adaptadores de impresión.
+  - [x] `IndexedDBSettingsRepository.ts`: repositorio asíncrono sobre `InteresItDB` con compatibilidad para los datos existentes.
+  - [x] `PrintExportAdapter.ts`: adaptador para emisión y visualización del reporte ejecutivo A4 de 2 páginas con estilos `@media print`.
+  - [x] Suite de pruebas unitarias y de integración (`tests/unit/infrastructure/`): 15 pruebas cubriendo IndexedDB con `fake-indexeddb` y el adaptador de impresión con mock de window.
   - [x] Total de suite en verde: **84 pruebas pasando al 100%**.
 - **Estado:** COMPLETED.
 
 ---
 
 ## 3. Próximo Paso Inmediato
-- **Siguiente Fase:** FASE 6 — Presentation Layer (Svelte 5 Runes + Svelte Material UI 9.x).
-- **Bloqueos Activos:** Ninguno. La infraestructura y la capa de aplicación están 100% integradas, tipadas y probadas.
+- **Siguiente Fase:** FASE 6 — Presentation Layer (Svelte 5 Runes + SMUI).
+- **Bloqueos Activos:** Ninguno. Dominio, Aplicación e Infraestructura completamente operativos y certificados con 84 tests.

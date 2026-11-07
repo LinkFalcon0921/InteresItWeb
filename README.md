@@ -12,7 +12,7 @@ Proyecciones de capital basadas en fechas reales de calendario, cortes bancarios
 [![Node.js](https://img.shields.io/badge/Node.js-24_LTS-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![pnpm 12](https://img.shields.io/badge/pnpm-12.x-F69220?logo=pnpm&logoColor=white)](https://pnpm.io)
 [![Svelte Material UI](https://img.shields.io/badge/SMUI-9.x-004851)](https://sveltematerialui.com)
-[![Vitest](https://img.shields.io/badge/Tests-69_Passing-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev)
+[![Vitest](https://img.shields.io/badge/Tests-84_Passing-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean_DDD-0B7A4B)](#-arquitectura-de-software-clean-architecture)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -216,9 +216,9 @@ flowchart LR
 | **1** | `PHASE-01` | Architecture & Technical Decisions | **COMPLETED** | ADR-001 a ADR-006 y especificaciones Clean Architecture. |
 | **2** | `PHASE-02` | Project Foundation & Quality Tooling | **COMPLETED** | Svelte 5, SMUI 9.x, Sass, Public Sans, scripts de calidad. |
 | **3** | `PHASE-03` | Domain Migration (Financial Core v2.2) | **COMPLETED** | Motor puro, Value Objects, 43 pruebas en Vitest al 100%. |
-| **4** | `PHASE-04` | Application Layer (Use Cases & Ports) | **COMPLETED** | 4 Casos de Uso, DTOs, Ports, 26 pruebas adicionales (Total: 69 tests). |
-| **5** | `PHASE-05` | Infrastructure & Adapters | **NEXT** | Adaptador IndexedDB y Adaptador de Impresión A4. |
-| **6** | `PHASE-06` | Presentation Layer (Svelte 5 Runes + SMUI) | **PENDING** | Componentes visuales y orquestación con Runes. |
+| **4** | `PHASE-04` | Application Layer (Use Cases & Ports) | **COMPLETED** | 4 Casos de Uso, DTOs, Ports, 26 pruebas adicionales. |
+| **5** | `PHASE-05` | Infrastructure & Adapters | **COMPLETED** | IndexedDB nativo, Impresión A4, 15 pruebas (Total: 84 tests). |
+| **6** | `PHASE-06` | Presentation Layer (Svelte 5 Runes + SMUI) | **NEXT** | Componentes visuales y orquestación con Runes. |
 | **7** | `PHASE-07` | Feature Migration & DI Composition | **PENDING** | Container DI, Driver.js y Service Worker PWA. |
 | **8** | `PHASE-08` | CI/CD Pipelines, Lighthouse & Release | **PENDING** | Workflows con compuerta de aprobación y auditoría > 90. |
 
