@@ -17,7 +17,7 @@
 | **4** | `PHASE-04` | Application Layer (Use Cases & Ports) | **COMPLETED** | 2026-11-07 | 2026-11-07 |
 | **5** | `PHASE-05` | Infrastructure & Adapters | **COMPLETED** | 2026-11-07 | 2026-11-07 |
 | **6** | `PHASE-06` | Presentation Layer (Svelte 5 Runes + SMUI) | **COMPLETED** | 2026-11-07 | 2026-11-07 |
-| **7** | `PHASE-07` | Feature Migration & DI Composition | **NOT_STARTED** | — | — |
+| **7** | `PHASE-07` | Feature Migration & DI Composition | **COMPLETED** | 2026-11-07 | 2026-11-07 |
 | **8** | `PHASE-08` | CI/CD Approval Pipelines, Lighthouse & Release | **NOT_STARTED** | — | — |
 
 ---
@@ -81,12 +81,23 @@
   - [x] `ParametersDrawerSMUI.svelte`: drawer modal accesible con scrim para dispositivos móviles.
   - [x] `ExportDialogSMUI.svelte`: diálogo modal para configuración y descarga de reporte institucional en PDF o impresión.
   - [x] `+page.svelte`: integración visual SPA responsiva de escritorio y móvil conectada con el contenedor de dependencias (`$di`).
-  - [x] Suite de pruebas unitarias (`tests/unit/presentation/` y `tests/unit/di/`): 25 pruebas pasando al 100%.
+  - [x] Suite de pruebas unitarias (`tests/unit/presentation/`): 11 pruebas cubriendo formatters y reactividad de estado.
+- **Estado:** COMPLETED.
+
+### FASE 7 — Feature Migration & DI Composition
+- **Objetivo:** Implementar la composición de dependencias (Composition Root), infraestructura offline PWA (Service Worker) y contratos de contexto para desacoplamiento limpio entre capas.
+- **Entregables Completados:**
+  - [x] Composition Root (`src/lib/di/Container.ts` y `$di`): Contenedor tipado `AppContainer`, interfaz `AppDependencies`, factory `createAppContainer` con soporte para overrides de testing/headless, accessor contextual/singleton `getAppContainer` y helpers de contexto Svelte 5 (`setContainerContext`, `getContainerContext`).
+  - [x] Factory de estado de presentación (`createSimulatorState`): Creación desacoplada de `SimulatorState` inyectando automáticamente los casos de uso y puertos del contenedor.
+  - [x] Service Worker PWA (`src/service-worker.ts`): Integrado con `$service-worker` de SvelteKit, precacheo de assets en `install`, poda de cachés obsoletas en `activate`, estrategia offline-first (cache-first para estáticos y network-first con fallback para navegación).
+  - [x] Manifiesto PWA e Integración de App Shell (`static/manifest.json` y `src/app.html`): Configuración de theme color `#004851`, íconos offline WebP/PNG y apple-touch-icon.
+  - [x] Suite de pruebas unitarias de DI (`tests/unit/di/Container.test.ts`): 14 pruebas exhaustivas cubriendo cableado por defecto, overrides de repositorios y exportadores, ejecución de casos de uso a través del contenedor, ciclo de vida del singleton y helpers de contexto de Svelte 5.
   - [x] Total de suite en verde: **118 pruebas pasando al 100%**.
+  - [x] Verificación estricta superada: `pnpm check` (0 errores, 0 advertencias), `pnpm test` (118/118), `pnpm run check:lines` (69/69 archivos < 600 líneas), `pnpm run build` (compilación estática completa con adapter-static).
 - **Estado:** COMPLETED.
 
 ---
 
 ## 3. Próximo Paso Inmediato
-- **Siguiente Fase:** FASE 7 — Feature Migration & DI Composition (Tour interactivo con Driver.js, Service Worker PWA offline y refinamiento de la composición final).
-- **Bloqueos Activos:** Ninguno. La terminal financiera está completamente construida y compila a producción con 0 errores y 0 warnings.
+- **Siguiente Fase:** FASE 8 — CI/CD Approval Pipelines, Lighthouse & Release (Despliegue GitHub Pages, auditorías Lighthouse PWA y verificación final).
+- **Bloqueos Activos:** Ninguno. Dominio, Aplicación, Infraestructura, Presentación y DI completamente integrados y certificados.
