@@ -9,14 +9,14 @@
 ## 1. Tabla de Seguimiento de Fases
 
 | Fase | Identificador | Nombre de Fase | Estado | Fecha de Inicio | Fecha de Cierre |
-| :---: | :--- | :--- | :---: | :---: | :---: |
+| :---: | :--- | :--- | :--- | :---: | :---: |
 | **0** | `PHASE-00` | Discovery & Legacy Audit | **COMPLETED** | 2026-11-07 | 2026-11-07 |
 | **1** | `PHASE-01` | Architecture & Technical Decisions | **COMPLETED** | 2026-11-07 | 2026-11-07 |
 | **2** | `PHASE-02` | Project Foundation & Quality Tooling | **COMPLETED** | 2026-11-07 | 2026-11-07 |
 | **3** | `PHASE-03` | Domain Migration (Financial Core v2.2) | **COMPLETED** | 2026-11-07 | 2026-11-07 |
 | **4** | `PHASE-04` | Application Layer (Use Cases & Ports) | **COMPLETED** | 2026-11-07 | 2026-11-07 |
 | **5** | `PHASE-05` | Infrastructure & Adapters | **COMPLETED** | 2026-11-07 | 2026-11-07 |
-| **6** | `PHASE-06` | Presentation Layer (Svelte 5 Runes + SMUI) | **NOT_STARTED** | — | — |
+| **6** | `PHASE-06` | Presentation Layer (Svelte 5 Runes + SMUI) | **COMPLETED** | 2026-11-07 | 2026-11-07 |
 | **7** | `PHASE-07` | Feature Migration & DI Composition | **NOT_STARTED** | — | — |
 | **8** | `PHASE-08` | CI/CD Approval Pipelines, Lighthouse & Release | **NOT_STARTED** | — | — |
 
@@ -63,12 +63,30 @@
 - **Entregables Completados:**
   - [x] `IndexedDBSettingsRepository.ts`: repositorio asíncrono sobre `InteresItDB` con compatibilidad para los datos existentes.
   - [x] `PrintExportAdapter.ts`: adaptador para emisión y visualización del reporte ejecutivo A4 de 2 páginas con estilos `@media print`.
-  - [x] Suite de pruebas unitarias y de integración (`tests/unit/infrastructure/`): 15 pruebas cubriendo IndexedDB con `fake-indexeddb` y el adaptador de impresión con mock de window.
-  - [x] Total de suite en verde: **93 pruebas pasando al 100%**.
+  - [x] Suite de pruebas unitarias y de integración (`tests/unit/infrastructure/`): 15 pruebas cubriendo IndexedDB y el adaptador de impresión.
+- **Estado:** COMPLETED.
+
+### FASE 6 — Presentation Layer (Svelte 5 Runes + SMUI 9.x)
+- **Objetivo:** Construir la interfaz de usuario completa basada en componentes Svelte Material UI y reactividad de Runes Svelte 5.
+- **Entregables Completados:**
+  - [x] `financialFormatters.ts`: formateadores de moneda dominicana (DOP / `$`), porcentajes con cifras tabulares, días y diferenciales con signo explícito.
+  - [x] `SimulatorState.svelte.ts`: gestor reactivo de estado con Runes (`$state`, `$derived`, `$derived.by`) y desacoplamiento estricto de la lógica financiera.
+  - [x] `HeaderSMUI.svelte`: barra institucional superior con identidad InteresIt, botón de menú móvil, toggle de modo oscuro y acciones de guardado y exportación.
+  - [x] `QuickChips.svelte`: selector interactivo de incrementos/decrementos numéricos (`-100`, `-50`, `-20`, `+20`, `+50`, `+100`).
+  - [x] `DataEntrySMUI.svelte`: formulario institucional para capital inicial, aporte recurrente, fechas de horizonte, día de corte bancario y switches de reglas.
+  - [x] `HeroCardSMUI.svelte`: tarjeta Hero en `#004851` con saldo estimado del escenario líder, ganancia neta devengada y píldoras de plazo rápido (`3 m`, `6 m`, `1 año`).
+  - [x] `ScenarioCardSMUI.svelte` y `ScenarioListSMUI.svelte`: tarjetas modulares para hasta 20 escenarios de inversión con badge dorado `#F6E7C3` para el líder.
+  - [x] `PairComparisonSMUI.svelte`: análisis matricial y banner de ventaja monetaria entre instrumentos.
+  - [x] `ProjectionTableSMUI.svelte`: tabla con `DataTable` de SMUI para el desglose mensual del saldo, días del período e intereses netos.
+  - [x] `ParametersDrawerSMUI.svelte`: drawer modal accesible con scrim para dispositivos móviles.
+  - [x] `ExportDialogSMUI.svelte`: diálogo modal para configuración y descarga de reporte institucional en PDF o impresión.
+  - [x] `+page.svelte`: integración visual SPA responsiva de escritorio y móvil conectada con el contenedor de dependencias (`$di`).
+  - [x] Suite de pruebas unitarias (`tests/unit/presentation/` y `tests/unit/di/`): 25 pruebas pasando al 100%.
+  - [x] Total de suite en verde: **118 pruebas pasando al 100%**.
 - **Estado:** COMPLETED.
 
 ---
 
 ## 3. Próximo Paso Inmediato
-- **Siguiente Fase:** FASE 6 — Presentation Layer (Svelte 5 Runes + SMUI).
-- **Bloqueos Activos:** Ninguno. Dominio, Aplicación e Infraestructura completamente operativos y certificados con 84 tests.
+- **Siguiente Fase:** FASE 7 — Feature Migration & DI Composition (Tour interactivo con Driver.js, Service Worker PWA offline y refinamiento de la composición final).
+- **Bloqueos Activos:** Ninguno. La terminal financiera está completamente construida y compila a producción con 0 errores y 0 warnings.
