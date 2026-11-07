@@ -1,0 +1,23 @@
+@use '@smui/common/theme/color-palette';
+
+$background: #0f172a;
+$primary: #7fd1d8;
+$secondary: #94a3b8;
+$surface: #1e293b;
+$error: #cf6679;
+
+@use '@smui/common/theme/index' as theme with (
+  $primary: $primary,
+  $secondary: $secondary,
+  $surface: $surface,
+  $background: $background,
+  $error: $error
+);
+
+html,
+body {
+  background-color: $background;
+  color: #f1f5f9;
+  font-family: 'Public Sans', system-ui, -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
