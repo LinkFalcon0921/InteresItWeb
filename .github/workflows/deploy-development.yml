@@ -1,0 +1,51 @@
+name: Deploy Development (Staging Artifact)
+
+on:
+  push:
+    branches: ["develop"]
+  workflow_dispatch:
+
+concurrency:
+  group: "development-deploy"
+  cancel-in-progress: true
+
+jobs:
+  build-staging:
+    name: Build & Package Staging SPA
+    runs-on: ubuntu-latest
+    environment:
+      name: development
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify Quality Gate
+        run: |
+          pnpm check:lines
+          pnpm check
+          pnpm test
+
+      - name: Build Static Staging Site
+        env:
+          BASE_PATH: '/InteresItWeb/dev'
+        run: pnpm run build
+
+      - name: Upload Staging Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-preview-build
+          path: build/
+          retention-days: 14
