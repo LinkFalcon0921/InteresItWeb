@@ -1,0 +1,198 @@
+import { describe, expect, it } from 'vitest';
+import {
+	CalculateSimulationUseCase,
+	type SimulationInputDTO
+} from '$application';
+import { ScenarioRole } from '$domain';
+
+describe('CalculateSimulationUseCase Unit Tests', () => {
+	const useCase = new CalculateSimulationUseCase();
+
+	const baseValidInput: SimulationInputDTO = {
+		capitalInicial: 185,
+		aporteMensual: 0,
+		fechaInicio: '2026-04-17',
+		fechaFin: '2026-11-16',
+		diaCorte: 16,
+		omitirPrimerCorte: false,
+		aplicarImpuestoRD: true,
+		escenarios: [
+			{ id: 'inv-1', nombre: 'Conservador', tasaAnual: 10, color: 'emerald' },
+			{ id: 'inv-2', nombre: 'Agresivo', tasaAnual: 12, color: 'blue' }
+		]
+	};
+
+	it('successfully executes simulation and returns SimulationOutputDTO matching expected domain values', () => {
+		const result = useCase.execute(baseValidInput);
+
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+
+		const dto = result.value;
+		expect(dto.capitalInicial).toBe(185);
+		expect(dto.aporteMensual).toBe(0);
+		expect(dto.totalAportado).toBe(0);
+		expect(dto.totalInvertido).toBe(185);
+		expect(dto.periodos.length).toBe(7);
+		expect(dto.resumenPorEscenario.length).toBe(2);
+
+		// Escenario 2 (12%) should be the leader over Escenario 1 (10%)
+		expect(dto.escenarioLiderId).toBe('inv-2');
+		expect(dto.ventajaLider).toBeGreaterThan(0);
+
+		const summary1 = dto.resumenPorEscenario.find((s) => s.escenarioId === 'inv-1');
+		const summary2 = dto.resumenPorEscenario.find((s) => s.escenarioId === 'inv-2');
+
+		expect(summary1).toBeDefined();
+		expect(summary2).toBeDefined();
+
+		if (summary1 && summary2) {
+			expect(summary1.rol).toBe(ScenarioRole.Challenger);
+			expect(summary2.rol).toBe(ScenarioRole.Leader);
+			expect(summary2.balanceFinal).toBeGreaterThan(summary1.balanceFinal);
+			expect(summary2.rendimientoNeto).toBeGreaterThan(summary1.rendimientoNeto);
+		}
+
+		// First period checks
+		const firstPeriod = dto.periodos[0];
+		expect(firstPeriod).toBeDefined();
+		if (firstPeriod) {
+			expect(firstPeriod.periodoIndex).toBe(1);
+			expect(firstPeriod.fechaInicio).toBe('2026-04-17');
+			expect(firstPeriod.fechaCorte).toBe('2026-05-16');
+			expect(firstPeriod.diasPeriodo).toBe(29);
+			expect(firstPeriod.resultadosPorEscenario.length).toBe(2);
+		}
+	});
+
+	it('correctly handles simulations with monthly contributions (PMT > 0)', () => {
+		const inputWithPMT: SimulationInputDTO = {
+			...baseValidInput,
+			capitalInicial: 1000,
+			aporteMensual: 500,
+			escenarios: [
+				{ id: 'inv-1', nombre: 'Fondo A', tasaAnual: 10, color: 'emerald' }
+			]
+		};
+
+		const result = useCase.execute(inputWithPMT);
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+
+		const dto = result.value;
+		expect(dto.capitalInicial).toBe(1000);
+		expect(dto.aporteMensual).toBe(500);
+		expect(dto.totalAportado).toBe(500 * 7);
+		expect(dto.totalInvertido).toBe(1000 + 500 * 7);
+		expect(dto.resumenPorEscenario[0]?.balanceFinal).toBeGreaterThan(dto.totalInvertido);
+	});
+
+	it('returns error when input object is missing or invalid', () => {
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		const result = useCase.execute(null);
+		expect(result.ok).toBe(false);
+	});
+
+	it('returns error when capitalInicial is negative', () => {
+		const result = useCase.execute({
+			...baseValidInput,
+			capitalInicial: -50
+		});
+		expect(result.ok).toBe(false);
+		if (!result.ok) {
+			expect(result.error.message).toContain('negativo');
+		}
+	});
+
+	it('returns error when aporteMensual is negative', () => {
+		const result = useCase.execute({
+			...baseValidInput,
+			aporteMensual: -10
+		});
+		expect(result.ok).toBe(false);
+		if (!result.ok) {
+			expect(result.error.message).toContain('negativo');
+		}
+	});
+
+	it('returns error when date range is reversed (fechaInicio >= fechaFin)', () => {
+		const result = useCase.execute({
+			...baseValidInput,
+			fechaInicio: '2026-11-16',
+			fechaFin: '2026-04-17'
+		});
+		expect(result.ok).toBe(false);
+	});
+
+	it('returns error when diaCorte is out of valid bounds (1 - 31)', () => {
+		const resultTooLow = useCase.execute({
+			...baseValidInput,
+			diaCorte: 0
+		});
+		expect(resultTooLow.ok).toBe(false);
+
+		const resultTooHigh = useCase.execute({
+			...baseValidInput,
+			diaCorte: 32
+		});
+		expect(resultTooHigh.ok).toBe(false);
+	});
+
+	it('returns error when escenarios array is empty', () => {
+		const result = useCase.execute({
+			...baseValidInput,
+			escenarios: []
+		});
+		expect(result.ok).toBe(false);
+		if (!result.ok) {
+			expect(result.error.message).toContain('al menos un escenario');
+		}
+	});
+
+	it('returns error when more than 20 scenarios are provided', () => {
+		const manyScenarios = Array.from({ length: 21 }, (_, i) => ({
+			id: `inv-${i + 1}`,
+			nombre: `Escenario ${i + 1}`,
+			tasaAnual: 10,
+			color: 'emerald'
+		}));
+
+		const result = useCase.execute({
+			...baseValidInput,
+			escenarios: manyScenarios
+		});
+		expect(result.ok).toBe(false);
+		if (!result.ok) {
+			expect(result.error.message).toContain('No se pueden simular más de 20');
+		}
+	});
+
+	it('returns error when scenario has invalid interest rate', () => {
+		const result = useCase.execute({
+			...baseValidInput,
+			escenarios: [
+				{ id: 'inv-1', nombre: 'Invalido', tasaAnual: -5, color: 'emerald' }
+			]
+		});
+		expect(result.ok).toBe(false);
+	});
+
+	it('returns error when scenario has empty id or name', () => {
+		const resultEmptyName = useCase.execute({
+			...baseValidInput,
+			escenarios: [
+				{ id: 'inv-1', nombre: '', tasaAnual: 10, color: 'emerald' }
+			]
+		});
+		expect(resultEmptyName.ok).toBe(false);
+
+		const resultEmptyId = useCase.execute({
+			...baseValidInput,
+			escenarios: [
+				{ id: '   ', nombre: 'Test', tasaAnual: 10, color: 'emerald' }
+			]
+		});
+		expect(resultEmptyId.ok).toBe(false);
+	});
+});
