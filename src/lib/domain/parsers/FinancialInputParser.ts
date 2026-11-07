@@ -101,7 +101,10 @@ export class FinancialInputParser {
 		} else if (typeof input === 'string') {
 			strVal = input.trim();
 		} else if (input instanceof Date && !isNaN(input.getTime())) {
-			strVal = input.toISOString().split('T')[0] ?? '';
+			const year = input.getFullYear();
+			const month = String(input.getMonth() + 1).padStart(2, '0');
+			const day = String(input.getDate()).padStart(2, '0');
+			strVal = `${year}-${month}-${day}`;
 		} else {
 			return err(new ParseInputError(fieldName, 'Tipo de dato no compatible para fecha.'));
 		}

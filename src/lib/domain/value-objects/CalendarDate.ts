@@ -57,6 +57,9 @@ export class CalendarDate {
 	}
 
 	public static getDaysInMonth(year: number, month: number): number {
+		if (month < 1 || month > 12) {
+			throw new InvalidCalendarDateError(`Mes fuera de rango: ${month}. Debe estar entre 1 y 12.`);
+		}
 		switch (month) {
 			case 2:
 				return CalendarDate.isLeapYear(year) ? 29 : 28;

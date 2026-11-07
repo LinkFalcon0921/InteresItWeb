@@ -46,6 +46,9 @@ export function simular(params: SimularParams): SimulationResult {
 	if (!params.escenarios || params.escenarios.length === 0) {
 		throw new InvalidScenarioError('Debe proporcionar al menos un escenario de inversión.');
 	}
+	if (params.escenarios.length > 20) {
+		throw new InvalidScenarioError('No se pueden simular más de 20 escenarios de inversión simultáneos.');
+	}
 
 	const omitirPrimerCorte = params.omitirPrimerCorte ?? false;
 	const aplicarImpuestoRD = params.aplicarImpuestoRD ?? false;
@@ -133,10 +136,10 @@ export function simular(params: SimularParams): SimulationResult {
 	const scenarioSummariesUnsorted: ScenarioSummary[] = params.escenarios.map((scenario, idx) => {
 		const finalBalNum = rawBalances[idx] ?? capital.amount;
 		const finalBalMoney = Money.fromNumber(finalBalNum);
-		const rendimientoNum = Math.max(0, finalBalNum - totalInvertido.amount);
-		const rendimientoMoney = Money.fromNumber(rendimientoNum);
-		const interesTotalNum = Math.max(0, finalBalNum - (capital.amount + totalAportadoNum));
-		const interesTotalMoney = Money.fromNumber(interesTotalNum);
+		const rendimientoMoney = finalBalMoney.isGreaterThan(totalInvertido)
+			? finalBalMoney.subtract(totalInvertido)
+			: Money.zero();
+		const interesTotalMoney = rendimientoMoney;
 
 		return {
 			escenarioId: scenario.id,
@@ -156,19 +159,24 @@ export function simular(params: SimularParams): SimulationResult {
 	const leaderSummary = sortedByGain[0];
 	const runnerUpSummary = sortedByGain[1];
 
-	const escenarioLiderId = leaderSummary ? leaderSummary.escenarioId : '';
+	let escenarioLiderId = '';
 	let ventajaLider = Money.zero();
 
 	if (leaderSummary && runnerUpSummary) {
-		const diffCents = Math.max(0, leaderSummary.balanceFinal.cents - runnerUpSummary.balanceFinal.cents);
-		ventajaLider = Money.fromCents(diffCents);
+		const diffCents = leaderSummary.balanceFinal.cents - runnerUpSummary.balanceFinal.cents;
+		if (diffCents > 0) {
+			escenarioLiderId = leaderSummary.escenarioId;
+			ventajaLider = Money.fromCents(diffCents);
+		}
+	} else if (leaderSummary && sortedByGain.length === 1) {
+		escenarioLiderId = leaderSummary.escenarioId;
 	}
 
 	const resumenPorEscenario: ScenarioSummary[] = scenarioSummariesUnsorted.map((item) => {
 		let rol = ScenarioRole.Neutral;
-		if (item.escenarioId === escenarioLiderId) {
+		if (escenarioLiderId !== '' && item.escenarioId === escenarioLiderId) {
 			rol = ScenarioRole.Leader;
-		} else if (sortedByGain.length > 1) {
+		} else if (escenarioLiderId !== '' && sortedByGain.length > 1) {
 			rol = ScenarioRole.Challenger;
 		}
 		return {

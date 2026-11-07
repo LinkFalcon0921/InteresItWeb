@@ -49,6 +49,14 @@ describe('Domain Parsers Unit Tests', () => {
 				expect(res.value.iso).toBe('2026-04-17');
 			}
 
+			// Date instance preserves local calendar parts
+			const dateObj = new Date(2026, 3, 17); // April 17, 2026
+			const resDate = FinancialInputParser.parseCalendarDate(dateObj, 'fecha');
+			expect(resDate.ok).toBe(true);
+			if (resDate.ok) {
+				expect(resDate.value.iso).toBe('2026-04-17');
+			}
+
 			const resInvalid = FinancialInputParser.parseCalendarDate('31-02-2026', 'fecha');
 			expect(resInvalid.ok).toBe(false);
 		});

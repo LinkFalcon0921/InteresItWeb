@@ -14,7 +14,7 @@ export class Money {
 		if (value < 0) {
 			throw new InvalidMoneyError('El monto no puede ser negativo.');
 		}
-		const cents = Math.round(value * 100);
+		const cents = Math.round((value + Number.EPSILON) * 100);
 		return new Money(cents);
 	}
 

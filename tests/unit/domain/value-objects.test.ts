@@ -16,6 +16,11 @@ describe('Value Objects Unit Tests', () => {
 			const m = Money.fromNumber(185.5);
 			expect(m.amount).toBe(185.5);
 			expect(m.cents).toBe(18550);
+
+			// Rounding boundary with IEEE 754 float quirk: 1.005 -> 101 cents
+			const mBoundary = Money.fromNumber(1.005);
+			expect(mBoundary.cents).toBe(101);
+			expect(mBoundary.amount).toBe(1.01);
 		});
 
 		it('creates Money from integer cents', () => {
@@ -95,6 +100,8 @@ describe('Value Objects Unit Tests', () => {
 			expect(CalendarDate.getDaysInMonth(2026, 2)).toBe(28);
 			expect(CalendarDate.getDaysInMonth(2026, 4)).toBe(30);
 			expect(CalendarDate.getDaysInMonth(2026, 5)).toBe(31);
+			expect(() => CalendarDate.getDaysInMonth(2026, 0)).toThrow(InvalidCalendarDateError);
+			expect(() => CalendarDate.getDaysInMonth(2026, 13)).toThrow(InvalidCalendarDateError);
 		});
 
 		it('calculates days between dates accurately', () => {

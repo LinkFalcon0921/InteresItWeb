@@ -217,5 +217,57 @@ describe('Financial Core simular Unit Tests', () => {
 				})
 			).toThrow(InvalidScenarioError);
 		});
+
+		it('throws InvalidScenarioError if more than 20 scenarios are provided', () => {
+			const scenarios21 = Array.from({ length: 21 }, (_, i) =>
+				InvestmentScenario.create(`inv-${i + 1}`, `Fondo ${i + 1}`, 5, 'emerald')
+			);
+			expect(() =>
+				simular({
+					capitalInicial: 100,
+					aporteMensual: 0,
+					fechaInicio: '2026-01-01',
+					fechaFin: '2026-05-01',
+					diaCorte: 1,
+					escenarios: scenarios21
+				})
+			).toThrow(InvalidScenarioError);
+		});
+
+		it('handles ultra-short leap year period: 2024-02-28 to 2024-02-29 with corte 29', () => {
+			const res = simular({
+				capitalInicial: 1000,
+				aporteMensual: 0,
+				fechaInicio: '2024-02-28',
+				fechaFin: '2024-02-29',
+				diaCorte: 29,
+				escenarios: [escB],
+				omitirPrimerCorte: false
+			});
+
+			expect(res.periodos).toHaveLength(1);
+			expect(res.periodos[0]?.diasPeriodo).toBe(1);
+			expect(res.periodos[0]?.fechaCorte.iso).toBe('2024-02-29');
+			expect(res.periodos[0]?.resultadosPorEscenario[0]?.interesNeto.amount).toBeGreaterThan(0);
+		});
+
+		it('handles ties between scenarios with identical rates gracefully', () => {
+			const escTie1 = InvestmentScenario.create('tie-1', 'Plan Alpha', 5.0, 'blue');
+			const escTie2 = InvestmentScenario.create('tie-2', 'Plan Beta', 5.0, 'emerald');
+
+			const res = simular({
+				capitalInicial: 1000,
+				aporteMensual: 0,
+				fechaInicio: '2026-01-01',
+				fechaFin: '2026-03-01',
+				diaCorte: 1,
+				escenarios: [escTie1, escTie2]
+			});
+
+			expect(res.ventajaLider.amount).toBe(0);
+			expect(res.escenarioLiderId).toBe('');
+			expect(res.resumenPorEscenario[0]?.rol).toBe(ScenarioRole.Neutral);
+			expect(res.resumenPorEscenario[1]?.rol).toBe(ScenarioRole.Neutral);
+		});
 	});
 });

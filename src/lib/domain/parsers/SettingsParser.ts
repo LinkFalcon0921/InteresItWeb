@@ -18,13 +18,17 @@ export interface ParsedSimulationSettings {
 	readonly isDarkMode: boolean;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null;
+}
+
 export class SettingsParser {
 	public static parseSettings(raw: unknown): Result<ParsedSimulationSettings, ParseInputError> {
-		if (typeof raw !== 'object' || raw === null) {
+		if (!isRecord(raw)) {
 			return err(new ParseInputError('settings', 'El objeto de configuración es inválido.'));
 		}
 
-		const data = raw as Record<string, unknown>;
+		const data = raw;
 
 		const montoInicialResult = FinancialInputParser.parseMoney(data['montoInicial'], 'montoInicial', 185);
 		if (!montoInicialResult.ok) return montoInicialResult;
@@ -57,8 +61,8 @@ export class SettingsParser {
 		if (Array.isArray(rawInversiones) && rawInversiones.length > 0) {
 			for (let i = 0; i < rawInversiones.length; i++) {
 				const item = rawInversiones[i];
-				if (typeof item !== 'object' || item === null) continue;
-				const invMap = item as Record<string, unknown>;
+				if (!isRecord(item)) continue;
+				const invMap = item;
 
 				const id = typeof invMap['id'] === 'string' ? invMap['id'] : `inv-${i + 1}`;
 				const nombre = typeof invMap['nombre'] === 'string' ? invMap['nombre'] : `Inversión ${i + 1}`;
