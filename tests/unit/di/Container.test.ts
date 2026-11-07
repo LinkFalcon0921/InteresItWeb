@@ -251,6 +251,14 @@ describe('DI Container — Singleton & Context Accessors', () => {
 		);
 	});
 
+	it('throws an error when getContainerContext is called in active Svelte context without container', () => {
+		vi.spyOn(svelte, 'getContext').mockImplementation(() => undefined);
+
+		expect(() => getContainerContext()).toThrow(
+			/AppContainer no está disponible en el contexto de Svelte/
+		);
+	});
+
 	it('getAppContainer gracefully falls back to singleton outside Svelte context', () => {
 		const container = getAppContainer();
 		expect(container).toBeDefined();

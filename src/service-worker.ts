@@ -42,11 +42,19 @@ async function handleAssetFetch(request: Request): Promise<Response> {
 		return cachedResponse;
 	}
 
-	const networkResponse = await fetch(request);
-	if (networkResponse.ok) {
-		await cache.put(request, networkResponse.clone());
+	try {
+		const networkResponse = await fetch(request);
+		if (networkResponse.ok) {
+			await cache.put(request, networkResponse.clone());
+		}
+		return networkResponse;
+	} catch (error) {
+		const fallback = await cache.match(request);
+		if (fallback) {
+			return fallback;
+		}
+		throw error;
 	}
-	return networkResponse;
 }
 
 async function handleNavigationFetch(request: Request): Promise<Response> {
@@ -64,7 +72,10 @@ async function handleNavigationFetch(request: Request): Promise<Response> {
 			return cachedPage;
 		}
 
+		const firstPrerendered = prerendered[0];
 		const appShell =
+			(firstPrerendered ? await cache.match(firstPrerendered) : undefined) ??
+			(await cache.match(base ? `${base}/` : '/')) ??
 			(await cache.match(base || '/')) ??
 			(await cache.match('./')) ??
 			(await cache.match('/index.html'));
@@ -92,12 +103,6 @@ self.addEventListener('fetch', (event: FetchEvent) => {
 
 	if (request.mode === 'navigate') {
 		event.respondWith(handleNavigationFetch(request));
-		return;
-	}
-
-	const isStaticAsset = build.includes(url.pathname) || files.includes(url.pathname);
-	if (isStaticAsset) {
-		event.respondWith(handleAssetFetch(request));
 		return;
 	}
 
