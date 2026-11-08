@@ -160,6 +160,15 @@
 		color: #e7eef8;
 	}
 
+	@media (min-width: 961px) {
+		.drawer-scrim,
+		.parameters-drawer {
+			display: none !important;
+			visibility: hidden !important;
+			pointer-events: none !important;
+		}
+	}
+
 	@media print {
 		.drawer-scrim,
 		.parameters-drawer {

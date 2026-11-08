@@ -24,7 +24,7 @@
 	// - Móvil (<=960px): <aside class="desktop-sidebar"> no monta DataEntrySMUI. ParametersDrawerSMUI monta DataEntrySMUI
 	//   únicamente cuando state.isDrawerOpen es true. Con el drawer cerrado, reachable inputs = 0.
 	// - Al redimensionar entre viewports, los valores se preservan 100% íntegros a través de SimulatorState.
-	let isDesktop = $state(true);
+	let isDesktop = $state(typeof window !== 'undefined' ? window.innerWidth > 960 : true);
 
 	let isExportDialogOpen = $state(false);
 	let snackbar: Snackbar | null = $state(null);
@@ -32,16 +32,16 @@
 	onMount(() => {
 		if (typeof window !== 'undefined') {
 			const mql = window.matchMedia('(min-width: 961px)');
-			isDesktop = mql.matches;
-			const mqlHandler = (e: MediaQueryListEvent) => {
-				isDesktop = e.matches;
+			const updateLayout = () => {
+				const desktopNow = window.innerWidth > 960;
+				isDesktop = desktopNow;
+				if (desktopNow && simState.isDrawerOpen) {
+					simState.isDrawerOpen = false;
+				}
 			};
-			mql.addEventListener('change', mqlHandler);
-
-			const resizeHandler = () => {
-				isDesktop = window.innerWidth > 960;
-			};
-			window.addEventListener('resize', resizeHandler);
+			updateLayout();
+			mql.addEventListener('change', updateLayout);
+			window.addEventListener('resize', updateLayout);
 
 			void (async () => {
 				if (window.location.hash.includes('#sim=')) {
@@ -52,8 +52,8 @@
 			})();
 
 			return () => {
-				mql.removeEventListener('change', mqlHandler);
-				window.removeEventListener('resize', resizeHandler);
+				mql.removeEventListener('change', updateLayout);
+				window.removeEventListener('resize', updateLayout);
 			};
 		}
 	});
@@ -356,6 +356,15 @@
 		background: #004851 !important;
 		color: #ffffff !important;
 		border-radius: 8px !important;
+	}
+
+	@media (min-width: 961px) {
+		:global(.parameters-drawer),
+		:global(.drawer-scrim) {
+			display: none !important;
+			visibility: hidden !important;
+			pointer-events: none !important;
+		}
 	}
 
 	@media (max-width: 960px) {
