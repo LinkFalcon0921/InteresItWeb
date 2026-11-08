@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { SimulatorState } from '../state/SimulatorState.svelte';
 	import { formatCurrency } from '../formatters/financialFormatters';
+	import AppButton from './AppButton.svelte';
 
 	interface Props {
 		state?: SimulatorState;
@@ -40,14 +41,15 @@
 			<span class="section-title">Aportes Extraordinarios</span>
 			<span class="section-subtitle">Depósitos únicos programados</span>
 		</div>
-		<button
-			type="button"
-			class="btn-toggle-add"
-			onclick={() => (isAdding = !isAdding)}
-			aria-expanded={isAdding}
+		<AppButton
+			variant="secondary"
+			onclick={() => {
+				isAdding = !isAdding;
+			}}
+			aria-label={isAdding ? 'Cancelar adición de aporte' : 'Programar nuevo aporte extraordinario'}
 		>
 			{isAdding ? '− Cancelar' : '+ Programar'}
-		</button>
+		</AppButton>
 	</div>
 
 	{#if isAdding}
@@ -86,14 +88,14 @@
 				/>
 			</div>
 
-			<button
-				type="button"
-				class="btn-save-aporte"
+			<AppButton
+				variant="primary"
 				onclick={handleAdd}
 				disabled={nuevoMonto <= 0 || !nuevaFecha}
+				aria-label="Guardar aporte extraordinario"
 			>
 				Guardar Aporte
-			</button>
+			</AppButton>
 		</div>
 	{/if}
 
@@ -152,27 +154,6 @@
 		color: #4f5d5c;
 	}
 
-	.btn-toggle-add {
-		background: rgba(0, 72, 81, 0.08);
-		color: #004851;
-		border: 1px solid rgba(0, 72, 81, 0.2);
-		border-radius: 8px;
-		font-size: 0.75rem;
-		font-weight: 600;
-		padding: 5px 12px;
-		min-height: 32px;
-		cursor: pointer;
-		display: inline-flex;
-		align-items: center;
-		transition: all 0.15s ease;
-	}
-
-	.btn-toggle-add:hover {
-		background: #004851;
-		color: #ffffff;
-		box-shadow: 0 2px 5px rgba(0, 72, 81, 0.2);
-	}
-
 	.add-aporte-form {
 		background: #f8fafc;
 		border: 1px solid #d5dedc;
@@ -212,33 +193,6 @@
 	.mini-input:focus {
 		border-color: #004851;
 		box-shadow: 0 0 0 3px rgba(0, 72, 81, 0.1);
-	}
-
-	.btn-save-aporte {
-		background: #004851;
-		color: #ffffff;
-		border: none;
-		border-radius: 8px;
-		padding: 9px;
-		font-size: 0.8125rem;
-		font-weight: 700;
-		cursor: pointer;
-		margin-top: 4px;
-		min-height: 36px;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		transition: all 0.15s ease;
-	}
-
-	.btn-save-aporte:hover:not(:disabled) {
-		background: #00363d;
-		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-	}
-
-	.btn-save-aporte:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
 	}
 
 	.aportes-list {
@@ -319,19 +273,6 @@
 		color: #94a3b8;
 	}
 
-	:global(html.dark) .btn-toggle-add,
-	:global(.dark) .btn-toggle-add {
-		background: rgba(16, 185, 129, 0.15);
-		color: #10b981;
-		border-color: rgba(16, 185, 129, 0.35);
-	}
-
-	:global(html.dark) .btn-toggle-add:hover,
-	:global(.dark) .btn-toggle-add:hover {
-		background: rgba(16, 185, 129, 0.25);
-		color: #34d399;
-	}
-
 	:global(html.dark) .add-aporte-form,
 	:global(html.dark) .aporte-item,
 	:global(.dark) .add-aporte-form,
@@ -351,17 +292,6 @@
 	:global(.dark) .mini-input:focus {
 		border-color: #10b981;
 		box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
-	}
-
-	:global(html.dark) .btn-save-aporte,
-	:global(.dark) .btn-save-aporte {
-		background: #10b981;
-		color: #0b1120;
-	}
-
-	:global(html.dark) .btn-save-aporte:hover:not(:disabled),
-	:global(.dark) .btn-save-aporte:hover:not(:disabled) {
-		background: #34d399;
 	}
 
 	:global(html.dark) .aporte-monto,
