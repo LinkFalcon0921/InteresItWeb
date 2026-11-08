@@ -33,8 +33,14 @@ importers:
       '@smui/chips':
         specifier: ^9.0.6
         version: 9.0.6
+      '@smui/circular-progress':
+        specifier: 9.0.6
+        version: 9.0.6
       '@smui/data-table':
         specifier: ^9.0.6
+        version: 9.0.6
+      '@smui/dialog':
+        specifier: 9.0.6
         version: 9.0.6
       '@smui/drawer':
         specifier: ^9.0.6
@@ -595,11 +601,17 @@ packages:
   '@smui/chips@9.0.6':
     resolution: {integrity: sha512-1de6Z0DHaeecl5dyRQi0lIReAgK8NQXIk9xUdhTmA8cOEBZ8RXVwdC3hq+Xgs57oAlBCVn+3P1DBfDi27Z9aaA==}
 
+  '@smui/circular-progress@9.0.6':
+    resolution: {integrity: sha512-qLXHIoOz4u5J++NGtxXX2KR/jl4VtGt1SA4GjDDDhjs1eCmSRNjd/lCMt4zGr2X1qWOmnuJZJoMbrWHhkk92JQ==}
+
   '@smui/common@9.0.6':
     resolution: {integrity: sha512-wWQ+4ixA0PjlHGlF9rTD8UKOxbyZlMGz0IKIwDqgo2189v9LOJFIHoqXfZO8b0YXcK0pO82M85xsvcUXkTcv1g==}
 
   '@smui/data-table@9.0.6':
     resolution: {integrity: sha512-kUwWGUQm9gsVE+1DvYkvpPrmN6JfR5Pp1DIM9cSCi/7jFTY7HAd2qTuLod8iNMhMxObqESOdfboausM/1XFNGQ==}
+
+  '@smui/dialog@9.0.6':
+    resolution: {integrity: sha512-MokL/uGGarO841KEDPA6HhvXpQfMCZFDIyNdaBn7zR1kn4uLp7T5T/hUTerZ7LmBk2Pj8D3n3pfTPc53omKzLw==}
 
   '@smui/drawer@9.0.6':
     resolution: {integrity: sha512-U/QxiwSuKsaOeZiuZ84A50utO2FZ+K2S5RtR9RURAjK9fVR5QhJFqUz+4cj43pipNxYZzwdV0h260hX5Z+XhNQ==}
@@ -1864,6 +1876,10 @@ snapshots:
       '@smui/touch-target': 9.0.6
       safevalues: 1.2.0
 
+  '@smui/circular-progress@9.0.6':
+    dependencies:
+      '@smui/common': 9.0.6
+
   '@smui/common@9.0.6':
     dependencies:
       safevalues: 1.2.0
@@ -1878,6 +1894,14 @@ snapshots:
       '@smui/menu': 9.0.6
       '@smui/ripple': 9.0.6
       '@smui/select': 9.0.6
+      '@smui/touch-target': 9.0.6
+
+  '@smui/dialog@9.0.6':
+    dependencies:
+      '@smui/button': 9.0.6
+      '@smui/common': 9.0.6
+      '@smui/icon-button': 9.0.6
+      '@smui/ripple': 9.0.6
       '@smui/touch-target': 9.0.6
 
   '@smui/drawer@9.0.6':

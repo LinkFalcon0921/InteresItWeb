@@ -153,64 +153,87 @@
 	}
 
 	.btn-toggle-add {
-		background: #eef5f5;
+		background: rgba(0, 72, 81, 0.08);
 		color: #004851;
-		border: 1px solid #c2dbde;
-		border-radius: 6px;
+		border: 1px solid rgba(0, 72, 81, 0.2);
+		border-radius: 8px;
 		font-size: 0.75rem;
 		font-weight: 600;
-		padding: 4px 10px;
+		padding: 5px 12px;
+		min-height: 32px;
 		cursor: pointer;
+		display: inline-flex;
+		align-items: center;
 		transition: all 0.15s ease;
 	}
 
 	.btn-toggle-add:hover {
 		background: #004851;
 		color: #ffffff;
+		box-shadow: 0 2px 5px rgba(0, 72, 81, 0.2);
 	}
 
 	.add-aporte-form {
-		background: #f7faf9;
+		background: #f8fafc;
 		border: 1px solid #d5dedc;
-		border-radius: 8px;
-		padding: 12px;
-		margin-bottom: 12px;
+		border-radius: 12px;
+		padding: 14px;
+		margin-bottom: 14px;
 		display: flex;
 		flex-direction: column;
-		gap: 8px;
+		gap: 10px;
 	}
 
 	.input-row {
 		display: flex;
 		flex-direction: column;
-		gap: 2px;
+		gap: 3px;
 	}
 
 	.mini-label {
 		font-size: 0.6875rem;
-		font-weight: 600;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
 		color: #4f5d5c;
 	}
 
 	.mini-input {
-		border: 1px solid #c2dbde;
-		border-radius: 6px;
-		padding: 6px 8px;
-		font-size: 0.75rem;
+		border: 1px solid #d5dedc;
+		border-radius: 8px;
+		padding: 8px 10px;
+		font-size: 0.8125rem;
 		background: #ffffff;
 		color: #14201f;
+		outline: none;
+		transition: all 0.15s ease;
+	}
+
+	.mini-input:focus {
+		border-color: #004851;
+		box-shadow: 0 0 0 3px rgba(0, 72, 81, 0.1);
 	}
 
 	.btn-save-aporte {
 		background: #004851;
 		color: #ffffff;
 		border: none;
-		border-radius: 6px;
-		padding: 8px;
-		font-size: 0.75rem;
+		border-radius: 8px;
+		padding: 9px;
+		font-size: 0.8125rem;
 		font-weight: 700;
 		cursor: pointer;
 		margin-top: 4px;
+		min-height: 36px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		transition: all 0.15s ease;
+	}
+
+	.btn-save-aporte:hover:not(:disabled) {
+		background: #00363d;
+		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 	}
 
 	.btn-save-aporte:disabled {
@@ -233,8 +256,13 @@
 		align-items: center;
 		background: #f1f7f6;
 		border: 1px solid #d5dedc;
-		border-radius: 6px;
-		padding: 6px 10px;
+		border-radius: 8px;
+		padding: 8px 12px;
+		transition: all 0.15s ease;
+	}
+
+	.aporte-item:hover {
+		background: #e8f3f2;
 	}
 
 	.aporte-info {
@@ -256,50 +284,88 @@
 	.btn-remove-aporte {
 		background: transparent;
 		border: none;
-		color: #c93b2b;
+		color: #dc2626;
 		font-size: 0.875rem;
 		cursor: pointer;
-		padding: 2px 6px;
-		border-radius: 4px;
+		width: 32px;
+		height: 32px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 6px;
+		transition: all 0.15s ease;
 	}
 
 	.btn-remove-aporte:hover {
-		background: rgba(201, 59, 43, 0.1);
+		background: rgba(220, 38, 38, 0.1);
 	}
 
-	:global(body.dark) .aportes-section {
-		border-color: #2a3b4c;
+	:global(html.dark) .aportes-section,
+	:global(.dark) .aportes-section {
+		border-color: #26334e;
 	}
 
-	:global(body.dark) .section-title {
+	:global(html.dark) .section-title,
+	:global(.dark) .section-title {
 		color: #e7eef8;
 	}
 
-	:global(body.dark) .section-subtitle,
-	:global(body.dark) .mini-label,
-	:global(body.dark) .aporte-meta {
+	:global(html.dark) .section-subtitle,
+	:global(html.dark) .mini-label,
+	:global(html.dark) .aporte-meta,
+	:global(.dark) .section-subtitle,
+	:global(.dark) .mini-label,
+	:global(.dark) .aporte-meta {
 		color: #94a3b8;
 	}
 
-	:global(body.dark) .btn-toggle-add {
-		background: #1e293b;
-		color: #38bdf8;
-		border-color: #334155;
+	:global(html.dark) .btn-toggle-add,
+	:global(.dark) .btn-toggle-add {
+		background: rgba(16, 185, 129, 0.15);
+		color: #10b981;
+		border-color: rgba(16, 185, 129, 0.35);
 	}
 
-	:global(body.dark) .add-aporte-form,
-	:global(body.dark) .aporte-item {
-		background: #1e293b;
-		border-color: #334155;
+	:global(html.dark) .btn-toggle-add:hover,
+	:global(.dark) .btn-toggle-add:hover {
+		background: rgba(16, 185, 129, 0.25);
+		color: #34d399;
 	}
 
-	:global(body.dark) .mini-input {
-		background: #0f172a;
-		border-color: #334155;
+	:global(html.dark) .add-aporte-form,
+	:global(html.dark) .aporte-item,
+	:global(.dark) .add-aporte-form,
+	:global(.dark) .aporte-item {
+		background: #0b1120;
+		border-color: #26334e;
+	}
+
+	:global(html.dark) .mini-input,
+	:global(.dark) .mini-input {
+		background: #131c30;
+		border-color: #26334e;
 		color: #f1f5f9;
 	}
 
-	:global(body.dark) .aporte-monto {
-		color: #38bdf8;
+	:global(html.dark) .mini-input:focus,
+	:global(.dark) .mini-input:focus {
+		border-color: #10b981;
+		box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+	}
+
+	:global(html.dark) .btn-save-aporte,
+	:global(.dark) .btn-save-aporte {
+		background: #10b981;
+		color: #0b1120;
+	}
+
+	:global(html.dark) .btn-save-aporte:hover:not(:disabled),
+	:global(.dark) .btn-save-aporte:hover:not(:disabled) {
+		background: #34d399;
+	}
+
+	:global(html.dark) .aporte-monto,
+	:global(.dark) .aporte-monto {
+		color: #10b981;
 	}
 </style>

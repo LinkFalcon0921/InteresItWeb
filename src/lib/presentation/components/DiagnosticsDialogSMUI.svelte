@@ -1,6 +1,7 @@
 <script lang="ts">
 	import AppButton from './AppButton.svelte';
 	import AppDialog from './AppDialog.svelte';
+	import AppSpinner from './AppSpinner.svelte';
 	import type { SimulatorState } from '../state/SimulatorState.svelte';
 
 	interface Props {
@@ -87,8 +88,10 @@
 <AppDialog
 	open={isOpen}
 	title="Diagnóstico de Sistema y Resiliencia"
+	subtitle="Monitoreo en tiempo real del estado de persistencia local y offline"
+	icon="🩺"
 	titleId="diag-dialog-title"
-	maxWidth="520px"
+	maxWidth="540px"
 	onclose={onClose}
 >
 	<p class="modal-desc">
@@ -98,12 +101,7 @@
 
 	<div class="diagnostic-grid">
 		<div class="diag-item">
-			<span class="diag-label">Versión de InteresIt</span>
-			<span class="diag-value">v2.2.0 (Build de Producción Svelte 5)</span>
-		</div>
-
-		<div class="diag-item">
-			<span class="diag-label">Service Worker (PWA Offline)</span>
+			<span class="diag-label">Service Worker / PWA</span>
 			<span class="diag-value" id="diag-sw-status">{swStatus}</span>
 		</div>
 
@@ -113,7 +111,7 @@
 		</div>
 
 		<div class="diag-item">
-			<span class="diag-label">Cuota de Almacenamiento</span>
+			<span class="diag-label">Estimación de Cuota Storage</span>
 			<span class="diag-value">{storageUsage}</span>
 		</div>
 
@@ -138,7 +136,12 @@
 			onclick={runDiagnostics}
 			class="confirm-btn"
 		>
-			{isRunningDiagnostic ? 'Verificando...' : 'Re-ejecutar Diagnóstico'}
+			{#if isRunningDiagnostic}
+				<AppSpinner size="sm" color="#ffffff" />
+				<span style="margin-left: 6px;">Verificando...</span>
+			{:else}
+				<span>Re-ejecutar Diagnóstico</span>
+			{/if}
 		</AppButton>
 	{/snippet}
 </AppDialog>
@@ -160,11 +163,17 @@
 	.diag-item {
 		display: flex;
 		flex-direction: column;
-		gap: 2px;
-		padding: 10px 12px;
-		border-radius: 8px;
+		gap: 3px;
+		padding: 12px 14px;
+		border-radius: 10px;
 		background: #f6f8fb;
 		border: 1px solid #edf2f0;
+		transition: all 0.15s ease;
+	}
+
+	.diag-item:hover {
+		background: #f1f5f9;
+		border-color: #cbd5e1;
 	}
 
 	.diag-label {
@@ -186,21 +195,26 @@
 		color: #ffffff !important;
 	}
 
-	:global(.dark) .diag-value {
+	:global(html.dark) .diag-value {
 		color: #e7eef8;
 	}
 
-	:global(.dark) .modal-desc,
-	:global(.dark) .diag-label {
+	:global(html.dark) .modal-desc,
+	:global(html.dark) .diag-label {
 		color: #a3b0c6;
 	}
 
-	:global(.dark) .diag-item {
+	:global(html.dark) .diag-item {
 		background: #0b1120;
 		border-color: #26334e;
 	}
 
-	:global(.dark) :global(.confirm-btn) {
+	:global(html.dark) .diag-item:hover {
+		background: #131c30;
+		border-color: #334155;
+	}
+
+	:global(html.dark) :global(.confirm-btn) {
 		background: #7fd1d8 !important;
 		color: #0b1120 !important;
 	}

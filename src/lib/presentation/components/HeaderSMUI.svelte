@@ -209,31 +209,42 @@
 		border: 1px solid rgba(255, 255, 255, 0.2);
 		background: rgba(255, 255, 255, 0.08);
 		color: #ffffff;
-		border-radius: 8px;
-		padding: 6px 12px;
+		border-radius: 9px;
+		padding: 7px 13px;
+		min-height: 36px;
 		font-size: 0.75rem;
 		font-weight: 600;
 		cursor: pointer;
 		display: inline-flex;
 		align-items: center;
-		gap: 4px;
-		transition: all 0.15s ease;
+		gap: 5px;
+		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+		transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+		user-select: none;
 	}
 
 	.action-btn:hover {
 		background: rgba(255, 255, 255, 0.18);
-		border-color: rgba(255, 255, 255, 0.35);
+		border-color: rgba(255, 255, 255, 0.38);
+		transform: translateY(-1px);
+		box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+	}
+
+	.action-btn:active {
+		transform: translateY(0);
+		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 	}
 
 	.portfolio-btn {
-		background: rgba(16, 185, 129, 0.15);
-		border-color: rgba(16, 185, 129, 0.35);
+		background: rgba(16, 185, 129, 0.18);
+		border-color: rgba(16, 185, 129, 0.4);
 		color: #10b981;
 	}
 
 	.portfolio-btn:hover {
-		background: rgba(16, 185, 129, 0.25);
+		background: rgba(16, 185, 129, 0.28);
 		border-color: #10b981;
+		color: #34d399;
 	}
 
 	.portfolio-chip-name {
@@ -260,10 +271,12 @@
 		background: #d7ebec;
 		color: #00292e;
 		border-color: transparent;
+		font-weight: 700;
 	}
 
 	.export-btn:hover {
-		background: #c3e2e4;
+		background: #bce1e4;
+		box-shadow: 0 3px 10px rgba(0, 41, 46, 0.3);
 	}
 
 	@media (max-width: 960px) {
