@@ -302,4 +302,17 @@
 	:global(.dark) .switch-desc {
 		color: #a3b0c6;
 	}
+
+	/* Adaptación fluida cuando se monta dentro del Drawer móvil: elimina anidamiento de tarjetas dobles */
+	:global(.parameters-drawer) .data-entry-panel {
+		background: transparent !important;
+		border: none !important;
+		border-radius: 0 !important;
+		padding: 0 !important;
+		box-shadow: none !important;
+	}
+
+	:global(.parameters-drawer) .panel-title {
+		display: none !important;
+	}
 </style>

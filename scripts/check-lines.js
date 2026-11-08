@@ -15,7 +15,9 @@ const IGNORED_DIRS = new Set([
   '.idea',
   '.vscode',
   '.agent',
-  'legacy'
+  'legacy',
+  'reports',
+  'playwright-report'
 ]);
 const IGNORED_FILES = new Set([
   'pnpm-lock.yaml',
