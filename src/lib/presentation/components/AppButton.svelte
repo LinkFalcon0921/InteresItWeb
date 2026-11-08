@@ -50,7 +50,7 @@
 
 <style>
 	:global(.app-btn) {
-		min-height: 36px !important;
+		min-height: 38px !important;
 		box-sizing: border-box !important;
 		display: inline-flex !important;
 		align-items: center !important;
@@ -60,7 +60,7 @@
 		font-weight: 600 !important;
 		letter-spacing: 0.01em !important;
 		text-transform: none !important;
-		padding: 6px 16px !important;
+		padding: 7px 16px !important;
 		transition: all 0.2s ease !important;
 	}
 

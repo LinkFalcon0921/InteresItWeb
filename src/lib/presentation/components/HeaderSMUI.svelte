@@ -291,9 +291,13 @@
 		.brand-subtitle {
 			display: none;
 		}
+
+		.portfolio-chip-name {
+			max-width: 100px;
+		}
 	}
 
-	@media (max-width: 600px) {
+	@media (max-width: 820px) {
 		.save-btn,
 		.guide-btn {
 			display: none;
@@ -303,6 +307,15 @@
 			display: none;
 		}
 
+		.action-btn {
+			min-width: 36px;
+			min-height: 36px;
+			padding: 6px 10px;
+			justify-content: center;
+		}
+	}
+
+	@media (max-width: 600px) {
 		.header-content {
 			padding: 8px 10px;
 		}
@@ -325,10 +338,7 @@
 		}
 
 		.action-btn {
-			min-width: 36px;
-			min-height: 36px;
 			padding: 6px 8px;
-			justify-content: center;
 		}
 	}
 
