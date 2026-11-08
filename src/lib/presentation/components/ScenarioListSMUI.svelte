@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Button, { Label } from '@smui/button';
+	import AppButton from './AppButton.svelte';
 	import type { SimulatorState } from '../state/SimulatorState.svelte';
 	import ScenarioCardSMUI from './ScenarioCardSMUI.svelte';
 
@@ -29,13 +29,13 @@
 		</div>
 
 		{#if canAdd}
-			<Button
-				variant="outlined"
+			<AppButton
+				variant="secondary"
 				onclick={() => state.addInversion()}
 				class="add-scenario-btn"
 			>
-				<Label>+ Agregar Escenario</Label>
-			</Button>
+				+ Agregar Escenario
+			</AppButton>
 		{/if}
 	</div>
 

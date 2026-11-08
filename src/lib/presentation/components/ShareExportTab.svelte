@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Button, { Label } from '@smui/button';
+	import AppButton from './AppButton.svelte';
 	import type { SimulatorState } from '../state/SimulatorState.svelte';
 
 	interface Props {
@@ -44,9 +44,9 @@
 					if (e.target instanceof HTMLInputElement) e.target.select();
 				}}
 			/>
-			<Button variant="raised" onclick={handleCopy} class="copy-btn" id="btn-copy-share-url">
-				<Label>{copied ? '✓ ¡Copiado!' : 'Copiar Enlace'}</Label>
-			</Button>
+			<AppButton variant="primary" onclick={handleCopy} class="copy-btn" id="btn-copy-share-url">
+				{copied ? '✓ ¡Copiado!' : 'Copiar Enlace'}
+			</AppButton>
 		</div>
 		{#if copied}
 			<span class="copy-success-hint" role="status">

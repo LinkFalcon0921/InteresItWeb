@@ -14,11 +14,11 @@ test.describe('Simulador Financiero E2E', () => {
 	});
 
 	test('debe recalcular la proyección al modificar el capital inicial y aporte', async ({ page }) => {
-		const montoInput = page.locator('.desktop-sidebar #monto-inicial-input');
+		const montoInput = page.locator('#monto-inicial-input');
 		await montoInput.fill('500000');
 		await montoInput.dispatchEvent('input');
 
-		const aporteInput = page.locator('.desktop-sidebar #aporte-mensual-input');
+		const aporteInput = page.locator('#aporte-mensual-input');
 		await aporteInput.fill('15000');
 		await aporteInput.dispatchEvent('input');
 
@@ -83,7 +83,7 @@ test.describe('Simulador Financiero E2E', () => {
 		// Simular pérdida de conexión de red
 		await context.setOffline(true);
 
-		const montoInput = page.locator('.desktop-sidebar #monto-inicial-input');
+		const montoInput = page.locator('#monto-inicial-input');
 		await montoInput.fill('250000');
 		await montoInput.dispatchEvent('input');
 
@@ -113,7 +113,7 @@ test.describe('Simulador Financiero E2E', () => {
 		await expect(drawer).toBeVisible();
 
 		// Modificar monto en drawer
-		const mobileInput = drawer.locator('#monto-inicial-input');
+		const mobileInput = page.locator('#monto-inicial-input');
 		await mobileInput.fill('750000');
 		await mobileInput.dispatchEvent('input');
 

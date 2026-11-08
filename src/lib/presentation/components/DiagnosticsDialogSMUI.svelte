@@ -1,5 +1,6 @@
 <script lang="ts">
-	import Button, { Label } from '@smui/button';
+	import AppButton from './AppButton.svelte';
+	import AppDialog from './AppDialog.svelte';
 	import type { SimulatorState } from '../state/SimulatorState.svelte';
 
 	interface Props {
@@ -83,146 +84,66 @@
 	});
 </script>
 
-{#if isOpen}
-	<div
-		class="modal-backdrop"
-		role="button"
-		tabindex="0"
-		onclick={onClose}
-		onkeydown={(e) => {
-			if (e.key === 'Escape') onClose();
-		}}
-		aria-label="Cerrar modal de diagnóstico"
-	>
-		<div
-			class="modal-card"
-			role="dialog"
-			aria-labelledby="diag-dialog-title"
-			tabindex="-1"
-			onclick={(e) => e.stopPropagation()}
-			onkeydown={(e) => e.stopPropagation()}
-		>
-			<div class="modal-header">
-				<h3 id="diag-dialog-title" class="modal-title">Diagnóstico de Sistema y Resiliencia</h3>
-				<button type="button" class="close-btn" onclick={onClose} aria-label="Cerrar">✕</button>
-			</div>
+<AppDialog
+	open={isOpen}
+	title="Diagnóstico de Sistema y Resiliencia"
+	titleId="diag-dialog-title"
+	maxWidth="520px"
+	onclose={onClose}
+>
+	<p class="modal-desc">
+		Monitoreo en tiempo real del estado de persistencia local, capacidades fuera de línea
+		(PWA) y componentes de ejecución de la terminal financiera.
+	</p>
 
-			<div class="modal-body">
-				<p class="modal-desc">
-					Monitoreo en tiempo real del estado de persistencia local, capacidades fuera de línea
-					(PWA) y componentes de ejecución de la terminal financiera.
-				</p>
+	<div class="diagnostic-grid">
+		<div class="diag-item">
+			<span class="diag-label">Versión de InteresIt</span>
+			<span class="diag-value">v2.2.0 (Build de Producción Svelte 5)</span>
+		</div>
 
-				<div class="diagnostic-grid">
-					<div class="diag-item">
-						<span class="diag-label">Versión de InteresIt</span>
-						<span class="diag-value">v2.2.0 (Build de Producción Svelte 5)</span>
-					</div>
+		<div class="diag-item">
+			<span class="diag-label">Service Worker (PWA Offline)</span>
+			<span class="diag-value" id="diag-sw-status">{swStatus}</span>
+		</div>
 
-					<div class="diag-item">
-						<span class="diag-label">Service Worker (PWA Offline)</span>
-						<span class="diag-value" id="diag-sw-status">{swStatus}</span>
-					</div>
+		<div class="diag-item">
+			<span class="diag-label">Persistencia Local (IndexedDB)</span>
+			<span class="diag-value" id="diag-idb-status">{idbStatus}</span>
+		</div>
 
-					<div class="diag-item">
-						<span class="diag-label">Persistencia Local (IndexedDB)</span>
-						<span class="diag-value" id="diag-idb-status">{idbStatus}</span>
-					</div>
+		<div class="diag-item">
+			<span class="diag-label">Cuota de Almacenamiento</span>
+			<span class="diag-value">{storageUsage}</span>
+		</div>
 
-					<div class="diag-item">
-						<span class="diag-label">Cuota de Almacenamiento</span>
-						<span class="diag-value">{storageUsage}</span>
-					</div>
+		<div class="diag-item">
+			<span class="diag-label">Portafolios Registrados</span>
+			<span class="diag-value">{portfoliosCount} portafolio(s) sincronizado(s)</span>
+		</div>
 
-					<div class="diag-item">
-						<span class="diag-label">Portafolios Registrados</span>
-						<span class="diag-value">{portfoliosCount} portafolio(s) sincronizado(s)</span>
-					</div>
-
-					<div class="diag-item">
-						<span class="diag-label">Último Análisis</span>
-						<span class="diag-value">{lastCheckTime || 'Iniciando...'}</span>
-					</div>
-				</div>
-			</div>
-
-			<div class="modal-footer">
-				<Button variant="outlined" onclick={onClose}>
-					<Label>Cerrar</Label>
-				</Button>
-				<Button
-					variant="raised"
-					disabled={isRunningDiagnostic}
-					onclick={runDiagnostics}
-					class="confirm-btn"
-				>
-					<Label>{isRunningDiagnostic ? 'Verificando...' : 'Re-ejecutar Diagnóstico'}</Label>
-				</Button>
-			</div>
+		<div class="diag-item">
+			<span class="diag-label">Último Análisis</span>
+			<span class="diag-value">{lastCheckTime || 'Iniciando...'}</span>
 		</div>
 	</div>
-{/if}
+
+	{#snippet actions()}
+		<AppButton variant="secondary" onclick={onClose}>
+			Cerrar
+		</AppButton>
+		<AppButton
+			variant="primary"
+			disabled={isRunningDiagnostic}
+			onclick={runDiagnostics}
+			class="confirm-btn"
+		>
+			{isRunningDiagnostic ? 'Verificando...' : 'Re-ejecutar Diagnóstico'}
+		</AppButton>
+	{/snippet}
+</AppDialog>
 
 <style>
-	.modal-backdrop {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background: rgba(0, 0, 0, 0.45);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 100;
-		padding: 16px;
-	}
-
-	.modal-card {
-		background: #ffffff;
-		border-radius: 16px;
-		width: 100%;
-		max-width: 520px;
-		box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
-		overflow: hidden;
-		border: 1px solid #d5dedc;
-	}
-
-	.modal-header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 16px 20px;
-		border-bottom: 1px solid #edf2f0;
-	}
-
-	.modal-title {
-		margin: 0;
-		font-size: 1.125rem;
-		font-weight: 800;
-		color: #14201f;
-	}
-
-	.close-btn {
-		appearance: none;
-		border: none;
-		background: transparent;
-		font-size: 1rem;
-		color: #5e6b6a;
-		cursor: pointer;
-		padding: 4px 8px;
-		border-radius: 4px;
-	}
-
-	.close-btn:hover {
-		background: #f6f8fb;
-		color: #14201f;
-	}
-
-	.modal-body {
-		padding: 20px;
-	}
-
 	.modal-desc {
 		margin: 0 0 16px 0;
 		font-size: 0.8125rem;
@@ -260,36 +181,16 @@
 		color: #14201f;
 	}
 
-	.modal-footer {
-		padding: 14px 20px;
-		background: #f6f8fb;
-		border-top: 1px solid #edf2f0;
-		display: flex;
-		justify-content: flex-end;
-		gap: 8px;
-	}
-
 	:global(.confirm-btn) {
 		background: #004851 !important;
 		color: #ffffff !important;
 	}
 
-	:global(.dark) .modal-card {
-		background: #131c30;
-		border-color: #26334e;
-	}
-
-	:global(.dark) .modal-header {
-		border-bottom-color: #1e293b;
-	}
-
-	:global(.dark) .modal-title,
 	:global(.dark) .diag-value {
 		color: #e7eef8;
 	}
 
 	:global(.dark) .modal-desc,
-	:global(.dark) .close-btn,
 	:global(.dark) .diag-label {
 		color: #a3b0c6;
 	}
@@ -297,11 +198,6 @@
 	:global(.dark) .diag-item {
 		background: #0b1120;
 		border-color: #26334e;
-	}
-
-	:global(.dark) .modal-footer {
-		background: #0b1120;
-		border-top-color: #1e293b;
 	}
 
 	:global(.dark) :global(.confirm-btn) {
