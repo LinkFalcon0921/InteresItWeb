@@ -9,10 +9,25 @@
 		state: SimulatorState;
 	}
 
-	let { state }: Props = $props();
+	let { state: simState }: Props = $props();
 
-	const lider = $derived(state.escenarioLider);
-	const simulation = $derived(state.simulationResult);
+	const lider = $derived(simState.escenarioLider);
+	const simulation = $derived(simState.simulationResult);
+
+	let isPulsing = $state(false);
+	let previousBalance = $state<number | null>(null);
+
+	$effect(() => {
+		const current = lider?.summary.balanceFinal;
+		if (current !== undefined && previousBalance !== null && current !== previousBalance) {
+			isPulsing = true;
+			const timer = setTimeout(() => {
+				isPulsing = false;
+			}, 450);
+			return () => clearTimeout(timer);
+		}
+		previousBalance = current ?? null;
+	});
 </script>
 
 <div class="hero-card">
@@ -26,7 +41,7 @@
 			<button
 				type="button"
 				class="horizon-pill"
-				onclick={() => state.setHorizonMonths(3)}
+				onclick={() => simState.setHorizonMonths(3)}
 				title="3 meses desde fecha inicial"
 			>
 				3 m
@@ -34,7 +49,7 @@
 			<button
 				type="button"
 				class="horizon-pill"
-				onclick={() => state.setHorizonMonths(6)}
+				onclick={() => simState.setHorizonMonths(6)}
 				title="6 meses desde fecha inicial"
 			>
 				6 m
@@ -42,7 +57,7 @@
 			<button
 				type="button"
 				class="horizon-pill"
-				onclick={() => state.setHorizonMonths(12)}
+				onclick={() => simState.setHorizonMonths(12)}
 				title="1 año desde fecha inicial"
 			>
 				1 año
@@ -51,11 +66,11 @@
 	</div>
 
 	<div class="hero-body">
-		<div class="balance-display">
+		<div class="balance-display" class:m3-expressive-pulsing={isPulsing}>
 			<span class="balance-label">Saldo Proyectado al Vencimiento</span>
 			<h2 class="balance-amount">{formatCurrency(lider?.summary.balanceFinal ?? 0)}</h2>
-			{#if state.tasaInflacion > 0 && lider?.summary.balanceReal !== undefined}
-				<div class="real-balance-subtext" title="Poder adquisitivo deflactado según la fórmula de Fisher con inflación de {state.tasaInflacion}%">
+			{#if simState.tasaInflacion > 0 && lider?.summary.balanceReal !== undefined}
+				<div class="real-balance-subtext" title="Poder adquisitivo deflactado según la fórmula de Fisher con inflación de {simState.tasaInflacion}%">
 					<span>Poder adquisitivo real:</span>
 					<strong class="real-balance-val">{formatCurrency(lider.summary.balanceReal)}</strong>
 					<span class="real-rate-tag">(Tasa real: {formatPercentage(lider.summary.tasaRealAnual ?? 0)})</span>
@@ -63,7 +78,7 @@
 			{/if}
 		</div>
 
-		<div class="yield-badge">
+		<div class="yield-badge" class:m3-yield-pulsing={isPulsing}>
 			<span class="yield-icon">↗</span>
 			<span class="yield-value">+{formatCurrency(lider?.summary.rendimientoNeto ?? 0)}</span>
 			<span class="yield-label">ganancia neta</span>
@@ -131,9 +146,9 @@
 	.hero-badge {
 		display: inline-flex;
 		align-items: center;
-		gap: 6px;
+		gap: 8px;
 		background: rgba(255, 255, 255, 0.12);
-		padding: 4px 12px;
+		padding: 4px 10px;
 		border-radius: 9999px;
 		font-size: 0.75rem;
 		font-weight: 600;
@@ -144,7 +159,8 @@
 		width: 8px;
 		height: 8px;
 		border-radius: 50%;
-		background: #f6e7c3;
+		background: #d7ebec;
+		box-shadow: 0 0 6px #d7ebec;
 	}
 
 	.horizon-pills {
@@ -162,12 +178,17 @@
 		font-size: 0.75rem;
 		font-weight: 600;
 		cursor: pointer;
-		transition: all 0.15s ease;
+		transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
 	}
 
 	.horizon-pill:hover {
 		background: rgba(255, 255, 255, 0.22);
 		border-color: #ffffff;
+		transform: translateY(-1px);
+	}
+
+	.horizon-pill:active {
+		transform: scale(0.95);
 	}
 
 	.hero-body {
@@ -194,6 +215,13 @@
 		letter-spacing: -0.03em;
 		font-variant-numeric: tabular-nums;
 		line-height: 1.05;
+		transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), text-shadow 0.3s ease;
+		transform-origin: left center;
+	}
+
+	.m3-expressive-pulsing .balance-amount {
+		animation: m3-value-spring 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+		text-shadow: 0 0 16px rgba(127, 209, 216, 0.7);
 	}
 
 	.real-balance-subtext {
@@ -227,6 +255,12 @@
 		font-size: 0.875rem;
 		font-weight: 700;
 		font-variant-numeric: tabular-nums;
+		transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+	}
+
+	.yield-badge.m3-yield-pulsing {
+		transform: scale(1.06);
+		box-shadow: 0 4px 12px rgba(246, 231, 195, 0.4);
 	}
 
 	.yield-icon {
@@ -238,6 +272,18 @@
 		font-size: 0.75rem;
 		font-weight: 600;
 		opacity: 0.9;
+	}
+
+	@keyframes m3-value-spring {
+		0% {
+			transform: scale(1);
+		}
+		40% {
+			transform: scale(1.035);
+		}
+		100% {
+			transform: scale(1);
+		}
 	}
 
 	.hero-footer {
