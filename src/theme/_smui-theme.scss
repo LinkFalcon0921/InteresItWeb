@@ -17,7 +17,7 @@ $error: #b00020;
 html,
 body {
   background-color: $background;
-  color: if(theme.contrast-tone($background) == 'dark', #0f172a, #ffffff);
+  color: #0f172a;
   font-family: 'Public Sans', system-ui, -apple-system, sans-serif;
   font-variant-numeric: tabular-nums;
 }
