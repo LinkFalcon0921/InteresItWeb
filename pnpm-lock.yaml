@@ -66,6 +66,9 @@ importers:
       '@smui/tooltip':
         specifier: ^9.0.6
         version: 9.0.6
+      '@smui/touch-target':
+        specifier: 9.0.6
+        version: 9.0.6
       '@sveltejs/adapter-static':
         specifier: ^3.0.8
         version: 3.0.11(@sveltejs/kit@2.70.4(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.57.3)(vite@6.4.5(sass@1.108.0)))(svelte@5.57.3)(typescript@5.9.3)(vite@6.4.5(sass@1.108.0)))
