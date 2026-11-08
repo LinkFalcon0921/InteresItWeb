@@ -2,6 +2,8 @@ import {
 	CalculatePairMatrixUseCase,
 	CalculateSimulationUseCase,
 	DeletePortfolioUseCase,
+	ExportBackupUseCase,
+	ImportBackupUseCase,
 	ListPortfoliosUseCase,
 	LoadPortfolioUseCase,
 	LoadSettingsUseCase,
@@ -30,6 +32,8 @@ export interface AppDependencies {
 	readonly savePortfolio: SavePortfolioUseCase;
 	readonly deletePortfolio: DeletePortfolioUseCase;
 	readonly renamePortfolio: RenamePortfolioUseCase;
+	readonly exportBackup: ExportBackupUseCase;
+	readonly importBackup: ImportBackupUseCase;
 }
 
 export interface AppContainer {
@@ -44,6 +48,8 @@ export interface AppContainer {
 	readonly savePortfolio: SavePortfolioUseCase;
 	readonly deletePortfolio: DeletePortfolioUseCase;
 	readonly renamePortfolio: RenamePortfolioUseCase;
+	readonly exportBackup: ExportBackupUseCase;
+	readonly importBackup: ImportBackupUseCase;
 }
 
 export const CONTAINER_CONTEXT_KEY = Symbol('APP_CONTAINER_CONTEXT');
@@ -63,6 +69,8 @@ export function createAppContainer(overrides?: Partial<AppDependencies>): AppCon
 	const savePortfolio = overrides?.savePortfolio ?? new SavePortfolioUseCase(settingsRepository);
 	const deletePortfolio = overrides?.deletePortfolio ?? new DeletePortfolioUseCase(settingsRepository);
 	const renamePortfolio = overrides?.renamePortfolio ?? new RenamePortfolioUseCase(settingsRepository);
+	const exportBackup = overrides?.exportBackup ?? new ExportBackupUseCase(settingsRepository);
+	const importBackup = overrides?.importBackup ?? new ImportBackupUseCase(settingsRepository);
 
 	return {
 		settingsRepository,
@@ -75,7 +83,9 @@ export function createAppContainer(overrides?: Partial<AppDependencies>): AppCon
 		loadPortfolio,
 		savePortfolio,
 		deletePortfolio,
-		renamePortfolio
+		renamePortfolio,
+		exportBackup,
+		importBackup
 	};
 }
 
@@ -129,7 +139,9 @@ export function createSimulatorState(container?: AppContainer): SimulatorState {
 		c.loadPortfolio,
 		c.savePortfolio,
 		c.deletePortfolio,
-		c.renamePortfolio
+		c.renamePortfolio,
+		c.exportBackup,
+		c.importBackup
 	);
 }
 

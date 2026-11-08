@@ -12,3 +12,4 @@ export { default as ProjectionTableSMUI } from './components/ProjectionTableSMUI
 export { default as ParametersDrawerSMUI } from './components/ParametersDrawerSMUI.svelte';
 export { default as ExportDialogSMUI } from './components/ExportDialogSMUI.svelte';
 export { default as PortfolioDialogSMUI } from './components/PortfolioDialogSMUI.svelte';
+export { default as DiagnosticsDialogSMUI } from './components/DiagnosticsDialogSMUI.svelte';

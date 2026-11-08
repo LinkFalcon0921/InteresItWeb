@@ -4,6 +4,7 @@ export * from './dtos/SimulationOutputDTO';
 export * from './dtos/PairMatrixDTO';
 export * from './dtos/SettingsDTO';
 export * from './dtos/PortfolioDTO';
+export * from './dtos/BackupDTO';
 
 // Ports
 export * from './ports/SettingsRepositoryPort';
@@ -19,3 +20,5 @@ export * from './use-cases/LoadPortfolioUseCase';
 export * from './use-cases/SavePortfolioUseCase';
 export * from './use-cases/DeletePortfolioUseCase';
 export * from './use-cases/RenamePortfolioUseCase';
+export * from './use-cases/ExportBackupUseCase';
+export * from './use-cases/ImportBackupUseCase';

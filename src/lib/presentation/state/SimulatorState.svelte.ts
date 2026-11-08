@@ -5,6 +5,8 @@ import {
 	DEFAULT_PORTFOLIO_NAME,
 	DEFAULT_SETTINGS_DTO,
 	DeletePortfolioUseCase,
+	ExportBackupUseCase,
+	ImportBackupUseCase,
 	ListPortfoliosUseCase,
 	LoadPortfolioUseCase,
 	LoadSettingsUseCase,
@@ -21,6 +23,7 @@ import {
 	type SimulationInputDTO,
 	type SimulationOutputDTO
 } from '$application';
+import { generateProjectionCSV } from '$domain';
 
 export class SimulatorState {
 	public montoInicial = $state<number>(185);
@@ -38,7 +41,7 @@ export class SimulatorState {
 
 	public activeTab = $state<'simulador' | 'comparativa' | 'reporte'>('simulador');
 	public isDrawerOpen = $state<boolean>(false);
-	public errorMessage = $state<string>('');
+	private _customErrorMessage = $state<string>('');
 	public isLoading = $state<boolean>(false);
 	public saveNotificationVisible = $state<boolean>(false);
 
@@ -46,6 +49,8 @@ export class SimulatorState {
 	public currentPortfolioName = $state<string>(DEFAULT_PORTFOLIO_NAME);
 	public portfolios = $state<PortfolioSummaryDTO[]>([]);
 	public isPortfolioDialogOpen = $state<boolean>(false);
+	public isDiagnosticsDialogOpen = $state<boolean>(false);
+	public isExportDialogOpen = $state<boolean>(false);
 
 	constructor(
 		private readonly calculateSimulation: CalculateSimulationUseCase,
@@ -57,10 +62,12 @@ export class SimulatorState {
 		private readonly loadPortfolioUseCase?: LoadPortfolioUseCase,
 		private readonly savePortfolioUseCase?: SavePortfolioUseCase,
 		private readonly deletePortfolioUseCase?: DeletePortfolioUseCase,
-		private readonly renamePortfolioUseCase?: RenamePortfolioUseCase
+		private readonly renamePortfolioUseCase?: RenamePortfolioUseCase,
+		private readonly exportBackupUseCase?: ExportBackupUseCase,
+		private readonly importBackupUseCase?: ImportBackupUseCase
 	) {}
 
-	public simulationResult = $derived.by<SimulationOutputDTO | null>(() => {
+	private calculationExecution = $derived.by(() => {
 		const input: SimulationInputDTO = {
 			capitalInicial: this.montoInicial,
 			aporteMensual: this.aporteMensual,
@@ -77,15 +84,21 @@ export class SimulatorState {
 			}))
 		};
 
-		const result = this.calculateSimulation.execute(input);
-		if (result.ok) {
-			this.errorMessage = '';
-			return result.value;
-		} else {
-			this.errorMessage = result.error.message;
-			return null;
-		}
+		return this.calculateSimulation.execute(input);
 	});
+
+	public simulationResult = $derived<SimulationOutputDTO | null>(
+		this.calculationExecution.ok ? this.calculationExecution.value : null
+	);
+
+	public get errorMessage(): string {
+		if (this._customErrorMessage) return this._customErrorMessage;
+		return this.calculationExecution.ok ? '' : this.calculationExecution.error.message;
+	}
+
+	public set errorMessage(value: string) {
+		this._customErrorMessage = value;
+	}
 
 	public pairMatrixResult = $derived.by<PairMatrixDTO | null>(() => {
 		const summaries = this.simulationResult?.resumenPorEscenario;
@@ -183,6 +196,15 @@ export class SimulatorState {
 		}
 	}
 
+	private getCleanInversiones(): InvestmentSettingDTO[] {
+		return this.inversiones.map((inv) => ({
+			id: inv.id,
+			nombre: inv.nombre,
+			tasaAnual: inv.tasaAnual,
+			color: inv.color
+		}));
+	}
+
 	public async saveToStorage(): Promise<boolean> {
 		const settings: SettingsDTO = {
 			id: 'current',
@@ -195,7 +217,7 @@ export class SimulatorState {
 			omitirPrimerCorte: this.omitirPrimerCorte,
 			aplicarImpuesto: this.aplicarImpuesto,
 			isDarkMode: this.isDarkMode,
-			inversiones: this.inversiones
+			inversiones: this.getCleanInversiones()
 		};
 
 		const result = await this.saveSettingsUseCase.execute(settings);
@@ -253,7 +275,7 @@ export class SimulatorState {
 			omitirPrimerCorte: this.omitirPrimerCorte,
 			aplicarImpuesto: this.aplicarImpuesto,
 			isDarkMode: this.isDarkMode,
-			inversiones: this.inversiones
+			inversiones: this.getCleanInversiones()
 		};
 
 		const portfolio: PortfolioDTO = {
@@ -296,7 +318,7 @@ export class SimulatorState {
 			omitirPrimerCorte: this.omitirPrimerCorte,
 			aplicarImpuesto: this.aplicarImpuesto,
 			isDarkMode: this.isDarkMode,
-			inversiones: this.inversiones
+			inversiones: this.getCleanInversiones()
 		};
 
 		const newPortfolio: PortfolioDTO = {
@@ -367,9 +389,78 @@ export class SimulatorState {
 		return result.ok;
 	}
 
+	public exportCSV(scenarioId?: string, fileName?: string): boolean {
+		if (!this.simulationResult) return false;
+		const csvContent = generateProjectionCSV(this.simulationResult, {
+			scenarioId: scenarioId === 'all' ? 'all' : scenarioId,
+			includeScenarioColumn: scenarioId === 'all'
+		});
+
+		if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+			const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			const cleanName = fileName?.trim()
+				? fileName.trim()
+				: `InteresIt_Proyeccion_${this.fechaInicio}_${this.fechaFin}`;
+			link.setAttribute('download', cleanName.endsWith('.csv') ? cleanName : `${cleanName}.csv`);
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			setTimeout(() => URL.revokeObjectURL(url), 10000);
+			return true;
+		}
+		return false;
+	}
+
+	public async exportBackup(): Promise<string | null> {
+		if (!this.exportBackupUseCase) return null;
+		const result = await this.exportBackupUseCase.execute();
+		if (!result.ok) {
+			this.errorMessage = result.error.message;
+			return null;
+		}
+		const jsonStr = JSON.stringify(result.value, null, 2);
+		if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+			const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8;' });
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			const dateTag = new Date().toISOString().split('T')[0];
+			link.setAttribute('download', `interesit_backup_${dateTag}.json`);
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			setTimeout(() => URL.revokeObjectURL(url), 10000);
+		}
+		return jsonStr;
+	}
+
+	public async importBackup(rawJson: unknown): Promise<boolean> {
+		if (!this.importBackupUseCase) return false;
+		this.isLoading = true;
+		this.errorMessage = '';
+		const result = await this.importBackupUseCase.execute(rawJson);
+		this.isLoading = false;
+		if (result.ok) {
+			await this.loadFromStorage();
+			return true;
+		} else {
+			this.errorMessage = result.error.message;
+			return false;
+		}
+	}
+
 	public async printReport(): Promise<boolean> {
 		const result = await this.reportExportPort.printReport();
 		return result.ok;
+	}
+
+	public async resetToSafeDefaults(): Promise<void> {
+		this.errorMessage = '';
+		this.applySettings(DEFAULT_SETTINGS_DTO);
+		await this.saveCurrentPortfolio();
 	}
 
 	public toggleTheme(): void {

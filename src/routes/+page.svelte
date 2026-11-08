@@ -5,6 +5,7 @@
 	import { createSimulatorState, getAppContainer } from '$di';
 	import {
 		DataEntrySMUI,
+		DiagnosticsDialogSMUI,
 		ExportDialogSMUI,
 		HeaderSMUI,
 		HeroCardSMUI,
@@ -43,8 +44,9 @@
 	<title>InteresIt — Terminal Financiera Multi-Escenario</title>
 </svelte:head>
 
-<div class="terminal-shell">
-	<HeaderSMUI state={simState} />
+<svelte:boundary>
+	<div class="terminal-shell">
+		<HeaderSMUI state={simState} />
 
 	<div class="terminal-main-layout">
 		<!-- Panel Lateral de Parámetros (Desktop) -->
@@ -129,9 +131,10 @@
 	<!-- Diálogo de Exportación -->
 	<ExportDialogSMUI
 		simState={simState}
-		isOpen={isExportDialogOpen}
+		isOpen={isExportDialogOpen || simState.isExportDialogOpen}
 		onClose={() => {
 			isExportDialogOpen = false;
+			simState.isExportDialogOpen = false;
 		}}
 	/>
 
@@ -144,6 +147,15 @@
 		}}
 	/>
 
+	<!-- Diálogo de Diagnóstico -->
+	<DiagnosticsDialogSMUI
+		simState={simState}
+		isOpen={simState.isDiagnosticsDialogOpen}
+		onClose={() => {
+			simState.isDiagnosticsDialogOpen = false;
+		}}
+	/>
+
 	<!-- Snackbar de Guardado -->
 	<Snackbar bind:this={snackbar}>
 		<Label>Configuración guardada en IndexedDB exitosamente.</Label>
@@ -152,6 +164,45 @@
 		</Actions>
 	</Snackbar>
 </div>
+
+{#snippet failed(error: unknown, reset: () => void)}
+	<div class="boundary-recovery-container" role="alert">
+		<div class="recovery-card">
+			<div class="recovery-badge">🛡️ Resiliencia del Sistema</div>
+			<h2 class="recovery-title">Interrupción Inesperada en la Terminal</h2>
+			<p class="recovery-desc">
+				Ocurrió un error inesperado al procesar la simulación o renderizar la interfaz. Puedes
+				restaurar el estado seguro para recuperar la sesión sin perder tus portafolios guardados.
+			</p>
+			<div class="recovery-error-detail">
+				<code>{error instanceof Error ? error.message : String(error)}</code>
+			</div>
+			<div class="recovery-actions">
+				<button
+					type="button"
+					class="recovery-btn recovery-btn-primary"
+					id="btn-restore-safe-state"
+					onclick={async () => {
+						await simState.resetToSafeDefaults();
+						reset();
+					}}
+				>
+					Restaurar estado seguro
+				</button>
+				<button
+					type="button"
+					class="recovery-btn recovery-btn-secondary"
+					onclick={() => {
+						if (typeof window !== 'undefined') window.location.reload();
+					}}
+				>
+					Recargar aplicación
+				</button>
+			</div>
+		</div>
+	</div>
+{/snippet}
+</svelte:boundary>
 
 <style>
 	:global(body) {
@@ -296,5 +347,120 @@
 	:global(.dark) :global(.export-action-btn) {
 		background: #7fd1d8 !important;
 		color: #0b1120 !important;
+	}
+
+	.boundary-recovery-container {
+		min-height: 100vh;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 24px;
+		background: #f5f7f6;
+	}
+
+	.recovery-card {
+		background: #ffffff;
+		border: 1px solid #d5dedc;
+		border-radius: 16px;
+		max-width: 480px;
+		padding: 28px;
+		box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+	}
+
+	.recovery-badge {
+		font-size: 0.75rem;
+		font-weight: 700;
+		color: #c5221f;
+		background: #fce8e6;
+		padding: 4px 10px;
+		border-radius: 9999px;
+		width: fit-content;
+	}
+
+	.recovery-title {
+		margin: 0;
+		font-size: 1.25rem;
+		font-weight: 800;
+		color: #14201f;
+	}
+
+	.recovery-desc {
+		margin: 0;
+		font-size: 0.875rem;
+		color: #5e6b6a;
+		line-height: 1.5;
+	}
+
+	.recovery-error-detail {
+		background: #f6f8fb;
+		padding: 10px 12px;
+		border-radius: 8px;
+		border: 1px solid #edf2f0;
+		font-size: 0.75rem;
+		color: #c5221f;
+		word-break: break-all;
+	}
+
+	.recovery-actions {
+		display: flex;
+		gap: 10px;
+		margin-top: 6px;
+	}
+
+	.recovery-btn {
+		flex: 1;
+		appearance: none;
+		border: none;
+		padding: 10px 14px;
+		border-radius: 8px;
+		font-size: 0.8125rem;
+		font-weight: 700;
+		cursor: pointer;
+		transition: all 0.15s ease;
+	}
+
+	.recovery-btn-primary {
+		background: #004851;
+		color: #ffffff;
+	}
+
+	.recovery-btn-secondary {
+		background: #edf2f0;
+		color: #14201f;
+	}
+
+	:global(.dark) .boundary-recovery-container {
+		background: #0b1120;
+	}
+
+	:global(.dark) .recovery-card {
+		background: #131c30;
+		border-color: #26334e;
+	}
+
+	:global(.dark) .recovery-title {
+		color: #e7eef8;
+	}
+
+	:global(.dark) .recovery-desc {
+		color: #a3b0c6;
+	}
+
+	:global(.dark) .recovery-error-detail {
+		background: #0b1120;
+		border-color: #26334e;
+	}
+
+	:global(.dark) .recovery-btn-primary {
+		background: #7fd1d8;
+		color: #0b1120;
+	}
+
+	:global(.dark) .recovery-btn-secondary {
+		background: #1e293b;
+		color: #e7eef8;
 	}
 </style>

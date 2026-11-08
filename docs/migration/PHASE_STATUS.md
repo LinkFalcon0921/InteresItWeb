@@ -22,6 +22,9 @@
 | **9** | `PHASE-09` | Monolith Decommissioning & Legacy Quarantine | **COMPLETED** | 2026-11-07 | 2026-11-07 |
 | **10** | `PHASE-10` | Interactive Onboarding & User Guidance (Driver.js) | **ON HOLD** | 2026-11-07 | — |
 | **11** | `PHASE-11` | Multi-Portfolio Management (Clean Architecture) | **COMPLETED** | 2026-11-07 | 2026-11-07 |
+| **12** | `PHASE-12` | Data Portability & Advanced Exporting | **COMPLETED** | 2026-11-07 | 2026-11-07 |
+| **13** | `PHASE-13` | End-to-End Automated Testing (Playwright) | **COMPLETED** | 2026-11-07 | 2026-11-07 |
+| **14** | `PHASE-14` | Production Resilience & Client Diagnostics | **COMPLETED** | 2026-11-07 | 2026-11-07 |
 
 ---
 
@@ -134,10 +137,42 @@
   - [x] Pruebas automatizadas: Cobertura completa en `PortfolioUseCases.test.ts`, `IndexedDBSettingsRepository.test.ts` y `SimulatorState.test.ts`. Total acumulado: 143 pruebas pasando al 100% sin contar la Fase 10 (en pausa).
 - **Estado:** COMPLETED.
 
+### FASE 12 — Data Portability & Advanced Exporting
+- **Objetivo:** Facilitar la portabilidad total de la información financiera y las configuraciones de portafolios del usuario mediante exportación a CSV estandarizado y mecanismos de respaldo/restauración de copias de seguridad en JSON con validación estricta de esquema.
+- **Entregables Completados:**
+  - [x] Generador CSV de Proyección (`src/lib/domain/export/csvExport.ts`): función de dominio pura `generateProjectionCSV` con encabezados canónicos (`Período, Fecha de Corte, Días, Saldo Inicial, Interés Bruto, Retención Ley 10% (RD), Interés Neto, Aporte Mensual, Saldo Final`), precisión fija a dos decimales y soporte multiescenario.
+  - [x] DTO y Parser de Respaldo (`src/lib/application/dtos/BackupDTO.ts` y `src/lib/domain/parsers/BackupParser.ts`): especificación `BACKUP_SCHEMA_VERSION = 1` y parser estricto `BackupParser.parse()` retornando `Result<BackupDTO, ParseInputError>` con validación contra esquemas truncados o corruptos.
+  - [x] Casos de Uso de Respaldo (`src/lib/application/use-cases/`): `ExportBackupUseCase` e `ImportBackupUseCase` para exportación atómica de portafolios/configuraciones y restauración segura en el repositorio.
+  - [x] Integración en UI (`ExportDialogSMUI.svelte`): diálogo modal con 3 pestañas accesibles (`Reporte PDF`, `Exportar CSV`, `Backup / Restauración`) con selección de escenario para CSV y selector de archivo local para importación.
+  - [x] Pruebas automatizadas: 18 pruebas unitarias añadidas en `csvExport.test.ts` y `BackupUseCases.test.ts`. Total Vitest acumulado: 161 pruebas pasando al 100%.
+- **Estado:** COMPLETED.
+
+### FASE 13 — End-to-End Automated Testing (Playwright)
+- **Objetivo:** Asegurar la integridad funcional de los flujos críticos de la Single Page Application mediante una suite automatizada End-to-End con Playwright navegando la aplicación real construida con Vite y servida en previsualización estática.
+- **Entregables Completados:**
+  - [x] Configuración de infraestructura E2E (`playwright.config.ts`): integración con `@playwright/test` en Chromium, servidor web preview integrado en el puerto 4173 (`timeout: 60s`).
+  - [x] Especificaciones de prueba (`tests/e2e/`):
+    - `simulator.spec.ts`: carga inicial de la terminal, cálculo reactivo en cambios de capital/aporte, adición y comparación de escenarios dinámicos, navegación fluida entre pestañas.
+    - `portfolio.spec.ts`: creación de portafolios, alternancia de portafolio activo, renombrado en línea y eliminación de portafolios con actualización reactiva en el encabezado.
+    - `data-portability.spec.ts`: descarga y validación de encabezados del archivo CSV mensual, y ciclo completo de descarga de backup JSON y restauración con validación de integridad.
+  - [x] Scripts y CI/CD: script `"test:e2e": "playwright test"` integrado en `package.json` y flujo automatizado en `.github/workflows/ci.yml`.
+  - [x] Ejecución: 7 pruebas E2E pasando exitosamente en 9.4 segundos.
+- **Estado:** COMPLETED.
+
+### FASE 14 — Production Resilience & Client Diagnostics
+- **Objetivo:** Elevar la resiliencia en tiempo de ejecución del cliente Svelte 5 y proveer diagnósticos transparentes sobre el estado del almacenamiento IndexedDB, Service Worker PWA y salud general del sistema.
+- **Entregables Completados:**
+  - [x] Error Boundary Svelte 5 (`<svelte:boundary>`): implementado en `src/routes/+page.svelte` con snippet `#snippet failed(error, reset)` presentando una tarjeta institucional de recuperación que aísla excepciones no controladas y ofrece los botones "Restaurar estado seguro" y "Recargar aplicación".
+  - [x] Modal de Diagnósticos del Cliente (`DiagnosticsDialogSMUI.svelte`): visualización de estado en tiempo real del Service Worker (activo, instalado, no soportado), cuota y uso de almacenamiento en IndexedDB vía `navigator.storage.estimate()`, versión del sistema (v2.2.0) y botón para forzar sincronización del estado.
+  - [x] Integración en Header (`HeaderSMUI.svelte`): botón institucional `🔧 Diagnóstico` permitiendo al usuario auditar la salud del cliente en cualquier momento.
+  - [x] Método de recuperación segura: `simState.resetToSafeDefaults()` garantizando el restablecimiento de configuraciones estables sin pérdida de datos no corruptos.
+- **Estado:** COMPLETED.
+
 ---
 
 ## 3. Estado del Proyecto y Cierre de Migración
-- **Estado Global:** FASES 0 A 9 Y FASE 11 COMPLETADAS (Fase 10 en progreso/pausa externa).
-- **Pruebas Automatizadas:** 143 pruebas unitarias pasando al 100% en Vitest.
+- **Estado Global:** FASES 0 A 9 Y FASES 11, 12, 13, 14 COMPLETADAS (Fase 10 estrictamente en pausa / on hold).
+- **Pruebas Automatizadas:** 161 pruebas unitarias pasando al 100% en Vitest + 7 pruebas E2E pasando al 100% en Playwright.
 - **Calidad de Código:** 0 errores y 0 advertencias en `svelte-check`, 0 archivos excediendo límites de líneas (máximo 600, alerta 450).
-- **Despliegue:** Preparado y verificado para despliegue automatizado en GitHub Pages vía Node 24 y SvelteKit adapter-static.
+- **Despliegue:** Preparado y verificado para despliegue automatizado en GitHub Pages vía Node 24 y SvelteKit adapter-static con pipeline de CI que incluye Vitest y Playwright.
+

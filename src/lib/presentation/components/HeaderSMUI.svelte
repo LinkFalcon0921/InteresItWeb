@@ -72,6 +72,18 @@
 
 			<button
 				type="button"
+				class="action-btn diag-btn"
+				id="btn-open-diagnostics"
+				onclick={() => {
+					state.isDiagnosticsDialogOpen = true;
+				}}
+				title="Ver diagnóstico del sistema, Service Worker e IndexedDB"
+			>
+				🩺 Diagnóstico
+			</button>
+
+			<button
+				type="button"
 				class="action-btn theme-toggle-btn"
 				onclick={() => state.toggleTheme()}
 				aria-label="Cambiar tema de color"
@@ -92,10 +104,12 @@
 				type="button"
 				class="action-btn export-btn"
 				id="tour-export"
-				onclick={handleExport}
-				title="Exportar reporte en PDF"
+				onclick={() => {
+					state.isExportDialogOpen = true;
+				}}
+				title="Exportación y Portabilidad (PDF, CSV, Copia de Seguridad)"
 			>
-				📄 Exportar PDF
+				📄 Exportar
 			</button>
 		</div>
 	</div>

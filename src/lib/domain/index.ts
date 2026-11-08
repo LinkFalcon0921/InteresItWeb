@@ -20,6 +20,10 @@ export * from './entities/SimulationResult';
 export * from './parsers/Result';
 export * from './parsers/FinancialInputParser';
 export * from './parsers/SettingsParser';
+export * from './parsers/BackupParser';
+
+// Export & Serializers
+export * from './export/csvExport';
 
 // Finance Core
 export * from './finance/simular';
