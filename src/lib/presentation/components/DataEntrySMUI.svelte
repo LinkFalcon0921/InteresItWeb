@@ -10,22 +10,22 @@
 	let { state }: Props = $props();
 
 	function handleMontoInput(event: Event): void {
-		const target = event.target as HTMLInputElement | null;
-		if (!target) return;
+		if (!(event.target instanceof HTMLInputElement)) return;
+		const target = event.target;
 		const val = parseFloat(target.value);
 		state.montoInicial = Number.isFinite(val) ? Math.max(0, val) : 0;
 	}
 
 	function handleAporteInput(event: Event): void {
-		const target = event.target as HTMLInputElement | null;
-		if (!target) return;
+		if (!(event.target instanceof HTMLInputElement)) return;
+		const target = event.target;
 		const val = parseFloat(target.value);
 		state.aporteMensual = Number.isFinite(val) ? Math.max(0, val) : 0;
 	}
 
 	function handleDiaCorteInput(event: Event): void {
-		const target = event.target as HTMLInputElement | null;
-		if (!target) return;
+		if (!(event.target instanceof HTMLInputElement)) return;
+		const target = event.target;
 		const val = parseInt(target.value, 10);
 		if (Number.isFinite(val)) {
 			state.diaCorte = Math.min(31, Math.max(1, val));

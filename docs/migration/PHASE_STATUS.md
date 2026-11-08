@@ -172,7 +172,7 @@
 
 ## 3. Estado del Proyecto y Cierre de Migración
 - **Estado Global:** FASES 0 A 9 Y FASES 11, 12, 13, 14 COMPLETADAS (Fase 10 estrictamente en pausa / on hold).
-- **Pruebas Automatizadas:** 161 pruebas unitarias pasando al 100% en Vitest + 7 pruebas E2E pasando al 100% en Playwright.
+- **Pruebas Automatizadas:** 168 pruebas unitarias pasando al 100% en Vitest + 8 pruebas E2E pasando al 100% en Playwright.
 - **Calidad de Código:** 0 errores y 0 advertencias en `svelte-check`, 0 archivos excediendo límites de líneas (máximo 600, alerta 450).
 - **Despliegue:** Preparado y verificado para despliegue automatizado en GitHub Pages vía Node 24 y SvelteKit adapter-static con pipeline de CI que incluye Vitest y Playwright.
 

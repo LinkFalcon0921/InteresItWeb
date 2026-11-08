@@ -15,15 +15,15 @@
 	let { state, inversion, summary, isLeader, canDelete }: Props = $props();
 
 	function handleTasaInput(event: Event): void {
-		const target = event.target as HTMLInputElement | null;
-		if (!target) return;
+		if (!(event.target instanceof HTMLInputElement)) return;
+		const target = event.target;
 		const val = parseFloat(target.value);
 		state.updateInversionTasa(inversion.id, Number.isFinite(val) ? val : 0);
 	}
 
 	function handleNombreInput(event: Event): void {
-		const target = event.target as HTMLInputElement | null;
-		if (!target) return;
+		if (!(event.target instanceof HTMLInputElement)) return;
+		const target = event.target;
 		state.updateInversionNombre(inversion.id, target.value);
 	}
 </script>

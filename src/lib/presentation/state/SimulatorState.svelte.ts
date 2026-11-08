@@ -187,9 +187,12 @@ export class SimulatorState {
 			const activeMatch = this.portfolios.find((p) => p.id === this.currentPortfolioId);
 			if (activeMatch) {
 				this.currentPortfolioName = activeMatch.name;
-			} else if (this.portfolios.length > 0) {
-				this.currentPortfolioId = this.portfolios[0]!.id;
-				this.currentPortfolioName = this.portfolios[0]!.name;
+			} else {
+				const first = this.portfolios[0];
+				if (first) {
+					this.currentPortfolioId = first.id;
+					this.currentPortfolioName = first.name;
+				}
 			}
 		} finally {
 			this.isLoading = false;

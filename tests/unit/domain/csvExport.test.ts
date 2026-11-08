@@ -125,12 +125,35 @@ describe('csvExport (Domain)', () => {
 		expect(lines[2]).toContain('Escenario Agresivo,1,2026-01-31');
 	});
 
-	it('should handle empty periods gracefully', () => {
+	it('should handle empty periods gracefully with single scenario', () => {
 		const emptySim: SimulationOutputDTO = {
 			...mockSimulation,
 			periodos: []
 		};
 		const csv = generateProjectionCSV(emptySim);
 		expect(csv).toBe(CSV_HEADERS.join(','));
+	});
+
+	it('should handle empty periods gracefully with all scenarios', () => {
+		const emptySim: SimulationOutputDTO = {
+			...mockSimulation,
+			periodos: []
+		};
+		const csv = generateProjectionCSV(emptySim, { scenarioId: 'all' });
+		expect(csv).toBe(CSV_HEADERS_WITH_SCENARIO.join(','));
+	});
+
+	it('should escape cells containing quotes, commas, newlines and carriage returns', () => {
+		const customSim: SimulationOutputDTO = {
+			...mockSimulation,
+			resumenPorEscenario: [
+				{
+					...mockSimulation.resumenPorEscenario[0]!,
+					nombre: 'Fondo "Especial", VIP\r\nPlus'
+				}
+			]
+		};
+		const csv = generateProjectionCSV(customSim, { scenarioId: 'all' });
+		expect(csv).toContain('"Fondo ""Especial"", VIP\r\nPlus"');
 	});
 });

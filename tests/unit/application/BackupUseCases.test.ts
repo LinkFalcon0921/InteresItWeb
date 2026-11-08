@@ -93,7 +93,10 @@ describe('BackupUseCases (Application)', () => {
 			const result = await useCase.execute(validJson);
 			expect(result.ok).toBe(true);
 			expect(repo.savePortfolio).toHaveBeenCalledWith(mockPortfolio);
-			expect(repo.saveSettings).toHaveBeenCalledWith(DEFAULT_SETTINGS_DTO);
+			expect(repo.saveSettings).toHaveBeenCalledWith({
+				...DEFAULT_SETTINGS_DTO,
+				activePortfolioId: DEFAULT_PORTFOLIO_ID
+			});
 		});
 
 		it('should reject invalid JSON text', async () => {
@@ -121,6 +124,37 @@ describe('BackupUseCases (Application)', () => {
 			expect(result.ok).toBe(false);
 			if (result.ok) return;
 			expect(result.error.message).toContain('Copia de seguridad inválida');
+		});
+
+		it('should delete existing portfolios not present in the backup when restoring', async () => {
+			const repo = createMockRepository({
+				listPortfolios: vi.fn().mockResolvedValue(
+					ok([
+						mockSummary,
+						{
+							id: 'obsolete-portfolio',
+							name: 'Obsoleto',
+							updatedAt: '2026-11-08T00:00:00.000Z',
+							escenariosCount: 2,
+							montoInicial: 100
+						}
+					])
+				)
+			});
+			const useCase = new ImportBackupUseCase(repo);
+
+			const validJson = JSON.stringify({
+				version: '2.2.0',
+				app: 'InteresIt',
+				exportedAt: '2026-11-08T00:00:00.000Z',
+				settings: DEFAULT_SETTINGS_DTO,
+				portfolios: [mockPortfolio]
+			});
+
+			const result = await useCase.execute(validJson);
+			expect(result.ok).toBe(true);
+			expect(repo.deletePortfolio).toHaveBeenCalledWith('obsolete-portfolio');
+			expect(repo.deletePortfolio).not.toHaveBeenCalledWith(DEFAULT_PORTFOLIO_ID);
 		});
 	});
 });

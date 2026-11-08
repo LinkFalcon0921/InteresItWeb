@@ -23,6 +23,17 @@ export class ImportBackupUseCase {
 
 			const backup = validationRes.value;
 
+			// Clear existing portfolios that are not in the backup to avoid orphaned data
+			const existingListRes = await this.settingsRepository.listPortfolios();
+			if (existingListRes.ok) {
+				const backupIds = new Set(backup.portfolios.map((p) => p.id));
+				for (const existing of existingListRes.value) {
+					if (!backupIds.has(existing.id)) {
+						await this.settingsRepository.deletePortfolio(existing.id);
+					}
+				}
+			}
+
 			// Persist each portfolio
 			for (const portfolio of backup.portfolios) {
 				const savePortRes = await this.settingsRepository.savePortfolio(portfolio);
@@ -31,8 +42,13 @@ export class ImportBackupUseCase {
 				}
 			}
 
-			// Persist settings
-			const saveSettingsRes = await this.settingsRepository.saveSettings(backup.settings);
+			// Persist settings with active portfolio
+			const settingsToSave = {
+				...backup.settings,
+				activePortfolioId: backup.activePortfolioId
+			};
+
+			const saveSettingsRes = await this.settingsRepository.saveSettings(settingsToSave);
 			if (!saveSettingsRes.ok) {
 				return err(new Error(`Error al restaurar configuración: ${saveSettingsRes.error.message}`));
 			}

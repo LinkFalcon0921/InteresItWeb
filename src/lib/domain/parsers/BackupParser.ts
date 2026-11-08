@@ -77,6 +77,7 @@ export class BackupParser {
 		}
 
 		const validatedPortfolios: PortfolioDTO[] = [];
+		const seenPortfolioIds = new Set<string>();
 		for (let i = 0; i < rawPortfolios.length; i++) {
 			const item = rawPortfolios[i];
 			if (!isRecord(item)) {
@@ -87,6 +88,12 @@ export class BackupParser {
 			if (typeof id !== 'string' || id.trim().length === 0) {
 				return err(new ParseInputError(`portfolios[${i}].id`, 'Identificador de portafolio inválido o vacío.'));
 			}
+
+			const cleanId = id.trim();
+			if (seenPortfolioIds.has(cleanId)) {
+				return err(new ParseInputError(`portfolios[${i}].id`, `Identificador de portafolio duplicado: "${cleanId}".`));
+			}
+			seenPortfolioIds.add(cleanId);
 
 			const name = item['name'];
 			if (typeof name !== 'string' || name.trim().length === 0 || name.trim().length > 100) {
@@ -105,7 +112,7 @@ export class BackupParser {
 
 			const ps = portSettingsRes.value;
 			const portSettingsDTO: SettingsDTO = {
-				id,
+				id: cleanId,
 				montoInicial: ps.montoInicial.amount,
 				aporteMensual: ps.aporteMensual.amount,
 				fechaInicio: ps.fechaInicio.iso,
@@ -126,7 +133,7 @@ export class BackupParser {
 			const updatedAt = isValidIsoDate(item['updatedAt']) ? item['updatedAt'] : new Date().toISOString();
 
 			validatedPortfolios.push({
-				id: id.trim(),
+				id: cleanId,
 				name: name.trim(),
 				settings: portSettingsDTO,
 				createdAt,
@@ -134,18 +141,23 @@ export class BackupParser {
 			});
 		}
 
-		const rawActiveId = raw['activePortfolioId'];
+		const rawActiveId = raw['activePortfolioId'] ?? rawSettings['activePortfolioId'];
 		const activePortfolioId =
 			typeof rawActiveId === 'string' && validatedPortfolios.some((p) => p.id === rawActiveId)
 				? rawActiveId
-				: validatedPortfolios[0]?.id;
+				: (validatedPortfolios[0]?.id ?? 'default');
+
+		const finalSettingsDTO: SettingsDTO = {
+			...settingsDTO,
+			activePortfolioId
+		};
 
 		return ok({
 			version: version.trim(),
 			app: 'InteresIt',
 			exportedAt,
 			activePortfolioId,
-			settings: settingsDTO,
+			settings: finalSettingsDTO,
 			portfolios: validatedPortfolios
 		});
 	}

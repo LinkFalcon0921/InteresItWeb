@@ -24,6 +24,10 @@ import {
 	type PortfolioSummaryDTO
 } from '$application';
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null;
+}
+
 export class IndexedDBSettingsRepository implements SettingsRepositoryPort {
 	constructor(private readonly idbFactory?: IDBFactory) {}
 
@@ -99,20 +103,18 @@ export class IndexedDBSettingsRepository implements SettingsRepositoryPort {
 	}
 
 	private parsePortfoliosRecord(raw: unknown): PortfolioDTO[] {
-		if (typeof raw !== 'object' || raw === null) return [];
-		const rec = raw as Record<string, unknown>;
-		const rawItems = rec['items'];
+		if (!isRecord(raw)) return [];
+		const rawItems = raw['items'];
 		if (!Array.isArray(rawItems)) return [];
 
 		const list: PortfolioDTO[] = [];
 		for (const item of rawItems) {
-			if (typeof item !== 'object' || item === null) continue;
-			const p = item as Record<string, unknown>;
-			const id = typeof p['id'] === 'string' ? p['id'] : '';
-			const name = typeof p['name'] === 'string' ? p['name'] : '';
-			if (!id || !name || !p['settings']) continue;
+			if (!isRecord(item)) continue;
+			const id = typeof item['id'] === 'string' ? item['id'] : '';
+			const name = typeof item['name'] === 'string' ? item['name'] : '';
+			if (!id || !name || !item['settings']) continue;
 
-			const parsedSettings = SettingsParser.parseSettings(p['settings']);
+			const parsedSettings = SettingsParser.parseSettings(item['settings']);
 			if (!parsedSettings.ok) continue;
 
 			const ps = parsedSettings.value;
@@ -138,8 +140,8 @@ export class IndexedDBSettingsRepository implements SettingsRepositoryPort {
 				id,
 				name,
 				settings: settingsDto,
-				createdAt: typeof p['createdAt'] === 'string' ? p['createdAt'] : new Date().toISOString(),
-				updatedAt: typeof p['updatedAt'] === 'string' ? p['updatedAt'] : new Date().toISOString()
+				createdAt: typeof item['createdAt'] === 'string' ? item['createdAt'] : new Date().toISOString(),
+				updatedAt: typeof item['updatedAt'] === 'string' ? item['updatedAt'] : new Date().toISOString()
 			});
 		}
 		return list;
@@ -164,9 +166,10 @@ export class IndexedDBSettingsRepository implements SettingsRepositoryPort {
 				return ok(DEFAULT_SETTINGS_DTO);
 			}
 
-			const rawRecord = typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>) : {};
 			const activePortfolioId =
-				typeof rawRecord['activePortfolioId'] === 'string' ? rawRecord['activePortfolioId'] : undefined;
+				isRecord(raw) && typeof raw['activePortfolioId'] === 'string'
+					? raw['activePortfolioId']
+					: undefined;
 
 			const p = parsedResult.value;
 			const dto: SettingsDTO = {
@@ -361,9 +364,8 @@ export class IndexedDBSettingsRepository implements SettingsRepositoryPort {
 		try {
 			const db = await this.getDatabase();
 			const raw = await this.readRecord(db, TUTORIAL_KEY);
-			if (typeof raw === 'object' && raw !== null) {
-				const rec = raw as Record<string, unknown>;
-				return ok(rec['completed'] === true);
+			if (isRecord(raw)) {
+				return ok(raw['completed'] === true);
 			}
 			return ok(false);
 		} catch (error) {

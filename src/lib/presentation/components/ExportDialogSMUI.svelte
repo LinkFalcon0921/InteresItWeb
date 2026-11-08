@@ -72,7 +72,8 @@
 	}
 
 	async function handleFileSelect(e: Event): Promise<void> {
-		const target = e.target as HTMLInputElement;
+		if (!(e.target instanceof HTMLInputElement)) return;
+		const target = e.target;
 		const file = target.files?.[0];
 		if (!file || !currentSimState) return;
 

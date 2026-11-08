@@ -115,4 +115,41 @@ describe('BackupParser (Domain)', () => {
 		if (result.ok) return;
 		expect(result.error.field).toContain('settings');
 	});
+
+	it('should reject duplicate portfolio IDs', () => {
+		const result = BackupParser.parseBackup({
+			...validBackup,
+			portfolios: [
+				{
+					id: 'port-dup',
+					name: 'Portafolio 1',
+					settings: DEFAULT_SETTINGS_DTO,
+					createdAt: '2026-11-08T00:00:00.000Z',
+					updatedAt: '2026-11-08T00:00:00.000Z'
+				},
+				{
+					id: 'port-dup',
+					name: 'Portafolio 2',
+					settings: DEFAULT_SETTINGS_DTO,
+					createdAt: '2026-11-08T00:00:00.000Z',
+					updatedAt: '2026-11-08T00:00:00.000Z'
+				}
+			]
+		});
+		expect(result.ok).toBe(false);
+		if (result.ok) return;
+		expect(result.error.field).toContain('id');
+		expect(result.error.message).toContain('duplicado');
+	});
+
+	it('should fallback activePortfolioId to first portfolio when missing or invalid', () => {
+		const result = BackupParser.parseBackup({
+			...validBackup,
+			activePortfolioId: 'non-existent-id'
+		});
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+		expect(result.value.activePortfolioId).toBe('port-1');
+		expect(result.value.settings.activePortfolioId).toBe('port-1');
+	});
 });

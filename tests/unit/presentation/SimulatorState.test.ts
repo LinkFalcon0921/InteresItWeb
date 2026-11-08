@@ -341,4 +341,24 @@ describe('SimulatorState', () => {
 		const p2 = portfoliosList.find((p) => p.id === 'p-2');
 		expect(p2?.settings.montoInicial).toBe(950);
 	});
+
+	it('resets state to safe defaults and saves them', async () => {
+		const state = createTestState();
+		state.montoInicial = 777777;
+		state.aporteMensual = 8888;
+		state.errorMessage = 'Some custom error';
+
+		await state.resetToSafeDefaults();
+
+		expect(state.montoInicial).toBe(185);
+		expect(state.aporteMensual).toBe(0);
+		expect(state.errorMessage).toBe('');
+	});
+
+	it('returns false on exportCSV when simulation result is missing or outside browser', () => {
+		const state = createTestState();
+		// In node environment without document, exportCSV returns false
+		const res = state.exportCSV();
+		expect(res).toBe(false);
+	});
 });

@@ -21,6 +21,10 @@ test.describe('Portabilidad de Datos & Exportación E2E', () => {
 		const csvTabBtn = page.locator('#tab-btn-csv');
 		await csvTabBtn.click();
 
+		// Seleccionar "all" (Todos los escenarios con columna Escenario)
+		const scenarioSelect = page.locator('#csv-scenario-select');
+		await scenarioSelect.selectOption('all');
+
 		// Descargar CSV
 		const downloadPromise = page.waitForEvent('download');
 		const downloadCsvBtn = page.locator('#btn-download-csv');
@@ -41,9 +45,9 @@ test.describe('Portabilidad de Datos & Exportación E2E', () => {
 		}
 		const csvContent = Buffer.concat(chunks).toString('utf-8');
 
-		// Verificar encabezados exactos del core financiero
+		// Verificar encabezados con columna Escenario
 		expect(csvContent).toContain(
-			'Período,Fecha de Corte,Días,Saldo Inicial,Interés Bruto,Retención Ley 10% (RD),Interés Neto,Aporte Mensual,Saldo Final'
+			'Escenario,Período,Fecha de Corte,Días,Saldo Inicial,Interés Bruto,Retención Ley 10% (RD),Interés Neto,Aporte Mensual,Saldo Final'
 		);
 		// Debe contener datos de cálculo
 		expect(csvContent).toContain('2026-');
@@ -110,5 +114,10 @@ test.describe('Portabilidad de Datos & Exportación E2E', () => {
 
 		// Verificar mensaje de confirmación
 		await expect(page.locator('.status-box-ok')).toContainText('Copia de seguridad restaurada');
+
+		// Esperar que el modal se cierre automáticamente y verificar que el valor fue restaurado en la UI
+		const dialogTitle = page.locator('#export-dialog-title');
+		await expect(dialogTitle).not.toBeVisible({ timeout: 5000 });
+		await expect(montoInput).toHaveValue(String(backupData.settings.montoInicial));
 	});
 });

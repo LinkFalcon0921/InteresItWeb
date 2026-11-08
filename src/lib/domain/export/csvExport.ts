@@ -28,7 +28,7 @@ function formatDecimal(val: number): string {
 
 function escapeCsvCell(cell: string | number): string {
 	const str = String(cell);
-	if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+	if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
 		return `"${str.replace(/"/g, '""')}"`;
 	}
 	return str;
@@ -41,13 +41,13 @@ export function generateProjectionCSV(
 	const periods = simulation.periodos;
 	const summaries = simulation.resumenPorEscenario;
 
-	if (!periods || periods.length === 0) {
-		return CSV_HEADERS.join(',');
-	}
-
 	const targetScenarioId = options?.scenarioId;
 	const isExportAll = targetScenarioId === 'all';
 	const includeScenarioCol = Boolean(options?.includeScenarioColumn ?? isExportAll);
+
+	if (!periods || periods.length === 0) {
+		return includeScenarioCol ? CSV_HEADERS_WITH_SCENARIO.join(',') : CSV_HEADERS.join(',');
+	}
 
 	const rows: string[] = [];
 

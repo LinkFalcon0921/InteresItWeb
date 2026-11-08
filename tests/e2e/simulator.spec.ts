@@ -55,4 +55,22 @@ test.describe('Simulador Financiero E2E', () => {
 		await tabSimulador.click();
 		await expect(page.locator('#panel-simulador')).toBeVisible();
 	});
+
+	test('debe abrir el diálogo de diagnóstico de sistema y mostrar la salud de IndexedDB y Service Worker', async ({ page }) => {
+		const diagBtn = page.locator('#btn-open-diagnostics');
+		await expect(diagBtn).toBeVisible();
+		await diagBtn.click();
+
+		const diagTitle = page.locator('#diag-dialog-title');
+		await expect(diagTitle).toBeVisible();
+
+		// Verificar que los diagnósticos de IndexedDB y Service Worker respondan
+		await expect(page.locator('#diag-idb-status')).toContainText('operativa');
+		await expect(page.locator('#diag-sw-status')).toBeVisible();
+
+		// Cerrar modal
+		const closeBtn = page.locator('.modal-header .close-btn');
+		await closeBtn.click();
+		await expect(diagTitle).not.toBeVisible();
+	});
 });
