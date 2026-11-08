@@ -6,6 +6,11 @@ export default defineConfig({
   test: {
     include: ['tests/unit/**/*.{test,spec}.{js,ts}'],
     globals: true,
-    environment: 'node'
+    environment: 'node',
+    reporters: ['default', 'junit', 'json'],
+    outputFile: {
+      junit: 'reports/vitest/junit.xml',
+      json: 'reports/vitest/results.json'
+    }
   }
 });
