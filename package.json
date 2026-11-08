@@ -13,9 +13,9 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "check:lines": "node scripts/check-lines.js",
-    "smui-theme": "smui-theme compile static/smui.css -i src/theme && smui-theme compile static/smui-dark.css -i src/theme/dark",
-    "smui-theme-light": "smui-theme compile static/smui.css -i src/theme",
-    "smui-theme-dark": "smui-theme compile static/smui-dark.css -i src/theme/dark"
+    "smui-theme": "node scripts/compile-theme.js",
+    "smui-theme-light": "node scripts/compile-theme.js",
+    "smui-theme-dark": "node scripts/compile-theme.js"
   },
   "dependencies": {
     "@fontsource/public-sans": "^5.2.5",
