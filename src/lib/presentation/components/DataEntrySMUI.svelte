@@ -1,8 +1,8 @@
 <script lang="ts">
-	import Switch from '@smui/switch';
 	import type { SimulatorState } from '../state/SimulatorState.svelte';
 	import QuickChips from './QuickChips.svelte';
 	import AportesExtraordinariosSMUI from './AportesExtraordinariosSMUI.svelte';
+	import M3WheelSwitch from './M3WheelSwitch.svelte';
 
 	interface Props {
 		state: SimulatorState;
@@ -139,22 +139,34 @@
 		/>
 	</div>
 
-	<!-- Switches de Reglas Bancarias y Fiscales -->
+	<!-- Reglas Bancarias y Fiscales con M3 Wheel Switch -->
 	<div class="switches-section">
 		<div class="switch-row">
 			<div class="switch-info">
-				<span class="switch-title">Omitir 1º corte parcial</span>
+				<span class="switch-title">1º corte parcial</span>
 				<span class="switch-desc">Si el 1º ciclo no completa el mes</span>
 			</div>
-			<Switch bind:checked={state.omitirPrimerCorte} />
+			<M3WheelSwitch
+				bind:checked={state.omitirPrimerCorte}
+				offLabel="Normal"
+				onLabel="Omitir"
+				id="switch-omitir-primer-corte"
+				ariaLabel="Omitir primer corte parcial si no completa el mes"
+			/>
 		</div>
 
 		<div class="switch-row">
 			<div class="switch-info">
-				<span class="switch-title">Retención Fiscal (10% RD)</span>
-				<span class="switch-desc">Deducción de ley sobre intereses</span>
+				<span class="switch-title">Retención Fiscal</span>
+				<span class="switch-desc">Deducción 10% ley República Dominicana</span>
 			</div>
-			<Switch bind:checked={state.aplicarImpuesto} />
+			<M3WheelSwitch
+				bind:checked={state.aplicarImpuesto}
+				offLabel="Exento (0%)"
+				onLabel="10% RD"
+				id="switch-aplicar-impuesto"
+				ariaLabel="Aplicar retención fiscal del 10% ley República Dominicana"
+			/>
 		</div>
 	</div>
 
@@ -214,7 +226,9 @@
 		color: #14201f;
 		font-variant-numeric: tabular-nums;
 		outline: none;
-		transition: all 0.2s ease;
+		transition: border-color 0.2s cubic-bezier(0.2, 0, 0, 1),
+			box-shadow 0.2s cubic-bezier(0.2, 0, 0, 1),
+			background-color 0.2s ease;
 	}
 
 	.terminal-input:focus {
@@ -235,7 +249,7 @@
 		margin-top: 8px;
 		display: flex;
 		flex-direction: column;
-		gap: 14px;
+		gap: 12px;
 	}
 
 	.switch-row {
@@ -243,22 +257,27 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 12px;
+		padding: 6px 0;
 	}
 
 	.switch-info {
 		display: flex;
 		flex-direction: column;
+		flex: 1;
+		min-width: 0;
 	}
 
 	.switch-title {
 		font-size: 0.8125rem;
-		font-weight: 600;
+		font-weight: 700;
 		color: #14201f;
+		line-height: 1.25;
 	}
 
 	.switch-desc {
 		font-size: 0.6875rem;
 		color: #5e6b6a;
+		margin-top: 2px;
 	}
 
 	:global(html.dark) .data-entry-panel,

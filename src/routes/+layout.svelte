@@ -18,6 +18,18 @@
 {@render children?.()}
 
 <style>
+	/* Material Design 3 (M3) Expressive Motion Tokens */
+	:global(:root) {
+		--m3-sys-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+		--m3-sys-motion-easing-emphasized: cubic-bezier(0.2, 0, 0, 1);
+		--m3-sys-motion-easing-emphasized-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
+		--m3-sys-motion-easing-emphasized-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
+		--m3-sys-motion-easing-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+		--m3-sys-motion-duration-short: 200ms;
+		--m3-sys-motion-duration-medium: 350ms;
+		--m3-sys-motion-duration-long: 500ms;
+	}
+
 	/* Scrollbars Modernos y Fluidos (Light & Dark) */
 	:global(*) {
 		scrollbar-width: thin;
