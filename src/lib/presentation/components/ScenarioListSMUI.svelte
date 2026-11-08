@@ -89,19 +89,42 @@
 	:global(.add-scenario-btn) {
 		border-color: #004851 !important;
 		color: #004851 !important;
-		border-radius: 8px !important;
+		border-radius: 10px !important;
+		font-weight: 700 !important;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+		transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 	}
 
+	:global(.add-scenario-btn:hover) {
+		background-color: rgba(0, 72, 81, 0.08) !important;
+		box-shadow: 0 3px 8px rgba(0, 72, 81, 0.15) !important;
+		transform: translateY(-1px);
+	}
+
+	:global(.add-scenario-btn:active) {
+		transform: translateY(0);
+		box-shadow: 0 1px 2px rgba(0, 72, 81, 0.1) !important;
+	}
+
+	:global(html.dark) .section-title,
 	:global(.dark) .section-title {
 		color: #e7eef8;
 	}
 
+	:global(html.dark) .section-subtitle,
 	:global(.dark) .section-subtitle {
 		color: #a3b0c6;
 	}
 
+	:global(html.dark) :global(.add-scenario-btn),
 	:global(.dark) :global(.add-scenario-btn) {
-		border-color: #7fd1d8 !important;
-		color: #7fd1d8 !important;
+		border-color: #10b981 !important;
+		color: #10b981 !important;
+	}
+
+	:global(html.dark) :global(.add-scenario-btn:hover),
+	:global(.dark) :global(.add-scenario-btn:hover) {
+		background-color: rgba(16, 185, 129, 0.15) !important;
+		box-shadow: 0 3px 8px rgba(16, 185, 129, 0.25) !important;
 	}
 </style>

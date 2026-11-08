@@ -18,6 +18,58 @@
 {@render children?.()}
 
 <style>
+	/* Scrollbars Modernos y Fluidos (Light & Dark) */
+	:global(*) {
+		scrollbar-width: thin;
+		scrollbar-color: #cbd5e1 transparent;
+	}
+
+	:global(::-webkit-scrollbar) {
+		width: 7px;
+		height: 7px;
+	}
+
+	:global(::-webkit-scrollbar-track) {
+		background: transparent;
+	}
+
+	:global(::-webkit-scrollbar-thumb) {
+		background: #cbd5e1;
+		border-radius: 9999px;
+		border: 1px solid transparent;
+		background-clip: padding-box;
+		transition: background-color 0.2s ease;
+	}
+
+	:global(::-webkit-scrollbar-thumb:hover) {
+		background: #10b981;
+	}
+
+	:global(html.dark *) {
+		scrollbar-color: #334155 transparent;
+	}
+
+	:global(html.dark ::-webkit-scrollbar-thumb) {
+		background: #334155;
+	}
+
+	:global(html.dark ::-webkit-scrollbar-thumb:hover) {
+		background: #10b981;
+	}
+
+	/* Ocultar flechas nativas toscas de inputs de tipo number */
+	:global(input[type='number']::-webkit-inner-spin-button),
+	:global(input[type='number']::-webkit-outer-spin-button) {
+		-webkit-appearance: none;
+		margin: 0;
+	}
+
+	:global(input[type='number']) {
+		-moz-appearance: textfield;
+		appearance: textfield;
+	}
+
+	/* Material Design Snackbar */
 	:global(.mdc-snackbar) {
 		position: fixed !important;
 		bottom: 24px !important;

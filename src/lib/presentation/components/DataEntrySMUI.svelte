@@ -207,14 +207,14 @@
 		box-sizing: border-box;
 		background: #f6f8fb;
 		border: 1px solid #d5dedc;
-		border-radius: 8px;
-		padding: 10px 12px;
+		border-radius: 10px;
+		padding: 10px 14px;
 		font-size: 0.9375rem;
 		font-weight: 600;
 		color: #14201f;
 		font-variant-numeric: tabular-nums;
 		outline: none;
-		transition: border-color 0.15s ease;
+		transition: all 0.2s ease;
 	}
 
 	.terminal-input:focus {
@@ -261,44 +261,54 @@
 		color: #5e6b6a;
 	}
 
+	:global(html.dark) .data-entry-panel,
 	:global(.dark) .data-entry-panel {
 		background: #131c30;
 		border-color: #26334e;
 	}
 
+	:global(html.dark) .panel-title,
 	:global(.dark) .panel-title {
 		color: #e7eef8;
-		border-bottom-color: #7fd1d8;
+		border-bottom-color: #10b981;
 	}
 
+	:global(html.dark) .field-label,
 	:global(.dark) .field-label {
 		color: #a3b0c6;
 	}
 
+	:global(html.dark) .field-currency,
+	:global(html.dark) .field-helper,
 	:global(.dark) .field-currency,
 	:global(.dark) .field-helper {
-		color: #7fd1d8;
+		color: #10b981;
 	}
 
+	:global(html.dark) .terminal-input,
 	:global(.dark) .terminal-input {
 		background: #0b1120;
 		border-color: #26334e;
 		color: #e7eef8;
 	}
 
+	:global(html.dark) .terminal-input:focus,
 	:global(.dark) .terminal-input:focus {
-		border-color: #7fd1d8;
-		box-shadow: 0 0 0 3px rgba(127, 209, 216, 0.2);
+		border-color: #10b981;
+		box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
 	}
 
+	:global(html.dark) .switches-section,
 	:global(.dark) .switches-section {
 		border-top-color: #1e293b;
 	}
 
+	:global(html.dark) .switch-title,
 	:global(.dark) .switch-title {
 		color: #e7eef8;
 	}
 
+	:global(html.dark) .switch-desc,
 	:global(.dark) .switch-desc {
 		color: #a3b0c6;
 	}
