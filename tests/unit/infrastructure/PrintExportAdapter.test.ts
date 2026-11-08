@@ -96,20 +96,40 @@ describe('PrintExportAdapter', () => {
 		expect(mockWindow.document.title).toBe('Base');
 	});
 
-	it('captures and returns errors if window.print() throws', async () => {
+	it('uses generated fallback title when periods list is empty', async () => {
+		let titleDuringPrint = '';
 		const mockWindow = {
 			document: { title: 'Base' },
 			print: vi.fn(() => {
-				throw new Error('Permiso de impresión denegado');
+				titleDuringPrint = mockWindow.document.title;
+			})
+		} as unknown as Window;
+
+		const emptyOutput: SimulationOutputDTO = {
+			...mockOutput,
+			periodos: []
+		};
+
+		const adapter = new PrintExportAdapter(mockWindow);
+		const result = await adapter.exportReport(emptyOutput);
+
+		expect(result.ok).toBe(true);
+		expect(titleDuringPrint).toBe('InteresIt_Reporte_inicio_fin');
+		expect(mockWindow.document.title).toBe('Base');
+	});
+
+	it('restores document title even if window.print throws during exportReport()', async () => {
+		const mockWindow = {
+			document: { title: 'Base Original' },
+			print: vi.fn(() => {
+				throw new Error('Error al imprimir');
 			})
 		} as unknown as Window;
 
 		const adapter = new PrintExportAdapter(mockWindow);
-		const result = await adapter.printReport();
+		const result = await adapter.exportReport(mockOutput, { fileName: 'Reporte_Test' });
 
 		expect(result.ok).toBe(false);
-		if (!result.ok) {
-			expect(result.error.message).toBe('Permiso de impresión denegado');
-		}
+		expect(mockWindow.document.title).toBe('Base Original');
 	});
 });

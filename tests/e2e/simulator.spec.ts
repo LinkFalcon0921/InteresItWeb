@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Simulador Financiero E2E', () => {
 	test.beforeEach(async ({ page }) => {
+		await page.setViewportSize({ width: 1280, height: 720 });
 		await page.goto('/');
 		await page.waitForLoadState('domcontentloaded');
 	});
@@ -21,10 +22,14 @@ test.describe('Simulador Financiero E2E', () => {
 		await aporteInput.fill('15000');
 		await aporteInput.dispatchEvent('input');
 
-		// Verificar que el Hero Card refleje el saldo estimado y ganancia
+		// Verificar que el Hero Card refleje el saldo estimado y ganancia con formato de moneda exacto
 		const heroCard = page.locator('#tour-hero');
 		await expect(heroCard).toBeVisible();
-		await expect(heroCard).toContainText('RD$');
+		const balanceAmount = page.locator('#tour-hero .balance-amount');
+		await expect(balanceAmount).toBeVisible();
+		await expect(balanceAmount).toHaveText(/(?:RD)?\$\s*[\d,]+\.\d{2}/);
+		const netProfit = page.locator('#tour-hero .yield-value');
+		await expect(netProfit).toHaveText(/(?:RD)?\$\s*[\d,]+\.\d{2}/);
 	});
 
 	test('debe permitir agregar un nuevo escenario y actualizar la comparativa', async ({ page }) => {
@@ -72,5 +77,81 @@ test.describe('Simulador Financiero E2E', () => {
 		const closeBtn = page.locator('.modal-header .close-btn');
 		await closeBtn.click();
 		await expect(diagTitle).not.toBeVisible();
+	});
+
+	test('debe operar 100% offline tras la carga inicial sin perder reactividad', async ({ context, page }) => {
+		// Simular pérdida de conexión de red
+		await context.setOffline(true);
+
+		const montoInput = page.locator('.desktop-sidebar #monto-inicial-input');
+		await montoInput.fill('250000');
+		await montoInput.dispatchEvent('input');
+
+		// El hero card debe actualizarse reactivamente en memoria sin llamadas de red
+		const balanceAmount = page.locator('#tour-hero .balance-amount');
+		await expect(balanceAmount).toBeVisible();
+		await expect(balanceAmount).toHaveText(/(?:RD)?\$\s*[\d,]+\.\d{2}/);
+
+		// Cambiar a comparativa y reporte en modo offline
+		const tabComparativa = page.locator('#tab-comparativa');
+		await tabComparativa.click();
+		await expect(page.locator('#panel-comparativa')).toBeVisible();
+
+		// Restaurar conectividad
+		await context.setOffline(false);
+	});
+
+	test('debe abrir y operar el panel de parámetros móvil en viewport pequeño (375x667)', async ({ page }) => {
+		await page.setViewportSize({ width: 375, height: 667 });
+
+		const menuBtn = page.locator('.mobile-menu-btn');
+		await expect(menuBtn).toBeVisible();
+		await menuBtn.click();
+
+		// El drawer modal debe desplegarse
+		const drawer = page.locator('.parameters-drawer');
+		await expect(drawer).toBeVisible();
+
+		// Modificar monto en drawer
+		const mobileInput = drawer.locator('#monto-inicial-input');
+		await mobileInput.fill('750000');
+		await mobileInput.dispatchEvent('input');
+
+		// Cerrar drawer
+		const closeDrawerBtn = page.locator('.close-drawer-btn');
+		await closeDrawerBtn.click();
+
+		// El hero card debe reflejar el cambio
+		const balanceAmount = page.locator('#tour-hero .balance-amount');
+		await expect(balanceAmount).toBeVisible();
+		await expect(balanceAmount).toHaveText(/(?:RD)?\$\s*[\d,]+\.\d{2}/);
+	});
+
+	test('debe generar enlace para compartir y restaurar parámetros desde hash de URL (#sim=...)', async ({ page }) => {
+		const exportBtn = page.locator('#tour-export');
+		await exportBtn.click();
+
+		const shareTabBtn = page.locator('#tab-btn-share');
+		await shareTabBtn.click();
+
+		const shareInput = page.locator('#share-url-input');
+		await expect(shareInput).toBeVisible();
+		const shareUrl = await shareInput.inputValue();
+		expect(shareUrl).toContain('#sim=');
+
+		const copyBtn = page.locator('#btn-copy-share-url');
+		await expect(copyBtn).toBeVisible();
+
+		// Cerrar modal
+		const closeBtn = page.locator('.modal-header .close-btn');
+		await closeBtn.click();
+
+		// Extraer el hash y navegar a él
+		const hash = shareUrl.substring(shareUrl.indexOf('#sim='));
+		await page.goto(`/${hash}`);
+		await page.waitForLoadState('domcontentloaded');
+
+		const heroCard = page.locator('#tour-hero');
+		await expect(heroCard).toBeVisible();
 	});
 });

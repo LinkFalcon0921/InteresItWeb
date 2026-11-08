@@ -10,9 +10,11 @@ export * from './value-objects/Money';
 export * from './value-objects/InterestRate';
 export * from './value-objects/CalendarDate';
 export * from './value-objects/CutoffDay';
+export * from './value-objects/InflationRate';
 
 // Entities
 export * from './entities/InvestmentScenario';
+export * from './entities/AporteExtraordinario';
 export * from './entities/PeriodCalculation';
 export * from './entities/SimulationResult';
 

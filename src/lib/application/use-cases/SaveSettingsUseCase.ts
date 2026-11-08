@@ -47,6 +47,15 @@ export class SaveSettingsUseCase {
 				omitirPrimerCorte: parsed.omitirPrimerCorte,
 				aplicarImpuesto: parsed.aplicarImpuesto,
 				isDarkMode: parsed.isDarkMode,
+				tasaInflacion: parsed.tasaInflacion ? parsed.tasaInflacion.percentage : 0,
+				aportesExtraordinarios: parsed.aportesExtraordinarios
+					? parsed.aportesExtraordinarios.map((a) => ({
+							id: a.id,
+							monto: a.monto.amount,
+							fecha: a.fecha.iso,
+							descripcion: a.descripcion
+						}))
+					: [],
 				inversiones: parsed.inversiones.map((inv) => ({
 					id: inv.id,
 					nombre: inv.nombre,

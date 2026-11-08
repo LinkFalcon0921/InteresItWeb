@@ -1,3 +1,5 @@
+import type { AporteExtraordinarioDTO } from './AporteExtraordinarioDTO';
+
 export interface ScenarioInputDTO {
 	readonly id: string;
 	readonly nombre: string;
@@ -13,5 +15,7 @@ export interface SimulationInputDTO {
 	readonly diaCorte: number;
 	readonly omitirPrimerCorte?: boolean;
 	readonly aplicarImpuestoRD?: boolean;
+	readonly tasaInflacion?: number;
+	readonly aportesExtraordinarios?: readonly AporteExtraordinarioDTO[];
 	readonly escenarios: readonly ScenarioInputDTO[];
 }

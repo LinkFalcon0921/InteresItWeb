@@ -6,7 +6,9 @@ export interface ScenarioPeriodResultDTO {
 	readonly interesBruto: number;
 	readonly interesNeto: number;
 	readonly aporte: number;
+	readonly aporteExtraordinario?: number;
 	readonly balanceFinal: number;
+	readonly balanceReal?: number;
 	readonly isSkipped: boolean;
 }
 
@@ -23,6 +25,8 @@ export interface ScenarioSummaryDTO {
 	readonly escenarioId: string;
 	readonly nombre: string;
 	readonly balanceFinal: number;
+	readonly balanceReal?: number;
+	readonly tasaRealAnual?: number;
 	readonly interesTotalNeto: number;
 	readonly rendimientoNeto: number;
 	readonly rol: ScenarioRole;
@@ -32,7 +36,9 @@ export interface SimulationOutputDTO {
 	readonly capitalInicial: number;
 	readonly aporteMensual: number;
 	readonly totalAportado: number;
+	readonly totalExtraordinario?: number;
 	readonly totalInvertido: number;
+	readonly tasaInflacion?: number;
 	readonly periodos: readonly PeriodCalculationDTO[];
 	readonly resumenPorEscenario: readonly ScenarioSummaryDTO[];
 	readonly escenarioLiderId: string;

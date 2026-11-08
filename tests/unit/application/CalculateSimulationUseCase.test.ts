@@ -43,8 +43,8 @@ describe('CalculateSimulationUseCase Unit Tests', () => {
 		const summary1 = dto.resumenPorEscenario.find((s) => s.escenarioId === 'inv-1');
 		const summary2 = dto.resumenPorEscenario.find((s) => s.escenarioId === 'inv-2');
 
-		expect(summary1).toBeDefined();
-		expect(summary2).toBeDefined();
+		expect(summary1?.escenarioId).toBe('inv-1');
+		expect(summary2?.escenarioId).toBe('inv-2');
 
 		if (summary1 && summary2) {
 			expect(summary1.rol).toBe(ScenarioRole.Challenger);
@@ -55,7 +55,7 @@ describe('CalculateSimulationUseCase Unit Tests', () => {
 
 		// First period checks
 		const firstPeriod = dto.periodos[0];
-		expect(firstPeriod).toBeDefined();
+		expect(firstPeriod?.periodoIndex).toBe(1);
 		if (firstPeriod) {
 			expect(firstPeriod.periodoIndex).toBe(1);
 			expect(firstPeriod.fechaInicio).toBe('2026-04-17');

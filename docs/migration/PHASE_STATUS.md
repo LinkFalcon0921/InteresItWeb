@@ -152,27 +152,33 @@
 - **Entregables Completados:**
   - [x] Configuración de infraestructura E2E (`playwright.config.ts`): integración con `@playwright/test` en Chromium, servidor web preview integrado en el puerto 4173 (`timeout: 60s`).
   - [x] Especificaciones de prueba (`tests/e2e/`):
-    - `simulator.spec.ts`: carga inicial de la terminal, cálculo reactivo en cambios de capital/aporte, adición y comparación de escenarios dinámicos, navegación fluida entre pestañas.
+    - `simulator.spec.ts`: carga institucional, validación de moneda exacta (DOP / `$`), adición y comparativa de escenarios, navegación entre pestañas, diagnóstico de salud, resiliencia offline 100% (`context.setOffline(true)`), operación en drawer móvil (`375x667`), y generación y restauración de simulación mediante enlace Base64 URL-safe (`#sim=...`).
     - `portfolio.spec.ts`: creación de portafolios, alternancia de portafolio activo, renombrado en línea y eliminación de portafolios con actualización reactiva en el encabezado.
-    - `data-portability.spec.ts`: descarga y validación de encabezados del archivo CSV mensual, y ciclo completo de descarga de backup JSON y restauración con validación de integridad.
+    - `data-portability.spec.ts`: descarga y validación de encabezados del archivo CSV mensual, descarga de backup JSON, restauración íntegra y rechazo controlado de archivos de backup corruptos sin caídas de la aplicación.
   - [x] Scripts y CI/CD: script `"test:e2e": "playwright test"` integrado en `package.json` y flujo automatizado en `.github/workflows/ci.yml`.
-  - [x] Ejecución: 7 pruebas E2E pasando exitosamente en 9.4 segundos.
+  - [x] Ejecución: 12 pruebas E2E pasando exitosamente.
 - **Estado:** COMPLETED.
 
-### FASE 14 — Production Resilience & Client Diagnostics
-- **Objetivo:** Elevar la resiliencia en tiempo de ejecución del cliente Svelte 5 y proveer diagnósticos transparentes sobre el estado del almacenamiento IndexedDB, Service Worker PWA y salud general del sistema.
+### FASE 14 — Production Resilience, Client Diagnostics & QA Remediation
+- **Objetivo:** Elevar la resiliencia en tiempo de ejecución del cliente Svelte 5, proveer diagnósticos transparentes sobre el almacenamiento IndexedDB y Service Worker PWA, e implementar capacidades de cálculo avanzado (Inflación de Fisher, Aportes Extraordinarios y Enlace Compartir URL).
 - **Entregables Completados:**
-  - [x] Error Boundary Svelte 5 (`<svelte:boundary>`): implementado en `src/routes/+page.svelte` con snippet `#snippet failed(error, reset)` presentando una tarjeta institucional de recuperación que aísla excepciones no controladas y ofrece los botones "Restaurar estado seguro" y "Recargar aplicación".
-  - [x] Modal de Diagnósticos del Cliente (`DiagnosticsDialogSMUI.svelte`): visualización de estado en tiempo real del Service Worker (activo, instalado, no soportado), cuota y uso de almacenamiento en IndexedDB vía `navigator.storage.estimate()`, versión del sistema (v2.2.0) y botón para forzar sincronización del estado.
-  - [x] Integración en Header (`HeaderSMUI.svelte`): botón institucional `🔧 Diagnóstico` permitiendo al usuario auditar la salud del cliente en cualquier momento.
-  - [x] Método de recuperación segura: `simState.resetToSafeDefaults()` garantizando el restablecimiento de configuraciones estables sin pérdida de datos no corruptos.
+  - [x] Error Boundary Svelte 5 (`<svelte:boundary>`): implementado en `src/routes/+page.svelte` con snippet `#snippet failed(error, reset)` y suite unitaria dedicada `tests/unit/presentation/BoundaryRecovery.test.ts` verificando el reinicio a valores seguros estables.
+  - [x] Modal de Diagnósticos del Cliente (`DiagnosticsDialogSMUI.svelte`): visualización de estado en tiempo real del Service Worker, cuota y uso de almacenamiento en IndexedDB vía `navigator.storage.estimate()`, versión del sistema (v2.2.0) y sincronización de estado.
+  - [x] Ciclo de Vida Multi-Pestaña IndexedDB (`IndexedDBSettingsRepository.ts`): gestión de eventos `onblocked`, `onversionchange`, y método `close()`.
+  - [x] Test Harness de Transacciones Reales con `fake-indexeddb`: pruebas de repositorio y contratos de `SettingsRepositoryPort` sin mocks artificiales (`IndexedDBSettingsRepository.test.ts`).
+  - [x] Eliminación de Mocks Duplicados: creación de `tests/fakes/FakeSettingsRepository.ts` como doble de prueba canónico tipado.
+  - [x] Fortalecimiento de Aserciones: eliminación de chequeos superficiales `toBeDefined()` en favor de valores exactos al centavo (`simular.test.ts:84`, `simular.test.ts:108`, `CalculateSimulationUseCase.test.ts`, `PortfolioUseCases.test.ts`, `SettingsUseCases.test.ts`).
+  - [x] Inflación según la Ecuación de Fisher: Value Object `InflationRate`, tasa real $r_{\text{real}} = \frac{1 + r_{\text{nominal}}}{1 + i} - 1$, cálculo de poder adquisitivo deflactado en `simular.ts`, y visualización en `HeroCardSMUI.svelte` y `DataEntrySMUI.svelte`.
+  - [x] Aportes Extraordinarios Programados: entidad `AporteExtraordinario`, integración en ciclo de simulación y componente `AportesExtraordinariosSMUI.svelte`.
+  - [x] Enlace Compartir en URL Base64 URL-safe: servicio `ShareUrlCodec`, sincronización con `#sim=...`, y pestaña de compartir con copiado rápido en `ExportDialogSMUI.svelte`.
+  - [x] Convención Bancaria Oficial: ADR-004 formalizada con base 365 días calendario exactos en `simular.ts` y documentada en `AGENTS.md §1.2`.
 - **Estado:** COMPLETED.
 
 ---
 
 ## 3. Estado del Proyecto y Cierre de Migración
 - **Estado Global:** FASES 0 A 9 Y FASES 11, 12, 13, 14 COMPLETADAS (Fase 10 estrictamente en pausa / on hold).
-- **Pruebas Automatizadas:** 168 pruebas unitarias pasando al 100% en Vitest + 8 pruebas E2E pasando al 100% en Playwright.
-- **Calidad de Código:** 0 errores y 0 advertencias en `svelte-check`, 0 archivos excediendo límites de líneas (máximo 600, alerta 450).
+- **Pruebas Automatizadas:** 179 pruebas unitarias pasando al 100% en Vitest (19 archivos de prueba) + 12 pruebas E2E pasando al 100% en Playwright.
+- **Calidad de Código:** 0 errores en `svelte-check`, 0 archivos excediendo límites de líneas (máximo 600, alerta 450).
 - **Despliegue:** Preparado y verificado para despliegue automatizado en GitHub Pages vía Node 24 y SvelteKit adapter-static con pipeline de CI que incluye Vitest y Playwright.
 

@@ -22,8 +22,18 @@
 	let snackbar: Snackbar | null = $state(null);
 
 	onMount(async () => {
-		await simState.loadFromStorage();
+		if (typeof window !== 'undefined' && window.location.hash.includes('#sim=')) {
+			simState.loadFromUrlHash(window.location.hash);
+		} else {
+			await simState.loadFromStorage();
+		}
 	});
+
+	function handleHashChange(): void {
+		if (typeof window !== 'undefined' && window.location.hash.includes('#sim=')) {
+			simState.loadFromUrlHash(window.location.hash);
+		}
+	}
 
 	$effect(() => {
 		if (simState.saveNotificationVisible && snackbar) {
@@ -39,6 +49,8 @@
 		{ id: 'reporte', label: 'Tabla de Proyección', icon: '📋' }
 	];
 </script>
+
+<svelte:window onhashchange={handleHashChange} />
 
 <svelte:head>
 	<title>InteresIt — Terminal Financiera Multi-Escenario</title>

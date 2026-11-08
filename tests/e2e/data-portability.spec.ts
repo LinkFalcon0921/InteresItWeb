@@ -120,4 +120,28 @@ test.describe('Portabilidad de Datos & Exportación E2E', () => {
 		await expect(dialogTitle).not.toBeVisible({ timeout: 5000 });
 		await expect(montoInput).toHaveValue(String(backupData.settings.montoInicial));
 	});
+
+	test('debe rechazar archivo de backup corrupto mostrando error sin provocar caída de la app', async ({ page }) => {
+		const exportBtn = page.locator('#tour-export');
+		await exportBtn.click();
+
+		const backupTabBtn = page.locator('#tab-btn-backup');
+		await backupTabBtn.click();
+
+		const fileInput = page.locator('#backup-file-input');
+		await fileInput.setInputFiles({
+			name: 'corrupted_backup.json',
+			mimeType: 'application/json',
+			buffer: Buffer.from('{"corrupted": true, "inversiones": "invalid_payload"}')
+		});
+
+		// Debe mostrar caja de estado de error
+		const statusBoxError = page.locator('.status-box-error');
+		await expect(statusBoxError).toBeVisible();
+
+		// La interfaz sigue activa y permite cerrar
+		const closeBtn = page.locator('.modal-header .close-btn');
+		await closeBtn.click();
+		await expect(page.locator('#export-dialog-title')).not.toBeVisible();
+	});
 });

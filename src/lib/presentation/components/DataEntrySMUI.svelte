@@ -2,6 +2,7 @@
 	import Switch from '@smui/switch';
 	import type { SimulatorState } from '../state/SimulatorState.svelte';
 	import QuickChips from './QuickChips.svelte';
+	import AportesExtraordinariosSMUI from './AportesExtraordinariosSMUI.svelte';
 
 	interface Props {
 		state: SimulatorState;
@@ -30,6 +31,13 @@
 		if (Number.isFinite(val)) {
 			state.diaCorte = Math.min(31, Math.max(1, val));
 		}
+	}
+
+	function handleInflacionInput(event: Event): void {
+		if (!(event.target instanceof HTMLInputElement)) return;
+		const target = event.target;
+		const val = parseFloat(target.value);
+		state.tasaInflacion = Number.isFinite(val) ? Math.min(100, Math.max(0, val)) : 0;
 	}
 </script>
 
@@ -112,6 +120,25 @@
 		/>
 	</div>
 
+	<!-- Inflación Estimada (Fisher) -->
+	<div class="field-group">
+		<label class="field-label" for="tasa-inflacion-input">
+			<span>Inflación Anual Estimada (Fisher)</span>
+			<span class="field-helper">% anual</span>
+		</label>
+		<input
+			id="tasa-inflacion-input"
+			type="number"
+			class="terminal-input"
+			min="0"
+			max="100"
+			step="0.1"
+			placeholder="0.0"
+			value={state.tasaInflacion}
+			oninput={handleInflacionInput}
+		/>
+	</div>
+
 	<!-- Switches de Reglas Bancarias y Fiscales -->
 	<div class="switches-section">
 		<div class="switch-row">
@@ -130,6 +157,9 @@
 			<Switch bind:checked={state.aplicarImpuesto} />
 		</div>
 	</div>
+
+	<!-- Aportes Extraordinarios Programados -->
+	<AportesExtraordinariosSMUI {state} />
 </div>
 
 <style>

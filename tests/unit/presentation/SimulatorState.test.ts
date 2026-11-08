@@ -355,6 +355,41 @@ describe('SimulatorState', () => {
 		expect(state.errorMessage).toBe('');
 	});
 
+	it('manages scheduled extraordinary contributions dynamically', () => {
+		const state = createTestState();
+		expect(state.aportesExtraordinarios).toHaveLength(0);
+
+		state.addAporteExtraordinario(50000, '2026-07-01', 'Bono Vacacional');
+		expect(state.aportesExtraordinarios).toHaveLength(1);
+		expect(state.aportesExtraordinarios[0]?.monto).toBe(50000);
+		expect(state.aportesExtraordinarios[0]?.descripcion).toBe('Bono Vacacional');
+
+		const id = state.aportesExtraordinarios[0]!.id;
+		state.removeAporteExtraordinario(id);
+		expect(state.aportesExtraordinarios).toHaveLength(0);
+	});
+
+	it('generates share URL and restores simulation state from hash', () => {
+		const state = createTestState();
+		state.montoInicial = 350000;
+		state.aporteMensual = 15000;
+		state.tasaInflacion = 4.5;
+		state.addAporteExtraordinario(40000, '2026-09-15', 'Regalía');
+
+		const shareUrl = state.getShareUrl();
+		expect(shareUrl).toContain('#sim=');
+
+		const receiverState = createTestState();
+		const loaded = receiverState.loadFromUrlHash(shareUrl);
+		expect(loaded).toBe(true);
+
+		expect(receiverState.montoInicial).toBe(350000);
+		expect(receiverState.aporteMensual).toBe(15000);
+		expect(receiverState.tasaInflacion).toBe(4.5);
+		expect(receiverState.aportesExtraordinarios).toHaveLength(1);
+		expect(receiverState.aportesExtraordinarios[0]?.descripcion).toBe('Regalía');
+	});
+
 	it('returns false on exportCSV when simulation result is missing or outside browser', () => {
 		const state = createTestState();
 		// In node environment without document, exportCSV returns false

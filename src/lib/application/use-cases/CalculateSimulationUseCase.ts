@@ -1,4 +1,5 @@
 import {
+	AporteExtraordinario,
 	err,
 	FinancialInputParser,
 	InvalidDateRangeError,
@@ -97,6 +98,28 @@ export class CalculateSimulationUseCase {
 			return err(new InvalidScenarioError('Debe proporcionar al menos un escenario de inversión válido.'));
 		}
 
+		const tasaInflacion = typeof input['tasaInflacion'] === 'number' && Number.isFinite(input['tasaInflacion'])
+			? Math.max(0, input['tasaInflacion'])
+			: 0;
+
+		const rawAportes = input['aportesExtraordinarios'];
+		const domainAportes: AporteExtraordinario[] = [];
+		if (Array.isArray(rawAportes)) {
+			for (let i = 0; i < rawAportes.length; i++) {
+				const item = rawAportes[i];
+				if (!isRecord(item)) continue;
+				const id = typeof item['id'] === 'string' && item['id'].trim().length > 0
+					? item['id'].trim()
+					: `extra-${i + 1}`;
+				const montoRes = FinancialInputParser.parseMoney(item['monto'], `aportesExtraordinarios[${i}].monto`);
+				if (!montoRes.ok) continue;
+				const fechaRes = FinancialInputParser.parseCalendarDate(item['fecha'], `aportesExtraordinarios[${i}].fecha`);
+				if (!fechaRes.ok) continue;
+				const desc = typeof item['descripcion'] === 'string' ? item['descripcion'].trim() : undefined;
+				domainAportes.push(AporteExtraordinario.create(id, montoRes.value, fechaRes.value, desc));
+			}
+		}
+
 		try {
 			const domainResult = simular({
 				capitalInicial: capitalResult.value,
@@ -106,6 +129,8 @@ export class CalculateSimulationUseCase {
 				diaCorte: diaCorteResult.value,
 				omitirPrimerCorte: omitirResult.value,
 				aplicarImpuestoRD: impuestoResult.value,
+				tasaInflacion,
+				aportesExtraordinarios: domainAportes,
 				escenarios: domainEscenarios
 			});
 
@@ -124,7 +149,9 @@ export class CalculateSimulationUseCase {
 				interesBruto: r.interesBruto.amount,
 				interesNeto: r.interesNeto.amount,
 				aporte: r.aporte.amount,
+				aporteExtraordinario: r.aporteExtraordinario?.amount ?? 0,
 				balanceFinal: r.balanceFinal.amount,
+				balanceReal: r.balanceReal?.amount,
 				isSkipped: r.isSkipped
 			}));
 
@@ -142,6 +169,8 @@ export class CalculateSimulationUseCase {
 			escenarioId: s.escenarioId,
 			nombre: s.nombre,
 			balanceFinal: s.balanceFinal.amount,
+			balanceReal: s.balanceReal?.amount,
+			tasaRealAnual: s.tasaRealAnual,
 			interesTotalNeto: s.interesTotalNeto.amount,
 			rendimientoNeto: s.rendimientoNeto.amount,
 			rol: s.rol
@@ -151,7 +180,9 @@ export class CalculateSimulationUseCase {
 			capitalInicial: result.capitalInicial.amount,
 			aporteMensual: result.aporteMensual.amount,
 			totalAportado: result.totalAportado.amount,
+			totalExtraordinario: result.totalExtraordinario?.amount ?? 0,
 			totalInvertido: result.totalInvertido.amount,
+			tasaInflacion: result.tasaInflacion?.percentage ?? 0,
 			periodos,
 			resumenPorEscenario,
 			escenarioLiderId: result.escenarioLiderId,

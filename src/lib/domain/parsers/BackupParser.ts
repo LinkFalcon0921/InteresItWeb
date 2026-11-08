@@ -62,6 +62,13 @@ export class BackupParser {
 			omitirPrimerCorte: parsedSettings.omitirPrimerCorte,
 			aplicarImpuesto: parsedSettings.aplicarImpuesto,
 			isDarkMode: parsedSettings.isDarkMode,
+			tasaInflacion: parsedSettings.tasaInflacion?.percentage ?? 0,
+			aportesExtraordinarios: parsedSettings.aportesExtraordinarios?.map((a) => ({
+				id: a.id,
+				monto: a.monto.amount,
+				fecha: a.fecha.iso,
+				descripcion: a.descripcion
+			})) ?? [],
 			inversiones: parsedSettings.inversiones.map((inv) => ({
 				id: inv.id,
 				nombre: inv.nombre,
@@ -121,6 +128,13 @@ export class BackupParser {
 				omitirPrimerCorte: ps.omitirPrimerCorte,
 				aplicarImpuesto: ps.aplicarImpuesto,
 				isDarkMode: ps.isDarkMode,
+				tasaInflacion: ps.tasaInflacion?.percentage ?? 0,
+				aportesExtraordinarios: ps.aportesExtraordinarios?.map((a) => ({
+					id: a.id,
+					monto: a.monto.amount,
+					fecha: a.fecha.iso,
+					descripcion: a.descripcion
+				})) ?? [],
 				inversiones: ps.inversiones.map((inv) => ({
 					id: inv.id,
 					nombre: inv.nombre,

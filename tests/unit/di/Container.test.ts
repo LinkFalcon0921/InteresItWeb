@@ -275,8 +275,8 @@ describe('DI Container — Singleton & Context Accessors', () => {
 
 	it('getAppContainer gracefully falls back to singleton outside Svelte context', () => {
 		const container = getAppContainer();
-		expect(container).toBeDefined();
 		expect(container.calculateSimulation).toBeInstanceOf(CalculateSimulationUseCase);
+		expect(container.settingsRepository).toBeInstanceOf(IndexedDBSettingsRepository);
 	});
 
 	it('stores and retrieves container using Svelte context API', () => {
@@ -306,11 +306,11 @@ describe('DI Container — Singleton & Context Accessors', () => {
 	it('creates a SimulatorState instance via createSimulatorState', () => {
 		const customContainer = createAppContainer();
 		const stateWithCustom = createSimulatorState(customContainer);
-		expect(stateWithCustom).toBeDefined();
 		expect(stateWithCustom.montoInicial).toBe(185);
+		expect(stateWithCustom.inversiones).toHaveLength(2);
 
 		const stateWithDefault = createSimulatorState();
-		expect(stateWithDefault).toBeDefined();
 		expect(stateWithDefault.montoInicial).toBe(185);
+		expect(stateWithDefault.inversiones).toHaveLength(2);
 	});
 });

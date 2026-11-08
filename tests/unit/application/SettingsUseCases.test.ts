@@ -8,69 +8,15 @@ import {
 	type SettingsDTO,
 	type SettingsRepositoryPort
 } from '$application';
-import { err, ok, type Result } from '$domain';
-
-class InMemorySettingsRepositoryStub implements SettingsRepositoryPort {
-	public storedSettings: SettingsDTO | null = null;
-	public shouldFailLoad = false;
-	public shouldFailSave = false;
-	public shouldThrowOnLoad = false;
-	public shouldThrowOnSave = false;
-	public error = new Error('Database connection failed');
-
-	async loadSettings(): Promise<Result<SettingsDTO, Error>> {
-		if (this.shouldThrowOnLoad) {
-			throw new Error('Catastrophic DB crash on load');
-		}
-		if (this.shouldFailLoad) {
-			return err(this.error);
-		}
-		return ok(this.storedSettings ?? DEFAULT_SETTINGS_DTO);
-	}
-
-	async saveSettings(settings: SettingsDTO): Promise<Result<void, Error>> {
-		if (this.shouldThrowOnSave) {
-			throw new Error('Catastrophic DB crash on save');
-		}
-		if (this.shouldFailSave) {
-			return err(this.error);
-		}
-		this.storedSettings = settings;
-		return ok(undefined);
-	}
-
-	async listPortfolios(): Promise<Result<PortfolioSummaryDTO[], Error>> {
-		return ok<PortfolioSummaryDTO[]>([]);
-	}
-
-	async loadPortfolio(_id: string): Promise<Result<PortfolioDTO, Error>> {
-		return err(new Error('Portfolio no encontrado'));
-	}
-
-	async savePortfolio(_portfolio: PortfolioDTO): Promise<Result<void, Error>> {
-		return ok<void>(undefined);
-	}
-
-	async deletePortfolio(_id: string): Promise<Result<void, Error>> {
-		return ok<void>(undefined);
-	}
-
-	async isTutorialCompleted(): Promise<Result<boolean, Error>> {
-		return ok<boolean>(false);
-	}
-
-	async setTutorialCompleted(_completed: boolean): Promise<Result<void, Error>> {
-		return ok<void>(undefined);
-	}
-}
+import { FakeSettingsRepository } from '../../fakes/FakeSettingsRepository';
 
 describe('Settings Use Cases (LoadSettingsUseCase & SaveSettingsUseCase)', () => {
-	let repository: InMemorySettingsRepositoryStub;
+	let repository: FakeSettingsRepository;
 	let loadUseCase: LoadSettingsUseCase;
 	let saveUseCase: SaveSettingsUseCase;
 
 	beforeEach(() => {
-		repository = new InMemorySettingsRepositoryStub();
+		repository = new FakeSettingsRepository();
 		loadUseCase = new LoadSettingsUseCase(repository);
 		saveUseCase = new SaveSettingsUseCase(repository);
 	});
@@ -153,7 +99,7 @@ describe('Settings Use Cases (LoadSettingsUseCase & SaveSettingsUseCase)', () =>
 			const result = await saveUseCase.execute(validSettings);
 			expect(result.ok).toBe(true);
 
-			expect(repository.storedSettings).toBeDefined();
+			expect(repository.storedSettings?.id).toBe('current');
 			expect(repository.storedSettings?.montoInicial).toBe(2500);
 			expect(repository.storedSettings?.aporteMensual).toBe(200);
 			expect(repository.storedSettings?.diaCorte).toBe(20);

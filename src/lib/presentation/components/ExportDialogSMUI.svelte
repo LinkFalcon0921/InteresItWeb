@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Button, { Label } from '@smui/button';
 	import type { SimulatorState } from '../state/SimulatorState.svelte';
+	import ShareExportTab from './ShareExportTab.svelte';
 
 	interface Props {
 		state?: SimulatorState;
@@ -12,7 +13,7 @@
 	let { state: stateProp, simState: simStateProp, isOpen, onClose }: Props = $props();
 	const currentSimState = $derived(simStateProp ?? stateProp);
 
-	let activeExportTab = $state<'pdf' | 'csv' | 'backup'>('pdf');
+	let activeExportTab = $state<'pdf' | 'csv' | 'backup' | 'share'>('pdf');
 
 	// PDF state
 	let pdfFileName = $state('');
@@ -166,6 +167,18 @@
 				>
 					💾 Backup / Restaurar
 				</button>
+				<button
+					type="button"
+					role="tab"
+					id="tab-btn-share"
+					aria-selected={activeExportTab === 'share'}
+					class="tab-nav-btn {activeExportTab === 'share' ? 'tab-nav-active' : ''}"
+					onclick={() => {
+						activeExportTab = 'share';
+					}}
+				>
+					🔗 Compartir
+				</button>
 			</div>
 
 			<div class="modal-body">
@@ -257,6 +270,10 @@
 						<div class="status-box {isBackupError ? 'status-box-error' : 'status-box-ok'}">
 							{backupStatus}
 						</div>
+					{/if}
+				{:else if activeExportTab === 'share'}
+					{#if currentSimState}
+						<ShareExportTab state={currentSimState} />
 					{/if}
 				{/if}
 			</div>

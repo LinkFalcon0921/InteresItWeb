@@ -31,7 +31,7 @@ describe('Financial Core simular Unit Tests', () => {
 
 			// Período 1: 17 abr -> 16 may 2026 (29 días)
 			const p1 = resultado.periodos[0];
-			expect(p1).toBeDefined();
+			expect(p1?.periodoIndex).toBe(1);
 			expect(p1?.diasPeriodo).toBe(29);
 			expect(p1?.etiquetaMes).toBe('MAY 26');
 
@@ -81,7 +81,8 @@ describe('Financial Core simular Unit Tests', () => {
 			const intSin = resSinImpuesto.periodos[0]?.resultadosPorEscenario[0]?.interesNeto.amount ?? 0;
 			const intCon = resConImpuesto.periodos[0]?.resultadosPorEscenario[0]?.interesNeto.amount ?? 0;
 
-			expect(intCon).toBeCloseTo(intSin * 0.90, 1);
+			expect(intSin).toBe(1019.18);
+			expect(intCon).toBe(917.26);
 		});
 	});
 
@@ -105,7 +106,7 @@ describe('Financial Core simular Unit Tests', () => {
 			// Segundo corte: del 15 may al 15 jun -> Computa normalmente
 			const p2 = resultado.periodos[1];
 			expect(p2?.resultadosPorEscenario[0]?.isSkipped).toBe(false);
-			expect(p2?.resultadosPorEscenario[0]?.interesNeto.amount).toBeGreaterThan(0);
+			expect(p2?.resultadosPorEscenario[0]?.interesNeto.amount).toBe(25.48);
 		});
 	});
 

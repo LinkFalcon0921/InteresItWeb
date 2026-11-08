@@ -5,6 +5,7 @@ export * from './dtos/PairMatrixDTO';
 export * from './dtos/SettingsDTO';
 export * from './dtos/PortfolioDTO';
 export * from './dtos/BackupDTO';
+export * from './dtos/AporteExtraordinarioDTO';
 
 // Ports
 export * from './ports/SettingsRepositoryPort';
@@ -22,3 +23,6 @@ export * from './use-cases/DeletePortfolioUseCase';
 export * from './use-cases/RenamePortfolioUseCase';
 export * from './use-cases/ExportBackupUseCase';
 export * from './use-cases/ImportBackupUseCase';
+
+// Services
+export * from './services/ShareUrlCodec';

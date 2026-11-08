@@ -21,7 +21,9 @@ import {
 	type ReportExportPort,
 	type SettingsDTO,
 	type SimulationInputDTO,
-	type SimulationOutputDTO
+	type SimulationOutputDTO,
+	type AporteExtraordinarioDTO,
+	ShareUrlCodec
 } from '$application';
 import { generateProjectionCSV } from '$domain';
 
@@ -34,6 +36,8 @@ export class SimulatorState {
 	public omitirPrimerCorte = $state<boolean>(false);
 	public aplicarImpuesto = $state<boolean>(true);
 	public isDarkMode = $state<boolean>(false);
+	public tasaInflacion = $state<number>(0);
+	public aportesExtraordinarios = $state<AporteExtraordinarioDTO[]>([]);
 	public inversiones = $state<InvestmentSettingDTO[]>([
 		{ id: 'inv-1', nombre: 'Escenario 1', tasaAnual: 10, color: 'emerald' },
 		{ id: 'inv-2', nombre: 'Escenario 2', tasaAnual: 12, color: 'blue' }
@@ -76,6 +80,8 @@ export class SimulatorState {
 			diaCorte: this.diaCorte,
 			omitirPrimerCorte: this.omitirPrimerCorte,
 			aplicarImpuestoRD: this.aplicarImpuesto,
+			tasaInflacion: this.tasaInflacion,
+			aportesExtraordinarios: this.aportesExtraordinarios,
 			escenarios: this.inversiones.map((inv) => ({
 				id: inv.id,
 				nombre: inv.nombre,
@@ -177,6 +183,14 @@ export class SimulatorState {
 	public async loadFromStorage(): Promise<void> {
 		this.isLoading = true;
 		try {
+			if (typeof window !== 'undefined' && window.location.hash.includes('sim=')) {
+				const loaded = this.loadFromUrlHash(window.location.hash);
+				if (loaded) {
+					await this.refreshPortfolios();
+					return;
+				}
+			}
+
 			const result = await this.loadSettingsUseCase.execute();
 			const settings = result.ok ? result.value : DEFAULT_SETTINGS_DTO;
 			this.applySettings(settings);
@@ -199,6 +213,24 @@ export class SimulatorState {
 		}
 	}
 
+	public toSettingsDTO(id = 'current'): SettingsDTO {
+		return {
+			id,
+			activePortfolioId: this.currentPortfolioId,
+			montoInicial: this.montoInicial,
+			aporteMensual: this.aporteMensual,
+			fechaInicio: this.fechaInicio,
+			fechaFin: this.fechaFin,
+			diaCorte: this.diaCorte,
+			omitirPrimerCorte: this.omitirPrimerCorte,
+			aplicarImpuesto: this.aplicarImpuesto,
+			isDarkMode: this.isDarkMode,
+			tasaInflacion: this.tasaInflacion,
+			aportesExtraordinarios: this.aportesExtraordinarios.map((a) => ({ ...a })),
+			inversiones: this.getCleanInversiones()
+		};
+	}
+
 	private getCleanInversiones(): InvestmentSettingDTO[] {
 		return this.inversiones.map((inv) => ({
 			id: inv.id,
@@ -209,19 +241,7 @@ export class SimulatorState {
 	}
 
 	public async saveToStorage(): Promise<boolean> {
-		const settings: SettingsDTO = {
-			id: 'current',
-			activePortfolioId: this.currentPortfolioId,
-			montoInicial: this.montoInicial,
-			aporteMensual: this.aporteMensual,
-			fechaInicio: this.fechaInicio,
-			fechaFin: this.fechaFin,
-			diaCorte: this.diaCorte,
-			omitirPrimerCorte: this.omitirPrimerCorte,
-			aplicarImpuesto: this.aplicarImpuesto,
-			isDarkMode: this.isDarkMode,
-			inversiones: this.getCleanInversiones()
-		};
+		const settings = this.toSettingsDTO('current');
 
 		const result = await this.saveSettingsUseCase.execute(settings);
 		if (result.ok) {
@@ -268,18 +288,7 @@ export class SimulatorState {
 			return await this.saveToStorage();
 		}
 		const nameToUse = customName?.trim() || this.currentPortfolioName;
-		const settings: SettingsDTO = {
-			id: this.currentPortfolioId,
-			montoInicial: this.montoInicial,
-			aporteMensual: this.aporteMensual,
-			fechaInicio: this.fechaInicio,
-			fechaFin: this.fechaFin,
-			diaCorte: this.diaCorte,
-			omitirPrimerCorte: this.omitirPrimerCorte,
-			aplicarImpuesto: this.aplicarImpuesto,
-			isDarkMode: this.isDarkMode,
-			inversiones: this.getCleanInversiones()
-		};
+		const settings = this.toSettingsDTO(this.currentPortfolioId);
 
 		const portfolio: PortfolioDTO = {
 			id: this.currentPortfolioId,
@@ -311,18 +320,7 @@ export class SimulatorState {
 		}
 
 		const newId = `portfolio-${Date.now()}`;
-		const settings: SettingsDTO = {
-			id: newId,
-			montoInicial: this.montoInicial,
-			aporteMensual: this.aporteMensual,
-			fechaInicio: this.fechaInicio,
-			fechaFin: this.fechaFin,
-			diaCorte: this.diaCorte,
-			omitirPrimerCorte: this.omitirPrimerCorte,
-			aplicarImpuesto: this.aplicarImpuesto,
-			isDarkMode: this.isDarkMode,
-			inversiones: this.getCleanInversiones()
-		};
+		const settings = this.toSettingsDTO(newId);
 
 		const newPortfolio: PortfolioDTO = {
 			id: newId,
@@ -460,6 +458,51 @@ export class SimulatorState {
 		return result.ok;
 	}
 
+	public addAporteExtraordinario(monto: number, fecha: string, descripcion?: string): void {
+		const id = `extra-${Date.now()}`;
+		this.aportesExtraordinarios = [
+			...this.aportesExtraordinarios,
+			{ id, monto: Math.max(0, monto), fecha, descripcion }
+		];
+	}
+
+	public removeAporteExtraordinario(id: string): void {
+		this.aportesExtraordinarios = this.aportesExtraordinarios.filter((a) => a.id !== id);
+	}
+
+	public getShareUrl(): string {
+		const settings = this.toSettingsDTO();
+		const encoded = ShareUrlCodec.encode(settings);
+		if (typeof window !== 'undefined') {
+			return `${window.location.origin}${window.location.pathname}#sim=${encoded}`;
+		}
+		return `#sim=${encoded}`;
+	}
+
+	public async copyShareUrl(): Promise<boolean> {
+		const url = this.getShareUrl();
+		if (typeof navigator !== 'undefined' && navigator.clipboard) {
+			try {
+				await navigator.clipboard.writeText(url);
+				return true;
+			} catch {
+				return false;
+			}
+		}
+		return false;
+	}
+
+	public loadFromUrlHash(hashOrUrl?: string): boolean {
+		const target = hashOrUrl ?? (typeof window !== 'undefined' ? window.location.hash : '');
+		if (!target || !target.includes('sim=')) return false;
+		const decoded = ShareUrlCodec.decode(target);
+		if (decoded.ok) {
+			this.applySettings(decoded.value);
+			return true;
+		}
+		return false;
+	}
+
 	public async resetToSafeDefaults(): Promise<void> {
 		this.errorMessage = '';
 		this.applySettings(DEFAULT_SETTINGS_DTO);
@@ -486,6 +529,10 @@ export class SimulatorState {
 		this.omitirPrimerCorte = settings.omitirPrimerCorte;
 		this.aplicarImpuesto = settings.aplicarImpuesto;
 		this.isDarkMode = settings.isDarkMode;
+		this.tasaInflacion = settings.tasaInflacion ?? 0;
+		this.aportesExtraordinarios = settings.aportesExtraordinarios
+			? settings.aportesExtraordinarios.map((a) => ({ ...a }))
+			: [];
 		this.inversiones = settings.inversiones.map((inv) => ({ ...inv }));
 
 		if (typeof document !== 'undefined') {

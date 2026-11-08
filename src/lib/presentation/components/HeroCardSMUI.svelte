@@ -54,6 +54,13 @@
 		<div class="balance-display">
 			<span class="balance-label">Saldo Proyectado al Vencimiento</span>
 			<h2 class="balance-amount">{formatCurrency(lider?.summary.balanceFinal ?? 0)}</h2>
+			{#if state.tasaInflacion > 0 && lider?.summary.balanceReal !== undefined}
+				<div class="real-balance-subtext" title="Poder adquisitivo deflactado según la fórmula de Fisher con inflación de {state.tasaInflacion}%">
+					<span>Poder adquisitivo real:</span>
+					<strong class="real-balance-val">{formatCurrency(lider.summary.balanceReal)}</strong>
+					<span class="real-rate-tag">(Tasa real: {formatPercentage(lider.summary.tasaRealAnual ?? 0)})</span>
+				</div>
+			{/if}
 		</div>
 
 		<div class="yield-badge">
@@ -73,6 +80,13 @@
 			<span class="stat-label">Aportes Recurrentes:</span>
 			<span class="stat-value">{formatCurrency(simulation?.totalAportado ?? 0)}</span>
 		</div>
+		{#if (simulation?.totalExtraordinario ?? 0) > 0}
+			<div class="footer-divider">•</div>
+			<div class="footer-stat">
+				<span class="stat-label">Extraordinarios:</span>
+				<span class="stat-value">{formatCurrency(simulation?.totalExtraordinario ?? 0)}</span>
+			</div>
+		{/if}
 		<div class="footer-divider">•</div>
 		<div class="footer-stat">
 			<span class="stat-label">Total Invertido:</span>
@@ -180,6 +194,26 @@
 		letter-spacing: -0.03em;
 		font-variant-numeric: tabular-nums;
 		line-height: 1.05;
+	}
+
+	.real-balance-subtext {
+		margin-top: 6px;
+		font-size: 0.8125rem;
+		color: #a8dadc;
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		flex-wrap: wrap;
+	}
+
+	.real-balance-val {
+		color: #ffffff;
+		font-weight: 700;
+	}
+
+	.real-rate-tag {
+		font-size: 0.75rem;
+		opacity: 0.85;
 	}
 
 	.yield-badge {

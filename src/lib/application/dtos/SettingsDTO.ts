@@ -1,3 +1,5 @@
+import type { AporteExtraordinarioDTO } from './AporteExtraordinarioDTO';
+
 export interface InvestmentSettingDTO {
 	readonly id: string;
 	readonly nombre: string;
@@ -17,6 +19,8 @@ export interface SettingsDTO {
 	readonly omitirPrimerCorte: boolean;
 	readonly aplicarImpuesto: boolean;
 	readonly isDarkMode: boolean;
+	readonly tasaInflacion?: number;
+	readonly aportesExtraordinarios?: readonly AporteExtraordinarioDTO[];
 }
 
 export const DEFAULT_SETTINGS_DTO: SettingsDTO = {
@@ -32,5 +36,7 @@ export const DEFAULT_SETTINGS_DTO: SettingsDTO = {
 	diaCorte: 16,
 	omitirPrimerCorte: false,
 	aplicarImpuesto: true,
-	isDarkMode: false
+	isDarkMode: false,
+	tasaInflacion: 0,
+	aportesExtraordinarios: []
 };

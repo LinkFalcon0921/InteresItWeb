@@ -59,7 +59,7 @@ describe('CalculatePairMatrixUseCase Unit Tests', () => {
 
 		expect(result.value.totalPares).toBe(1);
 		const comp = result.value.comparaciones[0];
-		expect(comp).toBeDefined();
+		expect(comp?.escenarioA.escenarioId).toBe('inv-1');
 
 		if (comp) {
 			expect(comp.escenarioA.escenarioId).toBe('inv-1');
@@ -78,7 +78,7 @@ describe('CalculatePairMatrixUseCase Unit Tests', () => {
 
 		expect(result.value.totalPares).toBe(1);
 		const comp = result.value.comparaciones[0];
-		expect(comp).toBeDefined();
+		expect(comp?.escenarioA.escenarioId).toBe('inv-2');
 
 		if (comp) {
 			expect(comp.escenarioA.escenarioId).toBe('inv-2');
@@ -100,7 +100,7 @@ describe('CalculatePairMatrixUseCase Unit Tests', () => {
 		if (!result.ok) return;
 
 		const comp = result.value.comparaciones[0];
-		expect(comp).toBeDefined();
+		expect(comp?.diferenciaBalance).toBe(0);
 		if (comp) {
 			expect(comp.diferenciaBalance).toBe(0);
 			expect(comp.favorecidoId).toBe('');

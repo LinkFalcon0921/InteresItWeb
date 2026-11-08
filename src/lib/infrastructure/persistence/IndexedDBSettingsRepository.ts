@@ -29,6 +29,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 export class IndexedDBSettingsRepository implements SettingsRepositoryPort {
+	private activeDb: IDBDatabase | null = null;
+
 	constructor(private readonly idbFactory?: IDBFactory) {}
 
 	private getFactory(): IDBFactory | undefined {
@@ -44,7 +46,18 @@ export class IndexedDBSettingsRepository implements SettingsRepositoryPort {
 		return undefined;
 	}
 
+	public close(): void {
+		if (this.activeDb) {
+			this.activeDb.close();
+			this.activeDb = null;
+		}
+	}
+
 	private getDatabase(): Promise<IDBDatabase> {
+		if (this.activeDb) {
+			return Promise.resolve(this.activeDb);
+		}
+
 		const factory = this.getFactory();
 		if (!factory) {
 			return Promise.reject(new Error('IndexedDB no está disponible en este entorno.'));
@@ -52,6 +65,10 @@ export class IndexedDBSettingsRepository implements SettingsRepositoryPort {
 
 		return new Promise((resolve, reject) => {
 			const request = factory.open(DB_NAME, DB_VERSION);
+
+			request.onblocked = (event) => {
+				console.warn('Conexión a IndexedDB bloqueada por otra pestaña u operación en curso.', event);
+			};
 
 			request.onupgradeneeded = () => {
 				const db = request.result;
@@ -61,7 +78,20 @@ export class IndexedDBSettingsRepository implements SettingsRepositoryPort {
 			};
 
 			request.onsuccess = () => {
-				resolve(request.result);
+				const db = request.result;
+				this.activeDb = db;
+
+				db.onversionchange = () => {
+					db.close();
+					this.activeDb = null;
+					console.warn('Conexión a IndexedDB cerrada debido a un cambio de versión en otra pestaña.');
+				};
+
+				db.onclose = () => {
+					this.activeDb = null;
+				};
+
+				resolve(db);
 			};
 
 			request.onerror = () => {
@@ -128,6 +158,13 @@ export class IndexedDBSettingsRepository implements SettingsRepositoryPort {
 				omitirPrimerCorte: ps.omitirPrimerCorte,
 				aplicarImpuesto: ps.aplicarImpuesto,
 				isDarkMode: ps.isDarkMode,
+				tasaInflacion: ps.tasaInflacion?.percentage ?? 0,
+				aportesExtraordinarios: ps.aportesExtraordinarios?.map((a) => ({
+					id: a.id,
+					monto: a.monto.amount,
+					fecha: a.fecha.iso,
+					descripcion: a.descripcion
+				})) ?? [],
 				inversiones: ps.inversiones.map((inv) => ({
 					id: inv.id,
 					nombre: inv.nombre,
@@ -183,6 +220,13 @@ export class IndexedDBSettingsRepository implements SettingsRepositoryPort {
 				omitirPrimerCorte: p.omitirPrimerCorte,
 				aplicarImpuesto: p.aplicarImpuesto,
 				isDarkMode: p.isDarkMode,
+				tasaInflacion: p.tasaInflacion?.percentage ?? 0,
+				aportesExtraordinarios: p.aportesExtraordinarios?.map((a) => ({
+					id: a.id,
+					monto: a.monto.amount,
+					fecha: a.fecha.iso,
+					descripcion: a.descripcion
+				})) ?? [],
 				inversiones: p.inversiones.map((inv) => ({
 					id: inv.id,
 					nombre: inv.nombre,

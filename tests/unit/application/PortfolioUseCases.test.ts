@@ -13,71 +13,10 @@ import {
 	type SettingsDTO,
 	type SettingsRepositoryPort
 } from '$application';
-import { err, ok, type Result } from '$domain';
-
-class InMemoryPortfolioRepositoryStub implements SettingsRepositoryPort {
-	public portfolios: PortfolioDTO[] = [];
-	public shouldFail = false;
-	public error = new Error('Simulated repository error');
-
-	async loadSettings(): Promise<Result<SettingsDTO, Error>> {
-		return ok(DEFAULT_SETTINGS_DTO);
-	}
-
-	async saveSettings(_settings: SettingsDTO): Promise<Result<void, Error>> {
-		return ok(undefined);
-	}
-
-	async listPortfolios(): Promise<Result<PortfolioSummaryDTO[], Error>> {
-		if (this.shouldFail) return err(this.error);
-		return ok(
-			this.portfolios.map((p) => ({
-				id: p.id,
-				name: p.name,
-				updatedAt: p.updatedAt,
-				escenariosCount: p.settings.inversiones.length,
-				montoInicial: p.settings.montoInicial
-			}))
-		);
-	}
-
-	async loadPortfolio(id: string): Promise<Result<PortfolioDTO, Error>> {
-		if (this.shouldFail) return err(this.error);
-		const match = this.portfolios.find((p) => p.id === id);
-		if (!match) {
-			return err(new Error(`Portafolio ${id} no encontrado`));
-		}
-		return ok(match);
-	}
-
-	async savePortfolio(portfolio: PortfolioDTO): Promise<Result<void, Error>> {
-		if (this.shouldFail) return err(this.error);
-		const idx = this.portfolios.findIndex((p) => p.id === portfolio.id);
-		if (idx >= 0) {
-			this.portfolios[idx] = portfolio;
-		} else {
-			this.portfolios.push(portfolio);
-		}
-		return ok(undefined);
-	}
-
-	async deletePortfolio(id: string): Promise<Result<void, Error>> {
-		if (this.shouldFail) return err(this.error);
-		this.portfolios = this.portfolios.filter((p) => p.id !== id);
-		return ok(undefined);
-	}
-
-	async isTutorialCompleted(): Promise<Result<boolean, Error>> {
-		return ok(false);
-	}
-
-	async setTutorialCompleted(_completed: boolean): Promise<Result<void, Error>> {
-		return ok(undefined);
-	}
-}
+import { FakeSettingsRepository } from '../../fakes/FakeSettingsRepository';
 
 describe('Portfolio Use Cases (Phase 11 Clean Architecture)', () => {
-	let repository: InMemoryPortfolioRepositoryStub;
+	let repository: FakeSettingsRepository;
 	let listUseCase: ListPortfoliosUseCase;
 	let loadUseCase: LoadPortfolioUseCase;
 	let saveUseCase: SavePortfolioUseCase;
@@ -93,7 +32,8 @@ describe('Portfolio Use Cases (Phase 11 Clean Architecture)', () => {
 	};
 
 	beforeEach(() => {
-		repository = new InMemoryPortfolioRepositoryStub();
+		repository = new FakeSettingsRepository();
+		repository.error = new Error('Simulated repository error');
 		repository.portfolios = [{ ...samplePortfolio }];
 		listUseCase = new ListPortfoliosUseCase(repository);
 		loadUseCase = new LoadPortfolioUseCase(repository);
@@ -164,7 +104,7 @@ describe('Portfolio Use Cases (Phase 11 Clean Architecture)', () => {
 			if (listResult.ok) {
 				expect(listResult.value).toHaveLength(2);
 				const saved = listResult.value.find((p) => p.id === 'port-2');
-				expect(saved).toBeDefined();
+				expect(saved?.id).toBe('port-2');
 				expect(saved?.name).toBe('Portafolio Secundario');
 			}
 		});
