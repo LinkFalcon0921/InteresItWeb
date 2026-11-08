@@ -33,4 +33,4 @@ pnpm-debug.log*
 
 # Test outputs
 test-results/
-playwright-report/
+playwright-report/reports/

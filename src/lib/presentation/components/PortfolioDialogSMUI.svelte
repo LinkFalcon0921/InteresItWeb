@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Button, { Label } from '@smui/button';
+	import AppButton from './AppButton.svelte';
 	import type { SimulatorState } from '../state/SimulatorState.svelte';
 	import { formatCurrency } from '../formatters/financialFormatters';
 
@@ -287,9 +287,9 @@
 			</div>
 
 			<div class="modal-footer">
-				<Button variant="outlined" onclick={onClose}>
-					<Label>Cerrar</Label>
-				</Button>
+				<AppButton variant="secondary" onclick={onClose}>
+					Cerrar
+				</AppButton>
 			</div>
 		</div>
 	</div>
@@ -340,4 +340,12 @@
 	:global(.dark) .active-badge { background: #10b981; color: #0b1120; }
 	:global(.dark) .action-pill { background: #0b1120; border-color: #26334e; color: #cbd5e1; }
 	:global(.dark) .status-banner.error-banner { background: #450a0a; color: #f87171; border-color: #7f1d1d; }
+
+	@media print {
+		.modal-backdrop,
+		.modal-card {
+			display: none !important;
+			visibility: hidden !important;
+		}
+	}
 </style>

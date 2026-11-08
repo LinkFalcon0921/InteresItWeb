@@ -1,5 +1,6 @@
 <script lang="ts">
-	import Button, { Label } from '@smui/button';
+	import { tick } from 'svelte';
+	import AppButton from './AppButton.svelte';
 	import type { SimulatorState } from '../state/SimulatorState.svelte';
 	import ShareExportTab from './ShareExportTab.svelte';
 
@@ -44,10 +45,15 @@
 	}
 
 	async function handlePrint(): Promise<void> {
-		if (currentSimState) {
-			await currentSimState.printReport();
-		}
 		onClose();
+		await tick();
+		requestAnimationFrame(async () => {
+			if (currentSimState) {
+				await currentSimState.printReport();
+			} else if (typeof window !== 'undefined') {
+				window.print();
+			}
+		});
 	}
 
 	function handleExportCSV(): void {
@@ -239,9 +245,9 @@
 						<div class="backup-card">
 							<span class="backup-card-title">📤 Exportar Backup</span>
 							<span class="backup-card-sub">Descarga todos los portafolios en JSON</span>
-							<Button variant="outlined" onclick={handleExportBackup} class="backup-btn">
-								<Label>Descargar Backup JSON</Label>
-							</Button>
+							<AppButton variant="secondary" onclick={handleExportBackup} class="backup-btn">
+								Descargar Backup JSON
+							</AppButton>
 						</div>
 
 						<div class="backup-card">
@@ -255,14 +261,14 @@
 								bind:this={fileInputRef}
 								onchange={handleFileSelect}
 							/>
-							<Button
-								variant="outlined"
+							<AppButton
+								variant="secondary"
 								disabled={isRestoring}
 								onclick={() => fileInputRef?.click()}
 								class="backup-btn"
 							>
-								<Label>{isRestoring ? 'Restaurando...' : 'Seleccionar Archivo JSON'}</Label>
-							</Button>
+								{isRestoring ? 'Restaurando...' : 'Seleccionar Archivo JSON'}
+							</AppButton>
 						</div>
 					</div>
 
@@ -279,21 +285,21 @@
 			</div>
 
 			<div class="modal-footer">
-				<Button variant="outlined" onclick={onClose}>
-					<Label>Cerrar</Label>
-				</Button>
+				<AppButton variant="secondary" onclick={onClose}>
+					Cerrar
+				</AppButton>
 
 				{#if activeExportTab === 'pdf'}
-					<Button variant="outlined" onclick={handlePrint}>
-						<Label>Imprimir</Label>
-					</Button>
-					<Button variant="raised" onclick={handleExportPDF} class="confirm-btn">
-						<Label>Guardar PDF</Label>
-					</Button>
+					<AppButton variant="secondary" onclick={handlePrint}>
+						Imprimir
+					</AppButton>
+					<AppButton variant="primary" onclick={handleExportPDF} class="confirm-btn">
+						Guardar PDF
+					</AppButton>
 				{:else if activeExportTab === 'csv'}
-					<Button variant="raised" onclick={handleExportCSV} class="confirm-btn" id="btn-download-csv">
-						<Label>Descargar CSV</Label>
-					</Button>
+					<AppButton variant="primary" onclick={handleExportCSV} class="confirm-btn" id="btn-download-csv">
+						Descargar CSV
+					</AppButton>
 				{/if}
 			</div>
 		</div>
@@ -549,5 +555,13 @@
 	:global(.dark) :global(.confirm-btn) {
 		background: #7fd1d8 !important;
 		color: #0b1120 !important;
+	}
+
+	@media print {
+		.modal-backdrop,
+		.modal-card {
+			display: none !important;
+			visibility: hidden !important;
+		}
 	}
 </style>

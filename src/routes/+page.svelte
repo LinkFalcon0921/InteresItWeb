@@ -18,14 +18,43 @@
 
 	const simState = createSimulatorState();
 
+	// PATRÓN ELEGIDO PARA UI-001/UI-002: (b) Montaje condicional responsivo con matchMedia.
+	// Garantiza exactamente UNA sola instancia de DataEntrySMUI en el DOM en cualquier momento:
+	// - Desktop (>960px): DataEntrySMUI se monta en <aside class="desktop-sidebar">. ParametersDrawerSMUI no se monta.
+	// - Móvil (<=960px): <aside class="desktop-sidebar"> no monta DataEntrySMUI. ParametersDrawerSMUI monta DataEntrySMUI
+	//   únicamente cuando state.isDrawerOpen es true. Con el drawer cerrado, reachable inputs = 0.
+	// - Al redimensionar entre viewports, los valores se preservan 100% íntegros a través de SimulatorState.
+	let isDesktop = $state(true);
+
 	let isExportDialogOpen = $state(false);
 	let snackbar: Snackbar | null = $state(null);
 
-	onMount(async () => {
-		if (typeof window !== 'undefined' && window.location.hash.includes('#sim=')) {
-			simState.loadFromUrlHash(window.location.hash);
-		} else {
-			await simState.loadFromStorage();
+	onMount(() => {
+		if (typeof window !== 'undefined') {
+			const mql = window.matchMedia('(min-width: 961px)');
+			isDesktop = mql.matches;
+			const mqlHandler = (e: MediaQueryListEvent) => {
+				isDesktop = e.matches;
+			};
+			mql.addEventListener('change', mqlHandler);
+
+			const resizeHandler = () => {
+				isDesktop = window.innerWidth > 960;
+			};
+			window.addEventListener('resize', resizeHandler);
+
+			void (async () => {
+				if (window.location.hash.includes('#sim=')) {
+					simState.loadFromUrlHash(window.location.hash);
+				} else {
+					await simState.loadFromStorage();
+				}
+			})();
+
+			return () => {
+				mql.removeEventListener('change', mqlHandler);
+				window.removeEventListener('resize', resizeHandler);
+			};
 		}
 	});
 
@@ -63,7 +92,9 @@
 	<div class="terminal-main-layout">
 		<!-- Panel Lateral de Parámetros (Desktop) -->
 		<aside id="tour-data" class="desktop-sidebar" aria-label="Parámetros de Simulación">
-			<DataEntrySMUI state={simState} />
+			{#if isDesktop}
+				<DataEntrySMUI state={simState} />
+			{/if}
 		</aside>
 
 		<!-- Área Principal de Trabajo -->
@@ -138,7 +169,9 @@
 	</div>
 
 	<!-- Drawer Móvil de Parámetros -->
-	<ParametersDrawerSMUI state={simState} />
+	{#if !isDesktop}
+		<ParametersDrawerSMUI state={simState} />
+	{/if}
 
 	<!-- Diálogo de Exportación -->
 	<ExportDialogSMUI
@@ -235,6 +268,8 @@
 		min-height: 100vh;
 		display: flex;
 		flex-direction: column;
+		max-width: 100vw;
+		overflow-x: hidden;
 	}
 
 	.terminal-main-layout {
@@ -474,5 +509,42 @@
 	:global(.dark) .recovery-btn-secondary {
 		background: #1e293b;
 		color: #e7eef8;
+	}
+
+	@media print {
+		:global([role="dialog"]),
+		:global(.mdc-dialog),
+		:global(.mdc-dialog__scrim),
+		:global(.mdc-drawer-scrim),
+		:global(.drawer-scrim),
+		:global(.parameters-drawer),
+		:global(.modal-backdrop),
+		:global(.modal-card),
+		:global(.app-dialog-backdrop),
+		:global(.app-dialog-card),
+		:global(.terminal-header),
+		:global(.tabs-nav),
+		:global(.report-actions-bar),
+		:global(.desktop-sidebar),
+		:global(.mdc-snackbar) {
+			display: none !important;
+			visibility: hidden !important;
+		}
+
+		:global(body) {
+			background: #ffffff !important;
+			color: #000000 !important;
+		}
+
+		.terminal-main-layout {
+			display: block !important;
+			max-width: 100% !important;
+			padding: 0 !important;
+			margin: 0 !important;
+		}
+
+		.workspace-area {
+			width: 100% !important;
+		}
 	}
 </style>
