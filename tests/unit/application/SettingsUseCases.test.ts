@@ -3,6 +3,8 @@ import {
 	DEFAULT_SETTINGS_DTO,
 	LoadSettingsUseCase,
 	SaveSettingsUseCase,
+	type PortfolioDTO,
+	type PortfolioSummaryDTO,
 	type SettingsDTO,
 	type SettingsRepositoryPort
 } from '$application';
@@ -35,6 +37,30 @@ class InMemorySettingsRepositoryStub implements SettingsRepositoryPort {
 		}
 		this.storedSettings = settings;
 		return ok(undefined);
+	}
+
+	async listPortfolios(): Promise<Result<PortfolioSummaryDTO[], Error>> {
+		return ok<PortfolioSummaryDTO[]>([]);
+	}
+
+	async loadPortfolio(_id: string): Promise<Result<PortfolioDTO, Error>> {
+		return err(new Error('Portfolio no encontrado'));
+	}
+
+	async savePortfolio(_portfolio: PortfolioDTO): Promise<Result<void, Error>> {
+		return ok<void>(undefined);
+	}
+
+	async deletePortfolio(_id: string): Promise<Result<void, Error>> {
+		return ok<void>(undefined);
+	}
+
+	async isTutorialCompleted(): Promise<Result<boolean, Error>> {
+		return ok<boolean>(false);
+	}
+
+	async setTutorialCompleted(_completed: boolean): Promise<Result<void, Error>> {
+		return ok<void>(undefined);
 	}
 }
 

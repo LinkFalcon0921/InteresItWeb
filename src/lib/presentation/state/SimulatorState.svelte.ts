@@ -1,11 +1,20 @@
 import {
 	CalculatePairMatrixUseCase,
 	CalculateSimulationUseCase,
+	DEFAULT_PORTFOLIO_ID,
+	DEFAULT_PORTFOLIO_NAME,
 	DEFAULT_SETTINGS_DTO,
+	DeletePortfolioUseCase,
+	ListPortfoliosUseCase,
+	LoadPortfolioUseCase,
 	LoadSettingsUseCase,
+	RenamePortfolioUseCase,
+	SavePortfolioUseCase,
 	SaveSettingsUseCase,
 	type InvestmentSettingDTO,
 	type PairMatrixDTO,
+	type PortfolioDTO,
+	type PortfolioSummaryDTO,
 	type ReportExportOptions,
 	type ReportExportPort,
 	type SettingsDTO,
@@ -33,12 +42,22 @@ export class SimulatorState {
 	public isLoading = $state<boolean>(false);
 	public saveNotificationVisible = $state<boolean>(false);
 
+	public currentPortfolioId = $state<string>(DEFAULT_PORTFOLIO_ID);
+	public currentPortfolioName = $state<string>(DEFAULT_PORTFOLIO_NAME);
+	public portfolios = $state<PortfolioSummaryDTO[]>([]);
+	public isPortfolioDialogOpen = $state<boolean>(false);
+
 	constructor(
 		private readonly calculateSimulation: CalculateSimulationUseCase,
 		private readonly calculatePairMatrix: CalculatePairMatrixUseCase,
 		private readonly loadSettingsUseCase: LoadSettingsUseCase,
 		private readonly saveSettingsUseCase: SaveSettingsUseCase,
-		private readonly reportExportPort: ReportExportPort
+		private readonly reportExportPort: ReportExportPort,
+		private readonly listPortfoliosUseCase?: ListPortfoliosUseCase,
+		private readonly loadPortfolioUseCase?: LoadPortfolioUseCase,
+		private readonly savePortfolioUseCase?: SavePortfolioUseCase,
+		private readonly deletePortfolioUseCase?: DeletePortfolioUseCase,
+		private readonly renamePortfolioUseCase?: RenamePortfolioUseCase
 	) {}
 
 	public simulationResult = $derived.by<SimulationOutputDTO | null>(() => {
@@ -148,6 +167,17 @@ export class SimulatorState {
 			const result = await this.loadSettingsUseCase.execute();
 			const settings = result.ok ? result.value : DEFAULT_SETTINGS_DTO;
 			this.applySettings(settings);
+			if (settings.activePortfolioId) {
+				this.currentPortfolioId = settings.activePortfolioId;
+			}
+			await this.refreshPortfolios();
+			const activeMatch = this.portfolios.find((p) => p.id === this.currentPortfolioId);
+			if (activeMatch) {
+				this.currentPortfolioName = activeMatch.name;
+			} else if (this.portfolios.length > 0) {
+				this.currentPortfolioId = this.portfolios[0]!.id;
+				this.currentPortfolioName = this.portfolios[0]!.name;
+			}
 		} finally {
 			this.isLoading = false;
 		}
@@ -156,6 +186,7 @@ export class SimulatorState {
 	public async saveToStorage(): Promise<boolean> {
 		const settings: SettingsDTO = {
 			id: 'current',
+			activePortfolioId: this.currentPortfolioId,
 			montoInicial: this.montoInicial,
 			aporteMensual: this.aporteMensual,
 			fechaInicio: this.fechaInicio,
@@ -170,6 +201,158 @@ export class SimulatorState {
 		const result = await this.saveSettingsUseCase.execute(settings);
 		if (result.ok) {
 			this.saveNotificationVisible = true;
+			return true;
+		} else {
+			this.errorMessage = result.error.message;
+			return false;
+		}
+	}
+
+	public async refreshPortfolios(): Promise<void> {
+		if (!this.listPortfoliosUseCase) return;
+		const result = await this.listPortfoliosUseCase.execute();
+		if (result.ok) {
+			this.portfolios = result.value;
+		}
+	}
+
+	public async switchPortfolio(id: string): Promise<boolean> {
+		if (!this.loadPortfolioUseCase) return false;
+		this.isLoading = true;
+		try {
+			const result = await this.loadPortfolioUseCase.execute(id);
+			if (result.ok) {
+				const portfolio = result.value;
+				this.currentPortfolioId = portfolio.id;
+				this.currentPortfolioName = portfolio.name;
+				this.applySettings(portfolio.settings);
+				await this.saveToStorage();
+				await this.refreshPortfolios();
+				return true;
+			} else {
+				this.errorMessage = result.error.message;
+				return false;
+			}
+		} finally {
+			this.isLoading = false;
+		}
+	}
+
+	public async saveCurrentPortfolio(customName?: string): Promise<boolean> {
+		if (!this.savePortfolioUseCase) {
+			return await this.saveToStorage();
+		}
+		const nameToUse = customName?.trim() || this.currentPortfolioName;
+		const settings: SettingsDTO = {
+			id: this.currentPortfolioId,
+			montoInicial: this.montoInicial,
+			aporteMensual: this.aporteMensual,
+			fechaInicio: this.fechaInicio,
+			fechaFin: this.fechaFin,
+			diaCorte: this.diaCorte,
+			omitirPrimerCorte: this.omitirPrimerCorte,
+			aplicarImpuesto: this.aplicarImpuesto,
+			isDarkMode: this.isDarkMode,
+			inversiones: this.inversiones
+		};
+
+		const portfolio: PortfolioDTO = {
+			id: this.currentPortfolioId,
+			name: nameToUse,
+			settings,
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString()
+		};
+
+		const result = await this.savePortfolioUseCase.execute(portfolio);
+		if (result.ok) {
+			this.currentPortfolioName = nameToUse;
+			this.saveNotificationVisible = true;
+			await this.saveToStorage();
+			await this.refreshPortfolios();
+			return true;
+		} else {
+			this.errorMessage = result.error.message;
+			return false;
+		}
+	}
+
+	public async createPortfolio(name: string): Promise<boolean> {
+		if (!this.savePortfolioUseCase) return false;
+		const trimmedName = name.trim();
+		if (!trimmedName) {
+			this.errorMessage = 'El nombre del nuevo portafolio no puede estar vacío.';
+			return false;
+		}
+
+		const newId = `portfolio-${Date.now()}`;
+		const settings: SettingsDTO = {
+			id: newId,
+			montoInicial: this.montoInicial,
+			aporteMensual: this.aporteMensual,
+			fechaInicio: this.fechaInicio,
+			fechaFin: this.fechaFin,
+			diaCorte: this.diaCorte,
+			omitirPrimerCorte: this.omitirPrimerCorte,
+			aplicarImpuesto: this.aplicarImpuesto,
+			isDarkMode: this.isDarkMode,
+			inversiones: this.inversiones
+		};
+
+		const newPortfolio: PortfolioDTO = {
+			id: newId,
+			name: trimmedName,
+			settings,
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString()
+		};
+
+		const result = await this.savePortfolioUseCase.execute(newPortfolio);
+		if (result.ok) {
+			this.currentPortfolioId = newId;
+			this.currentPortfolioName = trimmedName;
+			this.saveNotificationVisible = true;
+			await this.saveToStorage();
+			await this.refreshPortfolios();
+			return true;
+		} else {
+			this.errorMessage = result.error.message;
+			return false;
+		}
+	}
+
+	public async renamePortfolio(id: string, newName: string): Promise<boolean> {
+		if (!this.renamePortfolioUseCase) return false;
+		const trimmed = newName.trim();
+		if (!trimmed) {
+			this.errorMessage = 'El nuevo nombre no puede estar vacío.';
+			return false;
+		}
+
+		const result = await this.renamePortfolioUseCase.execute(id, trimmed);
+		if (result.ok) {
+			if (id === this.currentPortfolioId) {
+				this.currentPortfolioName = trimmed;
+			}
+			await this.refreshPortfolios();
+			return true;
+		} else {
+			this.errorMessage = result.error.message;
+			return false;
+		}
+	}
+
+	public async deletePortfolio(id: string): Promise<boolean> {
+		if (!this.deletePortfolioUseCase) return false;
+		const result = await this.deletePortfolioUseCase.execute(id);
+		if (result.ok) {
+			await this.refreshPortfolios();
+			if (id === this.currentPortfolioId) {
+				const fallback = this.portfolios[0];
+				if (fallback) {
+					await this.switchPortfolio(fallback.id);
+				}
+			}
 			return true;
 		} else {
 			this.errorMessage = result.error.message;

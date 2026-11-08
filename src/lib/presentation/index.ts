@@ -11,3 +11,4 @@ export { default as PairComparisonSMUI } from './components/PairComparisonSMUI.s
 export { default as ProjectionTableSMUI } from './components/ProjectionTableSMUI.svelte';
 export { default as ParametersDrawerSMUI } from './components/ParametersDrawerSMUI.svelte';
 export { default as ExportDialogSMUI } from './components/ExportDialogSMUI.svelte';
+export { default as PortfolioDialogSMUI } from './components/PortfolioDialogSMUI.svelte';

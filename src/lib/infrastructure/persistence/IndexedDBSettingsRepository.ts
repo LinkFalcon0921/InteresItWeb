@@ -14,6 +14,15 @@ export const DB_NAME = 'InteresItDB';
 export const DB_VERSION = 1;
 export const STORE_NAME = 'settings';
 export const CURRENT_SETTINGS_KEY = 'current';
+export const PORTFOLIOS_KEY = 'portfolios';
+export const TUTORIAL_KEY = 'tutorial';
+
+import {
+	DEFAULT_PORTFOLIO_ID,
+	DEFAULT_PORTFOLIO_NAME,
+	type PortfolioDTO,
+	type PortfolioSummaryDTO
+} from '$application';
 
 export class IndexedDBSettingsRepository implements SettingsRepositoryPort {
 	constructor(private readonly idbFactory?: IDBFactory) {}
@@ -89,6 +98,53 @@ export class IndexedDBSettingsRepository implements SettingsRepositoryPort {
 		});
 	}
 
+	private parsePortfoliosRecord(raw: unknown): PortfolioDTO[] {
+		if (typeof raw !== 'object' || raw === null) return [];
+		const rec = raw as Record<string, unknown>;
+		const rawItems = rec['items'];
+		if (!Array.isArray(rawItems)) return [];
+
+		const list: PortfolioDTO[] = [];
+		for (const item of rawItems) {
+			if (typeof item !== 'object' || item === null) continue;
+			const p = item as Record<string, unknown>;
+			const id = typeof p['id'] === 'string' ? p['id'] : '';
+			const name = typeof p['name'] === 'string' ? p['name'] : '';
+			if (!id || !name || !p['settings']) continue;
+
+			const parsedSettings = SettingsParser.parseSettings(p['settings']);
+			if (!parsedSettings.ok) continue;
+
+			const ps = parsedSettings.value;
+			const settingsDto: SettingsDTO = {
+				id,
+				montoInicial: ps.montoInicial.amount,
+				aporteMensual: ps.aporteMensual.amount,
+				fechaInicio: ps.fechaInicio.iso,
+				fechaFin: ps.fechaFin.iso,
+				diaCorte: ps.diaCorte.value,
+				omitirPrimerCorte: ps.omitirPrimerCorte,
+				aplicarImpuesto: ps.aplicarImpuesto,
+				isDarkMode: ps.isDarkMode,
+				inversiones: ps.inversiones.map((inv) => ({
+					id: inv.id,
+					nombre: inv.nombre,
+					tasaAnual: inv.tasaAnual.percentage,
+					color: inv.color
+				}))
+			};
+
+			list.push({
+				id,
+				name,
+				settings: settingsDto,
+				createdAt: typeof p['createdAt'] === 'string' ? p['createdAt'] : new Date().toISOString(),
+				updatedAt: typeof p['updatedAt'] === 'string' ? p['updatedAt'] : new Date().toISOString()
+			});
+		}
+		return list;
+	}
+
 	public async loadSettings(): Promise<Result<SettingsDTO, Error>> {
 		const factory = this.getFactory();
 		if (!factory) {
@@ -108,9 +164,14 @@ export class IndexedDBSettingsRepository implements SettingsRepositoryPort {
 				return ok(DEFAULT_SETTINGS_DTO);
 			}
 
+			const rawRecord = typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>) : {};
+			const activePortfolioId =
+				typeof rawRecord['activePortfolioId'] === 'string' ? rawRecord['activePortfolioId'] : undefined;
+
 			const p = parsedResult.value;
 			const dto: SettingsDTO = {
 				id: CURRENT_SETTINGS_KEY,
+				activePortfolioId,
 				montoInicial: p.montoInicial.amount,
 				aporteMensual: p.aporteMensual.amount,
 				fechaInicio: p.fechaInicio.iso,
@@ -152,4 +213,177 @@ export class IndexedDBSettingsRepository implements SettingsRepositoryPort {
 			return err(error instanceof Error ? error : new Error(String(error)));
 		}
 	}
+
+	public async listPortfolios(): Promise<Result<PortfolioSummaryDTO[], Error>> {
+		const factory = this.getFactory();
+		if (!factory) {
+			return ok([
+				{
+					id: DEFAULT_PORTFOLIO_ID,
+					name: DEFAULT_PORTFOLIO_NAME,
+					updatedAt: new Date().toISOString(),
+					escenariosCount: DEFAULT_SETTINGS_DTO.inversiones.length,
+					montoInicial: DEFAULT_SETTINGS_DTO.montoInicial
+				}
+			]);
+		}
+
+		try {
+			const db = await this.getDatabase();
+			const raw = await this.readRecord(db, PORTFOLIOS_KEY);
+			let portfolios = this.parsePortfoliosRecord(raw);
+
+			if (portfolios.length === 0) {
+				const currentSettingsResult = await this.loadSettings();
+				const initialSettings = currentSettingsResult.ok ? currentSettingsResult.value : DEFAULT_SETTINGS_DTO;
+				const defaultPortfolio: PortfolioDTO = {
+					id: DEFAULT_PORTFOLIO_ID,
+					name: DEFAULT_PORTFOLIO_NAME,
+					settings: initialSettings,
+					createdAt: new Date().toISOString(),
+					updatedAt: new Date().toISOString()
+				};
+				portfolios = [defaultPortfolio];
+				await this.writeRecord(db, { id: PORTFOLIOS_KEY, items: portfolios });
+			}
+
+			const summaries: PortfolioSummaryDTO[] = portfolios.map((p) => ({
+				id: p.id,
+				name: p.name,
+				updatedAt: p.updatedAt,
+				escenariosCount: p.settings.inversiones.length,
+				montoInicial: p.settings.montoInicial
+			}));
+
+			return ok(summaries);
+		} catch (error) {
+			return err(error instanceof Error ? error : new Error(String(error)));
+		}
+	}
+
+	public async loadPortfolio(id: string): Promise<Result<PortfolioDTO, Error>> {
+		const factory = this.getFactory();
+		if (!factory) {
+			return ok({
+				id: DEFAULT_PORTFOLIO_ID,
+				name: DEFAULT_PORTFOLIO_NAME,
+				settings: DEFAULT_SETTINGS_DTO,
+				createdAt: new Date().toISOString(),
+				updatedAt: new Date().toISOString()
+			});
+		}
+
+		try {
+			const db = await this.getDatabase();
+			const raw = await this.readRecord(db, PORTFOLIOS_KEY);
+			let portfolios = this.parsePortfoliosRecord(raw);
+			let match = portfolios.find((p) => p.id === id);
+
+			if (!match && id === DEFAULT_PORTFOLIO_ID) {
+				const currentSettingsResult = await this.loadSettings();
+				const initialSettings = currentSettingsResult.ok ? currentSettingsResult.value : DEFAULT_SETTINGS_DTO;
+				const defaultPortfolio: PortfolioDTO = {
+					id: DEFAULT_PORTFOLIO_ID,
+					name: DEFAULT_PORTFOLIO_NAME,
+					settings: initialSettings,
+					createdAt: new Date().toISOString(),
+					updatedAt: new Date().toISOString()
+				};
+				portfolios = [defaultPortfolio, ...portfolios];
+				await this.writeRecord(db, { id: PORTFOLIOS_KEY, items: portfolios });
+				match = defaultPortfolio;
+			}
+
+			if (!match) {
+				return err(new Error(`Portafolio con identificador "${id}" no encontrado.`));
+			}
+
+			return ok(match);
+		} catch (error) {
+			return err(error instanceof Error ? error : new Error(String(error)));
+		}
+	}
+
+	public async savePortfolio(portfolio: PortfolioDTO): Promise<Result<void, Error>> {
+		const factory = this.getFactory();
+		if (!factory) {
+			return err(new Error('IndexedDB no está disponible en este entorno.'));
+		}
+
+		try {
+			const db = await this.getDatabase();
+			const raw = await this.readRecord(db, PORTFOLIOS_KEY);
+			const portfolios = this.parsePortfoliosRecord(raw);
+			const existingIndex = portfolios.findIndex((p) => p.id === portfolio.id);
+
+			if (existingIndex >= 0) {
+				const existing = portfolios[existingIndex];
+				portfolios[existingIndex] = {
+					...portfolio,
+					createdAt: existing?.createdAt || portfolio.createdAt
+				};
+			} else {
+				portfolios.push(portfolio);
+			}
+
+			await this.writeRecord(db, { id: PORTFOLIOS_KEY, items: portfolios });
+			return ok(undefined);
+		} catch (error) {
+			return err(error instanceof Error ? error : new Error(String(error)));
+		}
+	}
+
+	public async deletePortfolio(id: string): Promise<Result<void, Error>> {
+		const factory = this.getFactory();
+		if (!factory) {
+			return err(new Error('IndexedDB no está disponible en este entorno.'));
+		}
+
+		try {
+			const db = await this.getDatabase();
+			const raw = await this.readRecord(db, PORTFOLIOS_KEY);
+			const portfolios = this.parsePortfoliosRecord(raw);
+			const filtered = portfolios.filter((p) => p.id !== id);
+
+			await this.writeRecord(db, { id: PORTFOLIOS_KEY, items: filtered });
+			return ok(undefined);
+		} catch (error) {
+			return err(error instanceof Error ? error : new Error(String(error)));
+		}
+	}
+
+	public async isTutorialCompleted(): Promise<Result<boolean, Error>> {
+		const factory = this.getFactory();
+		if (!factory) {
+			return ok(false);
+		}
+
+		try {
+			const db = await this.getDatabase();
+			const raw = await this.readRecord(db, TUTORIAL_KEY);
+			if (typeof raw === 'object' && raw !== null) {
+				const rec = raw as Record<string, unknown>;
+				return ok(rec['completed'] === true);
+			}
+			return ok(false);
+		} catch (error) {
+			return err(error instanceof Error ? error : new Error(String(error)));
+		}
+	}
+
+	public async setTutorialCompleted(completed: boolean): Promise<Result<void, Error>> {
+		const factory = this.getFactory();
+		if (!factory) {
+			return err(new Error('IndexedDB no está disponible en este entorno.'));
+		}
+
+		try {
+			const db = await this.getDatabase();
+			await this.writeRecord(db, { id: TUTORIAL_KEY, completed });
+			return ok(undefined);
+		} catch (error) {
+			return err(error instanceof Error ? error : new Error(String(error)));
+		}
+	}
 }
+

@@ -7,6 +7,7 @@ export interface InvestmentSettingDTO {
 
 export interface SettingsDTO {
 	readonly id?: string;
+	readonly activePortfolioId?: string;
 	readonly montoInicial: number;
 	readonly aporteMensual: number;
 	readonly inversiones: readonly InvestmentSettingDTO[];

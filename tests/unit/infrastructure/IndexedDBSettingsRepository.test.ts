@@ -6,7 +6,13 @@ import {
 	CURRENT_SETTINGS_KEY,
 	IndexedDBSettingsRepository
 } from '$infrastructure';
-import { DEFAULT_SETTINGS_DTO, type SettingsDTO } from '$application';
+import {
+	DEFAULT_PORTFOLIO_ID,
+	DEFAULT_PORTFOLIO_NAME,
+	DEFAULT_SETTINGS_DTO,
+	type PortfolioDTO,
+	type SettingsDTO
+} from '$application';
 
 // Helper para crear un mock ligero y determinista de IndexedDB para Node/Vitest
 interface MockStore {
@@ -26,99 +32,63 @@ function createMockIndexedDB(options?: {
 	const factory = {
 		open: (_name: string, _version?: number): IDBOpenDBRequest => {
 			const request = {} as IDBOpenDBRequest;
-
 			setTimeout(() => {
 				if (options?.shouldFailOpen) {
-					const errorEvent = new Event('error');
-					Object.defineProperty(request, 'error', {
-						value: new Error('Fallo simulado al abrir IndexedDB')
-					});
-					if (request.onerror) {
-						request.onerror.call(request, errorEvent);
-					}
+					Object.defineProperty(request, 'error', { value: new Error('Fallo simulado al abrir IndexedDB') });
+					request.onerror?.call(request, new Event('error'));
 					return;
 				}
-
 				const db = {
 					name: _name,
 					version: _version ?? 1,
-					objectStoreNames: {
-						contains: (name: string): boolean => stores.has(name)
-					},
+					objectStoreNames: { contains: (name: string): boolean => stores.has(name) },
 					createObjectStore: (name: string): IDBObjectStore => {
-						const storeData: MockStore = { records: new Map() };
-						stores.set(name, storeData);
+						stores.set(name, { records: new Map() });
 						return {} as IDBObjectStore;
 					},
-					transaction: (_storeNames: string | string[], _mode?: IDBTransactionMode): IDBTransaction => {
-						return {
-							objectStore: (storeName: string): IDBObjectStore => {
-								return {
-									get: (key: IDBValidKey): IDBRequest => {
-										const getReq = {} as IDBRequest;
-										setTimeout(() => {
-											if (options?.shouldFailRead) {
-												Object.defineProperty(getReq, 'error', {
-													value: new Error('Fallo simulado al leer registro')
-												});
-												if (getReq.onerror) {
-													getReq.onerror.call(getReq, new Event('error'));
-												}
-												return;
-											}
-
-											const targetStore = stores.get(storeName);
-											const result = targetStore?.records.get(String(key));
-											Object.defineProperty(getReq, 'result', { value: result });
-											if (getReq.onsuccess) {
-												getReq.onsuccess.call(getReq, new Event('success'));
-											}
-										}, 0);
-										return getReq;
-									},
-									put: (value: unknown): IDBRequest => {
-										const putReq = {} as IDBRequest;
-										setTimeout(() => {
-											if (options?.shouldFailWrite) {
-												Object.defineProperty(putReq, 'error', {
-													value: new Error('Fallo simulado al escribir registro')
-												});
-												if (putReq.onerror) {
-													putReq.onerror.call(putReq, new Event('error'));
-												}
-												return;
-											}
-
-											const targetStore = stores.get(storeName);
-											if (targetStore && typeof value === 'object' && value !== null) {
-												const id = 'id' in value ? String(value.id) : CURRENT_SETTINGS_KEY;
-												targetStore.records.set(id, value);
-											}
-											Object.defineProperty(putReq, 'result', { value });
-											if (putReq.onsuccess) {
-												putReq.onsuccess.call(putReq, new Event('success'));
-											}
-										}, 0);
-										return putReq;
+					transaction: (): IDBTransaction => ({
+						objectStore: (storeName: string): IDBObjectStore => ({
+							get: (key: IDBValidKey): IDBRequest => {
+								const getReq = {} as IDBRequest;
+								setTimeout(() => {
+									if (options?.shouldFailRead) {
+										Object.defineProperty(getReq, 'error', { value: new Error('Fallo simulado al leer registro') });
+										getReq.onerror?.call(getReq, new Event('error'));
+										return;
 									}
-								} as unknown as IDBObjectStore;
+									const result = stores.get(storeName)?.records.get(String(key));
+									Object.defineProperty(getReq, 'result', { value: result });
+									getReq.onsuccess?.call(getReq, new Event('success'));
+								}, 0);
+								return getReq;
+							},
+							put: (value: unknown): IDBRequest => {
+								const putReq = {} as IDBRequest;
+								setTimeout(() => {
+									if (options?.shouldFailWrite) {
+										Object.defineProperty(putReq, 'error', { value: new Error('Fallo simulado al escribir registro') });
+										putReq.onerror?.call(putReq, new Event('error'));
+										return;
+									}
+									if (stores.has(storeName) && typeof value === 'object' && value !== null) {
+										const id = 'id' in value ? String(value.id) : CURRENT_SETTINGS_KEY;
+										stores.get(storeName)!.records.set(id, value);
+									}
+									Object.defineProperty(putReq, 'result', { value });
+									putReq.onsuccess?.call(putReq, new Event('success'));
+								}, 0);
+								return putReq;
 							}
-						} as unknown as IDBTransaction;
-					}
+						}) as unknown as IDBObjectStore
+					}) as unknown as IDBTransaction
 				} as unknown as IDBDatabase;
 
 				Object.defineProperty(request, 'result', { value: db });
-
-				// Simular onupgradeneeded si no existe la tabla
 				if (!stores.has(STORE_NAME) && request.onupgradeneeded) {
 					request.onupgradeneeded.call(request, new Event('upgradeneeded') as IDBVersionChangeEvent);
 				}
-
-				if (request.onsuccess) {
-					request.onsuccess.call(request, new Event('success'));
-				}
+				request.onsuccess?.call(request, new Event('success'));
 			}, 0);
-
 			return request;
 		}
 	} as unknown as IDBFactory;
@@ -303,5 +273,175 @@ describe('IndexedDBSettingsRepository', () => {
 		if (!saveResult.ok) {
 			expect(saveResult.error.message).toContain('Fallo simulado al escribir registro');
 		}
+	});
+
+	describe('Multi-portfolio persistence (Phase 11)', () => {
+		it('returns default portfolio on listPortfolios when store is empty', async () => {
+			const { factory } = createMockIndexedDB();
+			const repository = new IndexedDBSettingsRepository(factory);
+
+			const listResult = await repository.listPortfolios();
+			expect(listResult.ok).toBe(true);
+			if (listResult.ok) {
+				expect(listResult.value.length).toBeGreaterThanOrEqual(1);
+				expect(listResult.value[0]?.id).toBe(DEFAULT_PORTFOLIO_ID);
+				expect(listResult.value[0]?.name).toBe(DEFAULT_PORTFOLIO_NAME);
+			}
+		});
+
+		it('saves and loads custom portfolio successfully', async () => {
+			const { factory } = createMockIndexedDB();
+			const repository = new IndexedDBSettingsRepository(factory);
+
+			const customPortfolio: PortfolioDTO = {
+				id: 'custom-p1',
+				name: 'Mi Portafolio Agresivo',
+				settings: {
+					...DEFAULT_SETTINGS_DTO,
+					montoInicial: 50000,
+					aporteMensual: 2500
+				},
+				createdAt: new Date().toISOString(),
+				updatedAt: new Date().toISOString()
+			};
+
+			const saveRes = await repository.savePortfolio(customPortfolio);
+			expect(saveRes.ok).toBe(true);
+
+			const loadRes = await repository.loadPortfolio('custom-p1');
+			expect(loadRes.ok).toBe(true);
+			if (loadRes.ok) {
+				expect(loadRes.value.id).toBe('custom-p1');
+				expect(loadRes.value.name).toBe('Mi Portafolio Agresivo');
+				expect(loadRes.value.settings.montoInicial).toBe(50000);
+			}
+		});
+
+		it('updates an existing portfolio in place', async () => {
+			const { factory } = createMockIndexedDB();
+			const repository = new IndexedDBSettingsRepository(factory);
+
+			const portfolio: PortfolioDTO = {
+				id: 'port-edit',
+				name: 'Nombre Original',
+				settings: DEFAULT_SETTINGS_DTO,
+				createdAt: '2026-01-01',
+				updatedAt: '2026-01-01'
+			};
+
+			await repository.savePortfolio(portfolio);
+			const updatedPortfolio = { ...portfolio, name: 'Nombre Modificado' };
+			await repository.savePortfolio(updatedPortfolio);
+
+			const loadRes = await repository.loadPortfolio('port-edit');
+			if (loadRes.ok) {
+				expect(loadRes.value.name).toBe('Nombre Modificado');
+			}
+		});
+
+		it('deletes a portfolio by id', async () => {
+			const { factory } = createMockIndexedDB();
+			const repository = new IndexedDBSettingsRepository(factory);
+
+			await repository.savePortfolio({
+				id: 'port-to-delete',
+				name: 'Eliminar Este',
+				settings: DEFAULT_SETTINGS_DTO,
+				createdAt: '2026-01-01',
+				updatedAt: '2026-01-01'
+			});
+
+			const delRes = await repository.deletePortfolio('port-to-delete');
+			expect(delRes.ok).toBe(true);
+
+			const loadRes = await repository.loadPortfolio('port-to-delete');
+			expect(loadRes.ok).toBe(false);
+		});
+
+		it('returns error when loading non-existent portfolio', async () => {
+			const { factory } = createMockIndexedDB();
+			const repository = new IndexedDBSettingsRepository(factory);
+
+			const result = await repository.loadPortfolio('inexistente');
+			expect(result.ok).toBe(false);
+			if (!result.ok) {
+				expect(result.error.message).toContain('no encontrado');
+			}
+		});
+
+		it('handles environment without IndexedDB gracefully for portfolios', async () => {
+			const repository = new IndexedDBSettingsRepository(undefined);
+
+			const listRes = await repository.listPortfolios();
+			expect(listRes.ok).toBe(true);
+			if (listRes.ok) {
+				expect(listRes.value[0]?.id).toBe(DEFAULT_PORTFOLIO_ID);
+			}
+
+			const loadRes = await repository.loadPortfolio(DEFAULT_PORTFOLIO_ID);
+			expect(loadRes.ok).toBe(true);
+
+			const saveRes = await repository.savePortfolio({
+				id: 'p1', name: 'P1', settings: DEFAULT_SETTINGS_DTO, createdAt: '', updatedAt: ''
+			});
+			expect(saveRes.ok).toBe(false);
+		});
+
+		it('bootstraps default portfolio on loadPortfolio when store is empty', async () => {
+			const { factory } = createMockIndexedDB();
+			const repository = new IndexedDBSettingsRepository(factory);
+
+			const loadRes = await repository.loadPortfolio(DEFAULT_PORTFOLIO_ID);
+			expect(loadRes.ok).toBe(true);
+			if (loadRes.ok) {
+				expect(loadRes.value.id).toBe(DEFAULT_PORTFOLIO_ID);
+				expect(loadRes.value.name).toBe(DEFAULT_PORTFOLIO_NAME);
+			}
+		});
+
+		it('preserves original createdAt when updating an existing portfolio', async () => {
+			const { factory } = createMockIndexedDB();
+			const repository = new IndexedDBSettingsRepository(factory);
+			const initialCreatedAt = '2025-12-01T10:00:00.000Z';
+
+			await repository.savePortfolio({
+				id: 'port-created-test',
+				name: 'Initial Name',
+				settings: DEFAULT_SETTINGS_DTO,
+				createdAt: initialCreatedAt,
+				updatedAt: initialCreatedAt
+			});
+			await repository.savePortfolio({
+				id: 'port-created-test',
+				name: 'Updated Name',
+				settings: DEFAULT_SETTINGS_DTO,
+				createdAt: '2026-06-01T12:00:00.000Z',
+				updatedAt: '2026-06-01T12:00:00.000Z'
+			});
+
+			const loadRes = await repository.loadPortfolio('port-created-test');
+			expect(loadRes.ok).toBe(true);
+			if (loadRes.ok) {
+				expect(loadRes.value.name).toBe('Updated Name');
+				expect(loadRes.value.createdAt).toBe(initialCreatedAt);
+			}
+		});
+
+		it('saves and loads activePortfolioId in settings', async () => {
+			const { factory } = createMockIndexedDB();
+			const repository = new IndexedDBSettingsRepository(factory);
+
+			const saveRes = await repository.saveSettings({
+				...DEFAULT_SETTINGS_DTO,
+				activePortfolioId: 'portfolio-custom-xyz'
+			});
+			expect(saveRes.ok).toBe(true);
+
+			const loadRes = await repository.loadSettings();
+			expect(loadRes.ok).toBe(true);
+			if (loadRes.ok) {
+				expect(loadRes.value.activePortfolioId).toBe('portfolio-custom-xyz');
+			}
+		});
 	});
 });

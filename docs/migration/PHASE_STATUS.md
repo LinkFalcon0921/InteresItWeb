@@ -19,6 +19,9 @@
 | **6** | `PHASE-06` | Presentation Layer (Svelte 5 Runes + SMUI) | **COMPLETED** | 2026-11-07 | 2026-11-07 |
 | **7** | `PHASE-07` | Feature Migration & DI Composition | **COMPLETED** | 2026-11-07 | 2026-11-07 |
 | **8** | `PHASE-08` | CI/CD Approval Pipelines, Lighthouse & Release | **COMPLETED** | 2026-11-07 | 2026-11-07 |
+| **9** | `PHASE-09` | Monolith Decommissioning & Legacy Quarantine | **COMPLETED** | 2026-11-07 | 2026-11-07 |
+| **10** | `PHASE-10` | Interactive Onboarding & User Guidance (Driver.js) | **ON HOLD** | 2026-11-07 | — |
+| **11** | `PHASE-11` | Multi-Portfolio Management (Clean Architecture) | **COMPLETED** | 2026-11-07 | 2026-11-07 |
 
 ---
 
@@ -106,10 +109,35 @@
   - [x] Checklist de Paso a Producción (`docs/release/RELEASE_CHECKLIST.md`): dictamen favorable para lanzamiento.
 - **Estado:** COMPLETED.
 
+### FASE 9 — Monolith Decommissioning & Legacy Quarantine
+- **Objetivo:** Descomisionar el monolito web original (`index.html`, `sw.js`, `manifest.json`), reubicándolo en la carpeta `legacy/` para su preservación histórica como baseline, asegurando que los pipelines de CI, scripts de calidad y el build estático sean 100% autónomos sin dependencias de archivos raíz heredados.
+- **Entregables Completados:**
+  - [x] Reubicación del monolito heredado: `index.html` (669 líneas), `sw.js` y `manifest.json` movidos a `legacy/`.
+  - [x] Documentación de baseline: `legacy/README.md` documentando el propósito histórico y paridad funcional.
+  - [x] Configuración de `scripts/check-lines.js`: exclusión explícita del directorio `legacy/` para concentrar la verificación en el código de producción moderno.
+  - [x] Autonomía de compilación y CI: `.github/workflows/ci.yml` y `.github/workflows/deploy.yml` operando de manera 100% independiente con SvelteKit adapter-static.
+- **Estado:** COMPLETED.
+
+### FASE 10 — Interactive Onboarding & User Guidance (Driver.js)
+- **Objetivo:** Diseñar e integrar un sistema de onboarding interactivo y guía guiada framework-agnostic con `driver.js`.
+- **Estado:** ON HOLD (Fase pausada por instrucción directa para desarrollo en línea de trabajo paralela).
+
+### FASE 11 — Multi-Portfolio Management (Clean Architecture)
+- **Objetivo:** Implementar la capacidad de gestionar múltiples portafolios de inversión en almacenamiento local IndexedDB bajo Clean Architecture, permitiendo a los usuarios crear, listar, renombrar, alternar y eliminar portafolios completos con persistencia del portafolio activo y aislamiento de escenarios.
+- **Entregables Completados:**
+  - [x] Modelado y DTOs en Application Layer: `PortfolioDTO`, `PortfolioSummaryDTO`, constantes `DEFAULT_PORTFOLIO_ID`, `DEFAULT_PORTFOLIO_NAME` y `activePortfolioId` en `SettingsDTO`.
+  - [x] Casos de uso de portafolios (`src/lib/application/use-cases/`): `ListPortfoliosUseCase`, `LoadPortfolioUseCase`, `SavePortfolioUseCase`, `DeletePortfolioUseCase` y `RenamePortfolioUseCase` con validaciones de unicidad, existencia, límites de caracteres (máx. 100) y regla de portafolio mínimo.
+  - [x] Adaptador de persistencia en Infrastructure: `IndexedDBSettingsRepository` con operaciones CRUD sobre el registro `portfolios` en `InteresItDB`, inicialización automática (bootstrap) del portafolio por defecto, preservación de fecha `createdAt` y persistencia de `activePortfolioId`.
+  - [x] Contenedor de Inyección de Dependencias (`Container.ts`): Registro e inyección de todos los casos de uso de portafolios en `AppDependencies` y `AppContainer`.
+  - [x] Estado reactivo en Presentation: `SimulatorState.svelte.ts` ampliado con `currentPortfolioId`, `currentPortfolioName`, `portfolios`, `isPortfolioDialogOpen`, `switchPortfolio`, `saveCurrentPortfolio`, `createPortfolio`, `renamePortfolio` y `deletePortfolio`.
+  - [x] Componentes de interfaz: `PortfolioDialogSMUI.svelte` (modal accesible con atajo Escape via `svelte:window`, mensajes de error semánticos, modo claro/oscuro) y botón de acceso directo `💼 [Nombre Portafolio]` en `HeaderSMUI.svelte`.
+  - [x] Pruebas automatizadas: Cobertura completa en `PortfolioUseCases.test.ts`, `IndexedDBSettingsRepository.test.ts` y `SimulatorState.test.ts`. Total acumulado: 143 pruebas pasando al 100% sin contar la Fase 10 (en pausa).
+- **Estado:** COMPLETED.
+
 ---
 
 ## 3. Estado del Proyecto y Cierre de Migración
-- **Estado Global:** TODAS LAS FASES (0 a 8) COMPLETADAS.
-- **Pruebas Automatizadas:** 119 pruebas unitarias pasando al 100% en Vitest.
+- **Estado Global:** FASES 0 A 9 Y FASE 11 COMPLETADAS (Fase 10 en progreso/pausa externa).
+- **Pruebas Automatizadas:** 143 pruebas unitarias pasando al 100% en Vitest.
 - **Calidad de Código:** 0 errores y 0 advertencias en `svelte-check`, 0 archivos excediendo límites de líneas (máximo 600, alerta 450).
 - **Despliegue:** Preparado y verificado para despliegue automatizado en GitHub Pages vía Node 24 y SvelteKit adapter-static.

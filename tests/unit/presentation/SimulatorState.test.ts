@@ -2,20 +2,27 @@ import { describe, expect, it, vi } from 'vitest';
 import {
 	CalculatePairMatrixUseCase,
 	CalculateSimulationUseCase,
+	DeletePortfolioUseCase,
+	ListPortfoliosUseCase,
+	LoadPortfolioUseCase,
 	LoadSettingsUseCase,
+	RenamePortfolioUseCase,
+	SavePortfolioUseCase,
 	SaveSettingsUseCase,
+	type PortfolioDTO,
+	type PortfolioSummaryDTO,
 	type ReportExportPort,
 	type SettingsDTO,
 	type SettingsRepositoryPort
 } from '$application';
 import { SimulatorState } from '$presentation/state/SimulatorState.svelte';
-import { ok } from '$domain';
+import { err, ok } from '$domain';
 
-function createTestState(): SimulatorState {
+function createTestState(customRepo?: SettingsRepositoryPort): SimulatorState {
 	const calcSim = new CalculateSimulationUseCase();
 	const calcPair = new CalculatePairMatrixUseCase();
 
-	const mockRepo: SettingsRepositoryPort = {
+	const mockRepo: SettingsRepositoryPort = customRepo ?? {
 		loadSettings: vi.fn(async () =>
 			ok<SettingsDTO>({
 				id: 'current',
@@ -33,7 +40,13 @@ function createTestState(): SimulatorState {
 				]
 			})
 		),
-		saveSettings: vi.fn(async () => ok<void>(undefined))
+		saveSettings: vi.fn(async () => ok(undefined)),
+		listPortfolios: vi.fn(async () => ok<PortfolioSummaryDTO[]>([])),
+		loadPortfolio: vi.fn(async () => err(new Error('Not found'))),
+		savePortfolio: vi.fn(async () => ok(undefined)),
+		deletePortfolio: vi.fn(async () => ok(undefined)),
+		isTutorialCompleted: vi.fn(async () => ok(false)),
+		setTutorialCompleted: vi.fn(async () => ok(undefined))
 	};
 
 	const mockExport: ReportExportPort = {
@@ -43,8 +56,24 @@ function createTestState(): SimulatorState {
 
 	const loadSettings = new LoadSettingsUseCase(mockRepo);
 	const saveSettings = new SaveSettingsUseCase(mockRepo);
+	const listPortfolios = new ListPortfoliosUseCase(mockRepo);
+	const loadPortfolio = new LoadPortfolioUseCase(mockRepo);
+	const savePortfolio = new SavePortfolioUseCase(mockRepo);
+	const deletePortfolio = new DeletePortfolioUseCase(mockRepo);
+	const renamePortfolio = new RenamePortfolioUseCase(mockRepo);
 
-	return new SimulatorState(calcSim, calcPair, loadSettings, saveSettings, mockExport);
+	return new SimulatorState(
+		calcSim,
+		calcPair,
+		loadSettings,
+		saveSettings,
+		mockExport,
+		listPortfolios,
+		loadPortfolio,
+		savePortfolio,
+		deletePortfolio,
+		renamePortfolio
+	);
 }
 
 describe('SimulatorState', () => {
@@ -131,5 +160,185 @@ describe('SimulatorState', () => {
 
 		const printed = await state.printReport();
 		expect(printed).toBe(true);
+	});
+
+	it('manages multi-portfolios (Phase 11)', async () => {
+		const portfoliosList: PortfolioDTO[] = [
+			{
+				id: 'p-1',
+				name: 'Portafolio Base',
+				settings: {
+					id: 'p-1',
+					montoInicial: 200,
+					aporteMensual: 50,
+					fechaInicio: '2026-01-01',
+					fechaFin: '2026-06-01',
+					diaCorte: 15,
+					omitirPrimerCorte: false,
+					aplicarImpuesto: true,
+					isDarkMode: false,
+					inversiones: [
+						{ id: 'inv-1', nombre: 'Escenario 1', tasaAnual: 10, color: 'blue' },
+						{ id: 'inv-2', nombre: 'Escenario 2', tasaAnual: 12, color: 'emerald' }
+					]
+				},
+				createdAt: '2026-01-01',
+				updatedAt: '2026-01-01'
+			}
+		];
+
+		const customRepo: SettingsRepositoryPort = {
+			loadSettings: vi.fn(async () => ok(portfoliosList[0]!.settings)),
+			saveSettings: vi.fn(async () => ok(undefined)),
+			listPortfolios: vi.fn(async () =>
+				ok(
+					portfoliosList.map((p) => ({
+						id: p.id,
+						name: p.name,
+						updatedAt: p.updatedAt,
+						escenariosCount: p.settings.inversiones.length,
+						montoInicial: p.settings.montoInicial
+					}))
+				)
+			),
+			loadPortfolio: vi.fn(async (id: string) => {
+				const match = portfoliosList.find((p) => p.id === id);
+				return match ? ok(match) : err(new Error('No encontrado'));
+			}),
+			savePortfolio: vi.fn(async (portfolio: PortfolioDTO) => {
+				const idx = portfoliosList.findIndex((p) => p.id === portfolio.id);
+				if (idx >= 0) portfoliosList[idx] = portfolio;
+				else portfoliosList.push(portfolio);
+				return ok(undefined);
+			}),
+			deletePortfolio: vi.fn(async (id: string) => {
+				const idx = portfoliosList.findIndex((p) => p.id === id);
+				if (idx >= 0) portfoliosList.splice(idx, 1);
+				return ok(undefined);
+			}),
+			isTutorialCompleted: vi.fn(async () => ok(false)),
+			setTutorialCompleted: vi.fn(async () => ok(undefined))
+		};
+
+		const state = createTestState(customRepo);
+		await state.loadFromStorage();
+
+		expect(state.portfolios).toHaveLength(1);
+		expect(state.currentPortfolioName).toBe('Portafolio Base');
+
+		// Crear nuevo portafolio
+		const created = await state.createPortfolio('Portafolio Crecimiento');
+		expect(created).toBe(true);
+		expect(state.currentPortfolioName).toBe('Portafolio Crecimiento');
+		expect(state.portfolios).toHaveLength(2);
+
+		// Renombrar portafolio
+		const renamed = await state.renamePortfolio(state.currentPortfolioId, 'Portafolio Alto Riesgo');
+		expect(renamed).toBe(true);
+		expect(state.currentPortfolioName).toBe('Portafolio Alto Riesgo');
+
+		// Alternar al primer portafolio
+		const switched = await state.switchPortfolio('p-1');
+		expect(switched).toBe(true);
+		expect(state.currentPortfolioId).toBe('p-1');
+		expect(state.currentPortfolioName).toBe('Portafolio Base');
+
+		// Eliminar el segundo portafolio
+		const p2Id = portfoliosList[1]!.id;
+		const deleted = await state.deletePortfolio(p2Id);
+		expect(deleted).toBe(true);
+		expect(state.portfolios).toHaveLength(1);
+	});
+
+	it('persists and restores active portfolio id across reloads', async () => {
+		let currentSettings: SettingsDTO = {
+			id: 'current',
+			activePortfolioId: 'p-2',
+			montoInicial: 800,
+			aporteMensual: 100,
+			fechaInicio: '2026-01-01',
+			fechaFin: '2026-06-01',
+			diaCorte: 15,
+			omitirPrimerCorte: false,
+			aplicarImpuesto: true,
+			isDarkMode: false,
+			inversiones: [
+				{ id: 'inv-1', nombre: 'Escenario 1', tasaAnual: 10, color: 'blue' },
+				{ id: 'inv-2', nombre: 'Escenario 2', tasaAnual: 12, color: 'emerald' }
+			]
+		};
+
+		const portfoliosList: PortfolioDTO[] = [
+			{
+				id: 'p-1',
+				name: 'Portafolio 1',
+				settings: { ...currentSettings, id: 'p-1' },
+				createdAt: '2026-01-01',
+				updatedAt: '2026-01-01'
+			},
+			{
+				id: 'p-2',
+				name: 'Portafolio 2',
+				settings: { ...currentSettings, id: 'p-2' },
+				createdAt: '2026-01-01',
+				updatedAt: '2026-01-01'
+			}
+		];
+
+		const customRepo: SettingsRepositoryPort = {
+			loadSettings: vi.fn(async () => ok(currentSettings)),
+			saveSettings: vi.fn(async (s) => {
+				currentSettings = s;
+				return ok(undefined);
+			}),
+			listPortfolios: vi.fn(async () =>
+				ok(
+					portfoliosList.map((p) => ({
+						id: p.id,
+						name: p.name,
+						updatedAt: p.updatedAt,
+						escenariosCount: p.settings.inversiones.length,
+						montoInicial: p.settings.montoInicial
+					}))
+				)
+			),
+			loadPortfolio: vi.fn(async (id: string) => {
+				const match = portfoliosList.find((p) => p.id === id);
+				return match ? ok(match) : err(new Error('No encontrado'));
+			}),
+			savePortfolio: vi.fn(async (portfolio: PortfolioDTO) => {
+				const idx = portfoliosList.findIndex((p) => p.id === portfolio.id);
+				if (idx >= 0) portfoliosList[idx] = portfolio;
+				else portfoliosList.push(portfolio);
+				return ok(undefined);
+			}),
+			deletePortfolio: vi.fn(async (id: string) => {
+				const idx = portfoliosList.findIndex((p) => p.id === id);
+				if (idx >= 0) portfoliosList.splice(idx, 1);
+				return ok(undefined);
+			}),
+			isTutorialCompleted: vi.fn(async () => ok(false)),
+			setTutorialCompleted: vi.fn(async () => ok(undefined))
+		};
+
+		const state = createTestState(customRepo);
+		await state.loadFromStorage();
+
+		// Should have loaded p-2 as active because activePortfolioId was p-2
+		expect(state.currentPortfolioId).toBe('p-2');
+		expect(state.currentPortfolioName).toBe('Portafolio 2');
+
+		// Modify values and call saveCurrentPortfolio
+		state.montoInicial = 950;
+		const saved = await state.saveCurrentPortfolio();
+		expect(saved).toBe(true);
+
+		// Verified that activePortfolioId was saved in settings
+		expect(currentSettings.activePortfolioId).toBe('p-2');
+		expect(currentSettings.montoInicial).toBe(950);
+
+		// And verified portfolio record was updated in portfolio store
+		const p2 = portfoliosList.find((p) => p.id === 'p-2');
+		expect(p2?.settings.montoInicial).toBe(950);
 	});
 });

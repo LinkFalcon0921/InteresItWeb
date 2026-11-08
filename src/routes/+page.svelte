@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import Snackbar, { Actions, Label } from '@smui/snackbar';
 	import Button from '@smui/button';
-	import { createSimulatorState } from '$di';
+	import { createSimulatorState, getAppContainer } from '$di';
 	import {
 		DataEntrySMUI,
 		ExportDialogSMUI,
@@ -10,6 +10,7 @@
 		HeroCardSMUI,
 		ParametersDrawerSMUI,
 		PairComparisonSMUI,
+		PortfolioDialogSMUI,
 		ProjectionTableSMUI,
 		ScenarioListSMUI
 	} from '$presentation';
@@ -47,7 +48,7 @@
 
 	<div class="terminal-main-layout">
 		<!-- Panel Lateral de Parámetros (Desktop) -->
-		<aside class="desktop-sidebar" aria-label="Parámetros de Simulación">
+		<aside id="tour-data" class="desktop-sidebar" aria-label="Parámetros de Simulación">
 			<DataEntrySMUI state={simState} />
 		</aside>
 
@@ -60,7 +61,9 @@
 				</div>
 			{/if}
 
-			<HeroCardSMUI state={simState} />
+			<div id="tour-hero">
+				<HeroCardSMUI state={simState} />
+			</div>
 
 			<!-- Navegación por Pestañas -->
 			<div class="tabs-nav" role="tablist" aria-label="Secciones de la terminal">
@@ -86,12 +89,18 @@
 			<div class="tab-panels">
 				{#if simState.activeTab === 'simulador'}
 					<div id="panel-simulador" role="tabpanel" tabindex="0" aria-labelledby="tab-simulador">
-						<ScenarioListSMUI state={simState} />
-						<ProjectionTableSMUI state={simState} />
+						<div id="tour-scenarios">
+							<ScenarioListSMUI state={simState} />
+						</div>
+						<div id="tour-table">
+							<ProjectionTableSMUI state={simState} />
+						</div>
 					</div>
 				{:else if simState.activeTab === 'comparativa'}
 					<div id="panel-comparativa" role="tabpanel" tabindex="0" aria-labelledby="tab-comparativa">
-						<PairComparisonSMUI state={simState} />
+						<div id="tour-pairs">
+							<PairComparisonSMUI state={simState} />
+						</div>
 						<ScenarioListSMUI state={simState} />
 					</div>
 				{:else if simState.activeTab === 'reporte'}
@@ -123,6 +132,15 @@
 		isOpen={isExportDialogOpen}
 		onClose={() => {
 			isExportDialogOpen = false;
+		}}
+	/>
+
+	<!-- Diálogo de Portafolios -->
+	<PortfolioDialogSMUI
+		simState={simState}
+		isOpen={simState.isPortfolioDialogOpen}
+		onClose={() => {
+			simState.isPortfolioDialogOpen = false;
 		}}
 	/>
 

@@ -1,7 +1,12 @@
 import {
 	CalculatePairMatrixUseCase,
 	CalculateSimulationUseCase,
+	DeletePortfolioUseCase,
+	ListPortfoliosUseCase,
+	LoadPortfolioUseCase,
 	LoadSettingsUseCase,
+	RenamePortfolioUseCase,
+	SavePortfolioUseCase,
 	SaveSettingsUseCase,
 	type ReportExportPort,
 	type SettingsRepositoryPort
@@ -20,6 +25,11 @@ export interface AppDependencies {
 	readonly calculatePairMatrix: CalculatePairMatrixUseCase;
 	readonly loadSettings: LoadSettingsUseCase;
 	readonly saveSettings: SaveSettingsUseCase;
+	readonly listPortfolios: ListPortfoliosUseCase;
+	readonly loadPortfolio: LoadPortfolioUseCase;
+	readonly savePortfolio: SavePortfolioUseCase;
+	readonly deletePortfolio: DeletePortfolioUseCase;
+	readonly renamePortfolio: RenamePortfolioUseCase;
 }
 
 export interface AppContainer {
@@ -29,6 +39,11 @@ export interface AppContainer {
 	readonly calculatePairMatrix: CalculatePairMatrixUseCase;
 	readonly loadSettings: LoadSettingsUseCase;
 	readonly saveSettings: SaveSettingsUseCase;
+	readonly listPortfolios: ListPortfoliosUseCase;
+	readonly loadPortfolio: LoadPortfolioUseCase;
+	readonly savePortfolio: SavePortfolioUseCase;
+	readonly deletePortfolio: DeletePortfolioUseCase;
+	readonly renamePortfolio: RenamePortfolioUseCase;
 }
 
 export const CONTAINER_CONTEXT_KEY = Symbol('APP_CONTAINER_CONTEXT');
@@ -43,6 +58,11 @@ export function createAppContainer(overrides?: Partial<AppDependencies>): AppCon
 	const calculatePairMatrix = overrides?.calculatePairMatrix ?? new CalculatePairMatrixUseCase();
 	const loadSettings = overrides?.loadSettings ?? new LoadSettingsUseCase(settingsRepository);
 	const saveSettings = overrides?.saveSettings ?? new SaveSettingsUseCase(settingsRepository);
+	const listPortfolios = overrides?.listPortfolios ?? new ListPortfoliosUseCase(settingsRepository);
+	const loadPortfolio = overrides?.loadPortfolio ?? new LoadPortfolioUseCase(settingsRepository);
+	const savePortfolio = overrides?.savePortfolio ?? new SavePortfolioUseCase(settingsRepository);
+	const deletePortfolio = overrides?.deletePortfolio ?? new DeletePortfolioUseCase(settingsRepository);
+	const renamePortfolio = overrides?.renamePortfolio ?? new RenamePortfolioUseCase(settingsRepository);
 
 	return {
 		settingsRepository,
@@ -50,7 +70,12 @@ export function createAppContainer(overrides?: Partial<AppDependencies>): AppCon
 		calculateSimulation,
 		calculatePairMatrix,
 		loadSettings,
-		saveSettings
+		saveSettings,
+		listPortfolios,
+		loadPortfolio,
+		savePortfolio,
+		deletePortfolio,
+		renamePortfolio
 	};
 }
 
@@ -99,7 +124,12 @@ export function createSimulatorState(container?: AppContainer): SimulatorState {
 		c.calculatePairMatrix,
 		c.loadSettings,
 		c.saveSettings,
-		c.reportExport
+		c.reportExport,
+		c.listPortfolios,
+		c.loadPortfolio,
+		c.savePortfolio,
+		c.deletePortfolio,
+		c.renamePortfolio
 	);
 }
 

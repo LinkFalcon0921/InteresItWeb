@@ -4,12 +4,13 @@
 
 	interface Props {
 		state: SimulatorState;
+		onStartTour?: () => void;
 	}
 
-	let { state }: Props = $props();
+	let { state, onStartTour }: Props = $props();
 
 	async function handleSave(): Promise<void> {
-		await state.saveToStorage();
+		await state.saveCurrentPortfolio();
 	}
 
 	async function handleExport(): Promise<void> {
@@ -47,6 +48,30 @@
 		<div class="actions-section">
 			<button
 				type="button"
+				class="action-btn portfolio-btn"
+				id="portfolio-manager-btn"
+				onclick={() => {
+					state.isPortfolioDialogOpen = true;
+				}}
+				title="Administrar y alternar portafolios guardados"
+			>
+				💼 <span class="portfolio-chip-name">{state.currentPortfolioName}</span>
+			</button>
+
+			{#if onStartTour}
+				<button
+					type="button"
+					class="action-btn guide-btn"
+					id="tour-guide-btn"
+					onclick={() => onStartTour?.()}
+					title="Iniciar recorrido guiado interactivo"
+				>
+					❓ Guía
+				</button>
+			{/if}
+
+			<button
+				type="button"
 				class="action-btn theme-toggle-btn"
 				onclick={() => state.toggleTheme()}
 				aria-label="Cambiar tema de color"
@@ -66,6 +91,7 @@
 			<button
 				type="button"
 				class="action-btn export-btn"
+				id="tour-export"
 				onclick={handleExport}
 				title="Exportar reporte en PDF"
 			>
@@ -168,6 +194,37 @@
 	.action-btn:hover {
 		background: rgba(255, 255, 255, 0.18);
 		border-color: rgba(255, 255, 255, 0.35);
+	}
+
+	.portfolio-btn {
+		background: rgba(16, 185, 129, 0.15);
+		border-color: rgba(16, 185, 129, 0.35);
+		color: #10b981;
+	}
+
+	.portfolio-btn:hover {
+		background: rgba(16, 185, 129, 0.25);
+		border-color: #10b981;
+	}
+
+	.portfolio-chip-name {
+		max-width: 140px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		display: inline-block;
+		vertical-align: middle;
+	}
+
+	.guide-btn {
+		background: rgba(246, 231, 195, 0.18);
+		border-color: rgba(246, 231, 195, 0.4);
+		color: #f6e7c3;
+	}
+
+	.guide-btn:hover {
+		background: rgba(246, 231, 195, 0.3);
+		border-color: #f6e7c3;
 	}
 
 	.export-btn {

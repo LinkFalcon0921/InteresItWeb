@@ -28,8 +28,17 @@ export class SaveSettingsUseCase {
 					? input.id
 					: 'current';
 
+			const activePortfolioId =
+				typeof input === 'object' &&
+				input !== null &&
+				'activePortfolioId' in input &&
+				typeof input.activePortfolioId === 'string'
+					? input.activePortfolioId
+					: undefined;
+
 			const dto: SettingsDTO = {
 				id,
+				activePortfolioId,
 				montoInicial: parsed.montoInicial.amount,
 				aporteMensual: parsed.aporteMensual.amount,
 				fechaInicio: parsed.fechaInicio.iso,

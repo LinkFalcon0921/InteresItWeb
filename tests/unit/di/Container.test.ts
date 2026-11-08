@@ -5,6 +5,8 @@ import {
 	CalculateSimulationUseCase,
 	LoadSettingsUseCase,
 	SaveSettingsUseCase,
+	type PortfolioDTO,
+	type PortfolioSummaryDTO,
 	type ReportExportOptions,
 	type ReportExportPort,
 	type SettingsDTO,
@@ -26,7 +28,7 @@ import {
 	setContainerContext,
 	type AppContainer
 } from '$di';
-import { ok } from '$domain';
+import { err, ok } from '$domain';
 
 const sampleSettings: SettingsDTO = {
 	id: 'current',
@@ -47,7 +49,13 @@ const sampleSettings: SettingsDTO = {
 function createMockRepository(): SettingsRepositoryPort {
 	return {
 		loadSettings: vi.fn(async () => ok(sampleSettings)),
-		saveSettings: vi.fn(async () => ok(undefined))
+		saveSettings: vi.fn(async () => ok(undefined)),
+		listPortfolios: vi.fn(async () => ok<PortfolioSummaryDTO[]>([])),
+		loadPortfolio: vi.fn(async () => err(new Error('Not found'))),
+		savePortfolio: vi.fn(async () => ok(undefined)),
+		deletePortfolio: vi.fn(async () => ok(undefined)),
+		isTutorialCompleted: vi.fn(async () => ok(false)),
+		setTutorialCompleted: vi.fn(async () => ok(undefined))
 	};
 }
 
@@ -144,7 +152,13 @@ describe('DI Container — createAppContainer', () => {
 			}),
 			saveSettings: vi.fn(async () => {
 				throw new Error('Disk full error');
-			})
+			}),
+			listPortfolios: vi.fn(async () => ok<PortfolioSummaryDTO[]>([])),
+			loadPortfolio: vi.fn(async () => err(new Error('Not found'))),
+			savePortfolio: vi.fn(async () => ok(undefined)),
+			deletePortfolio: vi.fn(async () => ok(undefined)),
+			isTutorialCompleted: vi.fn(async () => ok(false)),
+			setTutorialCompleted: vi.fn(async () => ok(undefined))
 		};
 
 		const container = createAppContainer({ settingsRepository: failingRepo });
