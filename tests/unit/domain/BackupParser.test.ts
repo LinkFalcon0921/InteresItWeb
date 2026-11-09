@@ -27,7 +27,7 @@ describe('BackupParser (Domain)', () => {
 
 		expect(result.value.app).toBe('InteresIt');
 		expect(result.value.version).toBe('2.2.0');
-		expect(result.value.portfolios.length).toBe(1);
+		expect(result.value.portfolios).toHaveLength(1);
 		expect(result.value.activePortfolioId).toBe('port-1');
 	});
 

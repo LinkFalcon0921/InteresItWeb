@@ -33,8 +33,8 @@ describe('CalculateSimulationUseCase Unit Tests', () => {
 		expect(dto.aporteMensual).toBe(0);
 		expect(dto.totalAportado).toBe(0);
 		expect(dto.totalInvertido).toBe(185);
-		expect(dto.periodos.length).toBe(7);
-		expect(dto.resumenPorEscenario.length).toBe(2);
+		expect(dto.periodos).toHaveLength(7);
+		expect(dto.resumenPorEscenario).toHaveLength(2);
 
 		// Escenario 2 (12%) should be the leader over Escenario 1 (10%)
 		expect(dto.escenarioLiderId).toBe('inv-2');
@@ -61,7 +61,7 @@ describe('CalculateSimulationUseCase Unit Tests', () => {
 			expect(firstPeriod.fechaInicio).toBe('2026-04-17');
 			expect(firstPeriod.fechaCorte).toBe('2026-05-16');
 			expect(firstPeriod.diasPeriodo).toBe(29);
-			expect(firstPeriod.resultadosPorEscenario.length).toBe(2);
+			expect(firstPeriod.resultadosPorEscenario).toHaveLength(2);
 		}
 	});
 

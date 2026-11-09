@@ -3,7 +3,7 @@
 	import type { SimulatorState } from '../state/SimulatorState.svelte';
 	import type { InvestmentSettingDTO, ScenarioSummaryDTO } from '$application';
 	import { formatCurrency } from '../formatters/financialFormatters';
-	import { RateStepDelta, type RateStepDelta as RateStepDeltaType } from '../enums/RateStepDelta';
+	import { RateStepDelta } from '../enums/RateStepDelta';
 
 	interface Props {
 		state: SimulatorState;
@@ -28,7 +28,7 @@
 		state.updateInversionNombre(inversion.id, target.value);
 	}
 
-	function adjustTasa(delta: RateStepDeltaType): void {
+	function adjustTasa(delta: RateStepDelta): void {
 		const raw = inversion.tasaAnual + delta;
 		const rounded = Math.round(raw * 100) / 100;
 		const clamped = Math.max(0, Math.min(100, rounded));

@@ -3,6 +3,7 @@
   "version": "2.2.0",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@11.24.0",
   "scripts": {
     "dev": "vite dev",
     "build": "pnpm run smui-theme && vite build",
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.65.0",
+    "pnpm": "^11.24.0",
     "@smui/button": "^9.0.6",
     "@smui/card": "^9.0.6",
     "@smui/chips": "^9.0.6",

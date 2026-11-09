@@ -27,7 +27,7 @@ describe('Financial Core simular Unit Tests', () => {
 				aplicarImpuestoRD: false
 			});
 
-			expect(resultado.periodos.length).toBe(7);
+			expect(resultado.periodos).toHaveLength(7);
 
 			// Período 1: 17 abr -> 16 may 2026 (29 días)
 			const p1 = resultado.periodos[0];
@@ -121,7 +121,7 @@ describe('Financial Core simular Unit Tests', () => {
 				escenarios: [escB]
 			});
 
-			expect(resultado.periodos.length).toBe(3);
+			expect(resultado.periodos).toHaveLength(3);
 			// 3 aportes de 200 = 600 total aportado
 			expect(resultado.totalAportado.amount).toBe(600);
 			expect(resultado.totalInvertido.amount).toBe(1600);
@@ -174,7 +174,7 @@ describe('Financial Core simular Unit Tests', () => {
 				escenarios
 			});
 
-			expect(resultado.resumenPorEscenario.length).toBe(20);
+			expect(resultado.resumenPorEscenario).toHaveLength(20);
 			// El escenario con mayor tasa (inv-20 con 14.5%) debe ser el líder
 			expect(resultado.escenarioLiderId).toBe('inv-20');
 			expect(resultado.resumenPorEscenario[19]?.rol).toBe(ScenarioRole.Leader);

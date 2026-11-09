@@ -1,14 +1,6 @@
-import { beforeEach, describe, expect, it } from 'vitest';
-import {
-	DEFAULT_SETTINGS_DTO,
-	LoadSettingsUseCase,
-	SaveSettingsUseCase,
-	type PortfolioDTO,
-	type PortfolioSummaryDTO,
-	type SettingsDTO,
-	type SettingsRepositoryPort
-} from '$application';
-import { FakeSettingsRepository } from '../../fakes/FakeSettingsRepository';
+import {beforeEach, describe, expect, it} from 'vitest';
+import {LoadSettingsUseCase, SaveSettingsUseCase, type SettingsDTO,} from '$application';
+import {FakeSettingsRepository} from '../../fakes/FakeSettingsRepository';
 
 describe('Settings Use Cases (LoadSettingsUseCase & SaveSettingsUseCase)', () => {
 	let repository: FakeSettingsRepository;
@@ -28,7 +20,7 @@ describe('Settings Use Cases (LoadSettingsUseCase & SaveSettingsUseCase)', () =>
 			if (!result.ok) return;
 
 			expect(result.value.montoInicial).toBe(185);
-			expect(result.value.inversiones.length).toBe(2);
+			expect(result.value.inversiones).toHaveLength(2);
 			expect(result.value.id).toBe('current');
 		});
 
@@ -103,7 +95,7 @@ describe('Settings Use Cases (LoadSettingsUseCase & SaveSettingsUseCase)', () =>
 			expect(repository.storedSettings?.montoInicial).toBe(2500);
 			expect(repository.storedSettings?.aporteMensual).toBe(200);
 			expect(repository.storedSettings?.diaCorte).toBe(20);
-			expect(repository.storedSettings?.inversiones.length).toBe(1);
+			expect(repository.storedSettings?.inversiones).toHaveLength(1);
 			expect(repository.storedSettings?.id).toBe('current');
 		});
 

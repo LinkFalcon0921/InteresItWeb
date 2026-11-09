@@ -1,23 +1,19 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import * as svelte from 'svelte';
 import {
 	CalculatePairMatrixUseCase,
 	CalculateSimulationUseCase,
 	LoadSettingsUseCase,
-	SaveSettingsUseCase,
-	type PortfolioDTO,
 	type PortfolioSummaryDTO,
 	type ReportExportOptions,
 	type ReportExportPort,
+	SaveSettingsUseCase,
 	type SettingsDTO,
 	type SettingsRepositoryPort,
 	type SimulationInputDTO,
 	type SimulationOutputDTO
 } from '$application';
-import {
-	IndexedDBSettingsRepository,
-	PrintExportAdapter
-} from '$infrastructure';
+import {IndexedDBSettingsRepository, PrintExportAdapter} from '$infrastructure';
 import {
 	CONTAINER_CONTEXT_KEY,
 	createAppContainer,
@@ -25,10 +21,9 @@ import {
 	getAppContainer,
 	getContainerContext,
 	resetAppContainer,
-	setContainerContext,
-	type AppContainer
+	setContainerContext
 } from '$di';
-import { err, ok } from '$domain';
+import {err, ok} from '$domain';
 
 const sampleSettings: SettingsDTO = {
 	id: 'current',

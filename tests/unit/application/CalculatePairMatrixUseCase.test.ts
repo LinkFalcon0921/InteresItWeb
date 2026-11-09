@@ -114,7 +114,7 @@ describe('CalculatePairMatrixUseCase Unit Tests', () => {
 		if (!result.ok) return;
 
 		expect(result.value.totalPares).toBe(3);
-		expect(result.value.comparaciones.length).toBe(3);
+		expect(result.value.comparaciones).toHaveLength(3);
 	});
 
 	it('accepts wrapped object with { resumenes: [...] }', () => {

@@ -93,7 +93,7 @@ describe('csvExport (Domain)', () => {
 		expect(lines[0]).toBe(
 			'Período,Fecha de Corte,Días,Saldo Inicial,Interés Bruto,Retención Ley 10% (RD),Interés Neto,Aporte Mensual,Saldo Final'
 		);
-		expect(lines.length).toBe(3); // 1 header + 2 periods
+		expect(lines).toHaveLength(3); // 1 header + 2 periods
 	});
 
 	it('should default to leader scenario values', () => {
@@ -120,7 +120,7 @@ describe('csvExport (Domain)', () => {
 
 		expect(lines[0]).toBe(CSV_HEADERS_WITH_SCENARIO.join(','));
 		// 1 header + 2 periods * 2 scenarios = 5 lines
-		expect(lines.length).toBe(5);
+		expect(lines).toHaveLength(5);
 		expect(lines[1]).toContain('Escenario Conservador,1,2026-01-31');
 		expect(lines[2]).toContain('Escenario Agresivo,1,2026-01-31');
 	});

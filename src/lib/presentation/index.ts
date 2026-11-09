@@ -1,6 +1,7 @@
 export * from './actions/portal';
 export * from './enums/NavigationTab';
 export * from './enums/RateStepDelta';
+export * from './enums/ResponsiveBreakpoint';
 export * from './enums/ResponsiveConstants';
 export * from './formatters/financialFormatters';
 export * from './state/SimulatorState.svelte';

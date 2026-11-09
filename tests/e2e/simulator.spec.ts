@@ -16,11 +16,9 @@ test.describe('Simulador Financiero E2E', () => {
 	test('debe recalcular la proyección al modificar el capital inicial y aporte', async ({ page }) => {
 		const montoInput = page.locator('#monto-inicial-input');
 		await montoInput.fill('500000');
-		await montoInput.dispatchEvent('input');
 
 		const aporteInput = page.locator('#aporte-mensual-input');
 		await aporteInput.fill('15000');
-		await aporteInput.dispatchEvent('input');
 
 		// Verificar que el Hero Card refleje el saldo estimado y ganancia con formato de moneda exacto
 		const heroCard = page.locator('#tour-hero');
@@ -53,7 +51,7 @@ test.describe('Simulador Financiero E2E', () => {
 		const addBtn = page.getByRole('button', { name: /\+ Agregar Escenario/i });
 		await expect(addBtn).toBeVisible();
 		for (let i = 0; i < 98; i++) {
-			await addBtn.dispatchEvent('click');
+			await addBtn.click();
 		}
 		const allCards = page.locator('.scenario-card-wrapper');
 		await expect(allCards).toHaveCount(100);
@@ -100,7 +98,6 @@ test.describe('Simulador Financiero E2E', () => {
 
 		const montoInput = page.locator('#monto-inicial-input');
 		await montoInput.fill('250000');
-		await montoInput.dispatchEvent('input');
 
 		// El hero card debe actualizarse reactivamente en memoria sin llamadas de red
 		const balanceAmount = page.locator('#tour-hero .balance-amount');
@@ -130,7 +127,6 @@ test.describe('Simulador Financiero E2E', () => {
 		// Modificar monto en drawer
 		const mobileInput = page.locator('#monto-inicial-input');
 		await mobileInput.fill('750000');
-		await mobileInput.dispatchEvent('input');
 
 		// Cerrar drawer
 		const closeDrawerBtn = page.locator('.close-drawer-btn');
@@ -151,8 +147,8 @@ test.describe('Simulador Financiero E2E', () => {
 
 		const shareInput = page.locator('#share-url-input');
 		await expect(shareInput).toBeVisible();
+		await expect(shareInput).toHaveValue(/#sim=/);
 		const shareUrl = await shareInput.inputValue();
-		expect(shareUrl).toContain('#sim=');
 
 		const copyBtn = page.locator('#btn-copy-share-url');
 		await expect(copyBtn).toBeVisible();
@@ -222,18 +218,15 @@ test.describe('Simulador Financiero E2E', () => {
 		// 1. Verificar que el sidebar de parámetros esté en posición sticky
 		const sidebar = page.locator('.desktop-sidebar');
 		await expect(sidebar).toBeVisible();
-		const sidebarPosition = await sidebar.evaluate((el) => window.getComputedStyle(el).position);
-		expect(sidebarPosition).toBe('sticky');
+		await expect(sidebar).toHaveCSS('position', 'sticky');
 
 		// 2. Verificar que workspace-area no tenga overflow-y auto ni scroll anidado
 		const workspace = page.locator('.workspace-area');
-		const workspaceOverflow = await workspace.evaluate((el) => window.getComputedStyle(el).overflowY);
-		expect(workspaceOverflow).toBe('visible');
+		await expect(workspace).toHaveCSS('overflow-y', 'visible');
 
 		// 3. Verificar que terminal-shell no limite la altura con overflow: hidden
 		const shell = page.locator('.terminal-shell');
-		const shellOverflow = await shell.evaluate((el) => window.getComputedStyle(el).overflowY);
-		expect(shellOverflow).not.toBe('hidden');
+		await expect(shell).not.toHaveCSS('overflow-y', 'hidden');
 
 		// 4. Scroll natural en el body para navegar por el dashboard
 		await page.evaluate(() => window.scrollTo(0, 400));
@@ -289,9 +282,7 @@ test.describe('Simulador Financiero E2E', () => {
 		expect(count).toBeGreaterThan(0);
 
 		for (let i = 0; i < count; i++) {
-			const el = balanceEls.nth(i);
-			const isVisible = await el.isVisible();
-			expect(isVisible).toBe(true);
+			await expect(balanceEls.nth(i)).toBeVisible();
 		}
 	});
 	test('debe abrir el selector de fecha en desktop sin sobreposición de hero ni banners y permitir editar la fecha', async ({ page }) => {
@@ -299,7 +290,7 @@ test.describe('Simulador Financiero E2E', () => {
 		await page.goto('/');
 
 		// 1. Abrir pestaña de Comparativa
-		await page.click('#tab-comparativa');
+		await page.locator('#tab-comparativa').click();
 		await expect(page.locator('#panel-comparativa')).toBeVisible();
 
 		// 2. Hacer clic en la tarjeta de fecha 'Desde'
@@ -344,7 +335,6 @@ test.describe('Simulador Financiero E2E', () => {
 
 		// 6. El diálogo se cierra y la fecha queda actualizada
 		await expect(scrim).toHaveCount(0);
-		const updatedText = await dateCard.locator('.date-text').textContent();
-		expect(updatedText).toContain('15');
+		await expect(dateCard.locator('.date-text')).toContainText('15');
 	});
 });
