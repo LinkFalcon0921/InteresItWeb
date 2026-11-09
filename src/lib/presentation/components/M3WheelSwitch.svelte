@@ -122,7 +122,8 @@
 		position: relative;
 		display: inline-grid;
 		grid-template-columns: 1fr 1fr;
-		width: 170px;
+		width: 160px;
+		flex-shrink: 0;
 		height: 36px;
 		border-radius: 9999px;
 		background: #f1f5f9;
@@ -163,10 +164,10 @@
 	/* Pill deslizante que se mueve con M3 Expressive physics */
 	.m3-wheel-slider {
 		position: absolute;
-		top: 2px;
-		bottom: 2px;
-		left: 2px;
-		width: calc(50% - 2px);
+		top: 3px;
+		bottom: 3px;
+		left: 3px;
+		width: calc(50% - 3px);
 		border-radius: 9999px;
 		background: #ffffff;
 		box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.06);
@@ -182,7 +183,7 @@
 	}
 
 	.m3-wheel-slider--on {
-		transform: translateX(calc(100% + 0px));
+		transform: translateX(100%);
 		background: #004851;
 		box-shadow: 0 3px 8px rgba(0, 72, 81, 0.25);
 		justify-content: flex-start;

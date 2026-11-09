@@ -53,8 +53,8 @@ export class CalculateSimulationUseCase {
 		if (!Array.isArray(rawEscenarios) || rawEscenarios.length === 0) {
 			return err(new InvalidScenarioError('Debe proporcionar al menos un escenario de inversión.'));
 		}
-		if (rawEscenarios.length > 20) {
-			return err(new InvalidScenarioError('No se pueden simular más de 20 escenarios de inversión simultáneos.'));
+		if (rawEscenarios.length > 200) {
+			return err(new InvalidScenarioError('No se pueden simular más de 200 escenarios de inversión simultáneos.'));
 		}
 
 		const domainEscenarios: InvestmentScenario[] = [];

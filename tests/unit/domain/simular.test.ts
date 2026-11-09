@@ -219,8 +219,8 @@ describe('Financial Core simular Unit Tests', () => {
 			).toThrow(InvalidScenarioError);
 		});
 
-		it('throws InvalidScenarioError if more than 20 scenarios are provided', () => {
-			const scenarios21 = Array.from({ length: 21 }, (_, i) =>
+		it('throws InvalidScenarioError if more than 200 scenarios are provided', () => {
+			const scenarios201 = Array.from({ length: 201 }, (_, i) =>
 				InvestmentScenario.create(`inv-${i + 1}`, `Fondo ${i + 1}`, 5, 'emerald')
 			);
 			expect(() =>
@@ -230,9 +230,26 @@ describe('Financial Core simular Unit Tests', () => {
 					fechaInicio: '2026-01-01',
 					fechaFin: '2026-05-01',
 					diaCorte: 1,
-					escenarios: scenarios21
+					escenarios: scenarios201
 				})
 			).toThrow(InvalidScenarioError);
+		});
+
+		it('supports simulating 100+ concurrent scenarios correctly without errors', () => {
+			const scenarios105 = Array.from({ length: 105 }, (_, i) =>
+				InvestmentScenario.create(`inv-${i + 1}`, `Fondo ${i + 1}`, 5 + i * 0.1, 'emerald')
+			);
+			const res = simular({
+				capitalInicial: 1000,
+				aporteMensual: 100,
+				fechaInicio: '2026-01-01',
+				fechaFin: '2026-06-01',
+				diaCorte: 1,
+				escenarios: scenarios105
+			});
+			expect(res.resumenPorEscenario).toHaveLength(105);
+			expect(res.periodos[0]?.resultadosPorEscenario).toHaveLength(105);
+			expect(res.escenarioLiderId).toBe('inv-105');
 		});
 
 		it('handles ultra-short leap year period: 2024-02-28 to 2024-02-29 with corte 29', () => {

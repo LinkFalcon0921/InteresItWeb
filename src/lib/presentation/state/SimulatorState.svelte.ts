@@ -147,15 +147,16 @@ export class SimulatorState {
 	}
 
 	public addInversion(nombre?: string, tasaAnual?: number): void {
-		if (this.inversiones.length >= 20) return;
+		if (this.inversiones.length >= 200) return;
 		const nextIdx = this.inversiones.length + 1;
 		const colorPalette = ['emerald', 'blue', 'cyan', 'amber', 'purple', 'rose', 'teal', 'indigo'];
 		const nextColor = colorPalette[(nextIdx - 1) % colorPalette.length] ?? 'teal';
+		const uniqueId = `inv-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
 		this.inversiones = [
 			...this.inversiones,
 			{
-				id: `inv-${Date.now()}-${nextIdx}`,
+				id: uniqueId,
 				nombre: nombre ?? `Escenario ${nextIdx}`,
 				tasaAnual: tasaAnual ?? 10,
 				color: nextColor
@@ -533,7 +534,14 @@ export class SimulatorState {
 		this.aportesExtraordinarios = settings.aportesExtraordinarios
 			? settings.aportesExtraordinarios.map((a) => ({ ...a }))
 			: [];
-		this.inversiones = settings.inversiones.map((inv) => ({ ...inv }));
+		const seenIds = new Set<string>();
+		this.inversiones = settings.inversiones
+			.filter((inv) => {
+				if (!inv.id || seenIds.has(inv.id)) return false;
+				seenIds.add(inv.id);
+				return true;
+			})
+			.map((inv) => ({ ...inv }));
 
 		if (typeof document !== 'undefined') {
 			if (this.isDarkMode) {

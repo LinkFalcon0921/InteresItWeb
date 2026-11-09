@@ -101,10 +101,11 @@
 
 			<button
 				type="button"
-				class="action-btn save-btn"
-				onclick={handleSave}
-				title="Guardar en almacenamiento local del navegador"
-				aria-label="Guardar configuración"
+				class="action-btn save-btn save-btn--disabled"
+				id="btn-save-settings"
+				disabled={true}
+				title="Módulo de guardado en mantenimiento y optimización"
+				aria-label="Guardar configuración (deshabilitado temporalmente)"
 			>
 				<span class="btn-icon">💾</span>
 				<span class="btn-text">Guardar</span>

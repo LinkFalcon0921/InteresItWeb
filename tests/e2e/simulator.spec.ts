@@ -32,16 +32,31 @@ test.describe('Simulador Financiero E2E', () => {
 		await expect(netProfit).toHaveText(/(?:RD)?\$\s*[\d,]+\.\d{2}/);
 	});
 
-	test('debe permitir agregar un nuevo escenario y actualizar la comparativa', async ({ page }) => {
+	test('debe permitir agregar un nuevo escenario y actualizar la comparativa sin duplicación', async ({ page }) => {
 		const initialCards = page.locator('.scenario-card-wrapper');
 		await expect(initialCards).toHaveCount(2);
 
 		const addBtn = page.locator('.add-scenario-btn');
 		await expect(addBtn).toBeVisible();
-		await addBtn.click();
 
+		// 1. Agregar 1 escenario: debe pasar exactamente a 3 (sin duplicarse a 6)
+		await addBtn.click();
 		const updatedCards = page.locator('.scenario-card-wrapper');
 		await expect(updatedCards).toHaveCount(3);
+
+		// 2. Agregar otro escenario: debe pasar exactamente a 4
+		await addBtn.click();
+		await expect(updatedCards).toHaveCount(4);
+	});
+
+	test('debe soportar agregar 100+ escenarios en la vista sin degradación ni errores', async ({ page }) => {
+		const addBtn = page.getByRole('button', { name: /\+ Agregar Escenario/i });
+		await expect(addBtn).toBeVisible();
+		for (let i = 0; i < 98; i++) {
+			await addBtn.dispatchEvent('click');
+		}
+		const allCards = page.locator('.scenario-card-wrapper');
+		await expect(allCards).toHaveCount(100);
 	});
 
 	test('debe navegar fluidamente entre las pestañas de simulación, comparativa y reporte', async ({ page }) => {

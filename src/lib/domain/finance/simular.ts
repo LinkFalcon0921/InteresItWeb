@@ -57,8 +57,8 @@ export function simular(params: SimularParams): SimulationResult {
 	if (!params.escenarios || params.escenarios.length === 0) {
 		throw new InvalidScenarioError('Debe proporcionar al menos un escenario de inversión.');
 	}
-	if (params.escenarios.length > 20) {
-		throw new InvalidScenarioError('No se pueden simular más de 20 escenarios de inversión simultáneos.');
+	if (params.escenarios.length > 200) {
+		throw new InvalidScenarioError('No se pueden simular más de 200 escenarios de inversión simultáneos.');
 	}
 
 	const inflacion = typeof params.tasaInflacion === 'number'

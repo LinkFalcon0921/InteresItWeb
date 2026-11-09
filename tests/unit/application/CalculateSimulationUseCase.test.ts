@@ -160,8 +160,8 @@ describe('CalculateSimulationUseCase Unit Tests', () => {
 		expect(resultNotArray.ok).toBe(false);
 	});
 
-	it('returns error when more than 20 scenarios are provided', () => {
-		const manyScenarios = Array.from({ length: 21 }, (_, i) => ({
+	it('returns error when more than 200 scenarios are provided', () => {
+		const manyScenarios = Array.from({ length: 201 }, (_, i) => ({
 			id: `inv-${i + 1}`,
 			nombre: `Escenario ${i + 1}`,
 			tasaAnual: 10,
@@ -174,7 +174,24 @@ describe('CalculateSimulationUseCase Unit Tests', () => {
 		});
 		expect(result.ok).toBe(false);
 		if (!result.ok) {
-			expect(result.error.message).toContain('No se pueden simular más de 20');
+			expect(result.error.message).toContain('No se pueden simular más de 200');
+		}
+	});
+
+	it('successfully calculates simulation with 100+ concurrent scenarios', () => {
+		const scenarios105 = Array.from({ length: 105 }, (_, i) => ({
+			id: `inv-${i + 1}`,
+			nombre: `Escenario ${i + 1}`,
+			tasaAnual: 8 + i * 0.1,
+			color: 'emerald'
+		}));
+		const result = useCase.execute({
+			...baseValidInput,
+			escenarios: scenarios105
+		});
+		expect(result.ok).toBe(true);
+		if (result.ok) {
+			expect(result.value.resumenPorEscenario).toHaveLength(105);
 		}
 	});
 

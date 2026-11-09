@@ -90,7 +90,7 @@
 		<!-- Fecha Inicio -->
 		<div class="m3-field-wrapper">
 			<label class="m3-field-label" for="fecha-inicio-input">
-				<span>Desde (Inicio)</span>
+				<span class="label-title">Fecha Inicio</span>
 				<span class="field-hint">Apertura</span>
 			</label>
 			<div
@@ -121,7 +121,7 @@
 		<!-- Fecha Fin -->
 		<div class="m3-field-wrapper">
 			<label class="m3-field-label" for="fecha-fin-input">
-				<span>Hasta (Término)</span>
+				<span class="label-title">Fecha Término</span>
 				<span class="field-hint">Liquidación</span>
 			</label>
 			<div
@@ -226,7 +226,21 @@
 	.dates-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 	@media (max-width: 400px) { .dates-grid { grid-template-columns: 1fr; } }
 	.m3-field-wrapper { display: flex; flex-direction: column; min-width: 0; }
-	.m3-field-label { display: flex; justify-content: space-between; font-size: 0.6875rem; font-weight: 600; color: #4f5d5c; margin-bottom: 4px; }
+	.m3-field-label {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		font-size: 0.6875rem;
+		font-weight: 600;
+		color: #4f5d5c;
+		margin-bottom: 5px;
+		min-height: 20px;
+		white-space: nowrap;
+	}
+	.label-title {
+		font-weight: 700;
+		white-space: nowrap;
+	}
 	.field-hint { font-size: 0.625rem; color: #64748b; }
 	.m3-date-box {
 		display: flex;
@@ -235,7 +249,10 @@
 		border: 1.5px solid #d5dedc;
 		border-radius: 10px;
 		padding: 0 10px;
-		min-height: 40px;
+		height: 42px;
+		min-height: 42px;
+		max-height: 42px;
+		box-sizing: border-box;
 		cursor: pointer;
 		transition: all 0.15s ease;
 	}

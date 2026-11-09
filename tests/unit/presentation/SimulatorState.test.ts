@@ -396,4 +396,36 @@ describe('SimulatorState', () => {
 		const res = state.exportCSV();
 		expect(res).toBe(false);
 	});
+	it('adds exactly 1 scenario per invocation without duplicates', () => {
+		const state = createTestState();
+		expect(state.inversiones).toHaveLength(2);
+
+		state.addInversion('Escenario Adicional', 14.5);
+		expect(state.inversiones).toHaveLength(3);
+		expect(state.inversiones[2]?.nombre).toBe('Escenario Adicional');
+		expect(state.inversiones[2]?.tasaAnual).toBe(14.5);
+
+		// Los IDs deben ser únicos
+		const ids = state.inversiones.map((inv) => inv.id);
+		const uniqueIds = new Set(ids);
+		expect(uniqueIds.size).toBe(3);
+	});
+
+	it('supports adding 100+ scenarios without errors or duplication', () => {
+		const state = createTestState();
+		for (let i = 0; i < 103; i++) {
+			state.addInversion(`Fondo ${i + 3}`, 10 + i * 0.05);
+		}
+		// 2 iniciales + 103 = 105 escenarios
+		expect(state.inversiones).toHaveLength(105);
+
+		// Comprobar unicidad de IDs
+		const ids = state.inversiones.map((inv) => inv.id);
+		expect(new Set(ids).size).toBe(105);
+
+		// La simulación derivada debe ejecutarse para los 105 escenarios
+		expect(state.simulationResult).toBeDefined();
+		expect(state.simulationResult?.resumenPorEscenario).toHaveLength(105);
+	});
+
 });

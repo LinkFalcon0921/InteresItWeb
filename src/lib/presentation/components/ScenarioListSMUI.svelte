@@ -12,7 +12,7 @@
 	const leaderId = $derived(state.simulationResult?.escenarioLiderId ?? '');
 	const summaries = $derived(state.simulationResult?.resumenPorEscenario ?? []);
 	const canDelete = $derived(state.inversiones.length > 2);
-	const canAdd = $derived(state.inversiones.length < 20);
+	const canAdd = $derived(state.inversiones.length < 200);
 
 	function findSummary(id: string) {
 		return summaries.find((s) => s.escenarioId === id);
@@ -32,7 +32,7 @@
 			<AppButton
 				variant="secondary"
 				onclick={() => state.addInversion()}
-				class="add-scenario-btn"
+				id="btn-add-scenario" class="add-scenario-btn"
 			>
 				+ Agregar Escenario
 			</AppButton>

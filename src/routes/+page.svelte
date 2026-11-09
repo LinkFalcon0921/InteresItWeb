@@ -120,8 +120,13 @@
 						aria-selected={simState.activeTab === tab.id}
 						aria-controls="panel-{tab.id}"
 						class="tab-btn {simState.activeTab === tab.id ? 'tab-btn-active' : ''}"
-						onclick={() => {
+						onclick={(e) => {
 							simState.activeTab = tab.id;
+							(e.currentTarget as HTMLElement)?.scrollIntoView({
+								behavior: 'smooth',
+								inline: 'center',
+								block: 'nearest'
+							});
 						}}
 					>
 						<span class="tab-icon">{tab.icon}</span>
@@ -317,6 +322,18 @@
 		border-bottom: 2px solid #d5dedc;
 		margin-bottom: 20px;
 		overflow-x: auto;
+		scroll-behavior: smooth;
+		scrollbar-width: none;
+	}
+
+	.tabs-nav::-webkit-scrollbar {
+		display: none;
+	}
+
+	@media (min-width: 640px) {
+		.tabs-nav {
+			justify-content: center;
+		}
 	}
 
 	.tab-btn {
