@@ -424,7 +424,7 @@ describe('SimulatorState', () => {
 		expect(new Set(ids).size).toBe(105);
 
 		// La simulación derivada debe ejecutarse para los 105 escenarios
-		expect(state.simulationResult).toBeDefined();
+		expect(state.simulationResult).not.toBeNull();
 		expect(state.simulationResult?.resumenPorEscenario).toHaveLength(105);
 	});
 

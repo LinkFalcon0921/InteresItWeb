@@ -98,7 +98,6 @@ test.describe('Portabilidad de Datos & Exportación E2E', () => {
 
 		const montoInput = page.locator('.desktop-sidebar #monto-inicial-input');
 		await montoInput.fill('999999');
-		await montoInput.dispatchEvent('input');
 
 		// 5. Re-abrir y restaurar desde el archivo de backup
 		await exportBtn.click();

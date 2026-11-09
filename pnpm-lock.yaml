@@ -84,6 +84,9 @@ importers:
       fake-indexeddb:
         specifier: ^6.2.7
         version: 6.2.7
+      pnpm:
+        specifier: ^11.24.0
+        version: 11.28.11
       sass:
         specifier: ^1.80.0
         version: 1.108.0
@@ -928,6 +931,11 @@ packages:
   playwright@1.65.0:
     resolution: {integrity: sha512-F3AMWcR44qMBt4kq+6Kb6mX7bjGXshktKFOPULd7reED6ZJWevjbNRqysP7q+AATE9kdPEZBibex1BYsvpVoeA==}
     engines: {node: '>=20'}
+    hasBin: true
+
+  pnpm@11.28.11:
+    resolution: {integrity: sha512-dAGE0Q+B9dWxZb6IVg7numJAbEE0iWq8J6WAEJ7sL0fB5B2RJRyUTCyrq8scIkYXmeu3LeLsYlryAwsONsc1ow==}
+    engines: {node: '>=22.13'}
     hasBin: true
 
   postcss@8.5.32:
@@ -1850,6 +1858,8 @@ snapshots:
   playwright@1.65.0:
     dependencies:
       playwright-core: 1.65.0
+
+  pnpm@11.28.11: {}
 
   postcss@8.5.32:
     dependencies:

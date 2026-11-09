@@ -9,9 +9,6 @@ import {
 	RenamePortfolioUseCase,
 	SavePortfolioUseCase,
 	type PortfolioDTO,
-	type PortfolioSummaryDTO,
-	type SettingsDTO,
-	type SettingsRepositoryPort
 } from '$application';
 import { FakeSettingsRepository } from '../../fakes/FakeSettingsRepository';
 

@@ -1,7 +1,17 @@
-export const NavigationTab = {
-	Simulador: 'simulador',
-	Comparativa: 'comparativa',
-	Reporte: 'reporte'
-} as const;
+/**
+ * Pestañas principales de navegación en la interfaz de la terminal financiera.
+ */
+export enum NavigationTab {
+	Simulador = 'simulador',
+	Comparativa = 'comparativa',
+	Reporte = 'reporte'
+}
 
-export type NavigationTab = (typeof NavigationTab)[keyof typeof NavigationTab];
+/**
+ * Contrato de interfaz para items descriptivos de pestañas de navegación.
+ */
+export interface NavigationTabOption {
+	readonly id: NavigationTab;
+	readonly label: string;
+	readonly icon: string;
+}

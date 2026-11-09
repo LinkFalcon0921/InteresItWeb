@@ -16,10 +16,10 @@ test.describe('Gestión de Multi-Portafolios E2E', () => {
 		await expect(dialogTitle).toBeVisible();
 
 		// 2. Crear nuevo portafolio
-		const newNameInput = page.locator('input[placeholder="Nombre del nuevo portafolio..."]');
+		const newNameInput = page.getByPlaceholder('Nombre del nuevo portafolio...');
 		await newNameInput.fill('Fondo de Oportunidad');
 
-		const createBtn = page.locator('button.create-btn');
+		const createBtn = page.getByRole('button', { name: /\+ Crear/i });
 		await createBtn.click();
 
 		// Verificar banner y que el header refleje el nuevo portafolio activo
@@ -35,13 +35,13 @@ test.describe('Gestión de Multi-Portafolios E2E', () => {
 
 		// Buscar el item de "Fondo de Oportunidad" para renombrarlo
 		const nuevoItem = page.locator('.portfolio-item', { hasText: 'Fondo de Oportunidad' });
-		const renameBtn = nuevoItem.locator('button', { hasText: 'Renombrar' });
+		const renameBtn = nuevoItem.getByRole('button', { name: 'Renombrar' });
 		await renameBtn.click();
 
 		const renameInput = page.locator('input.rename-input');
 		await renameInput.fill('Fondo Inmobiliario 2026');
 
-		const confirmRenameBtn = page.locator('button.confirm-rename-btn');
+		const confirmRenameBtn = page.getByRole('button', { name: 'Guardar nombre' });
 		await confirmRenameBtn.click();
 
 		// Verificar que el nombre se actualizó en la lista
@@ -49,7 +49,7 @@ test.describe('Gestión de Multi-Portafolios E2E', () => {
 
 		// 4. Alternar de regreso a "Portafolio Principal"
 		const principalItem = page.locator('.portfolio-item', { hasText: 'Portafolio Principal' });
-		const activateBtn = principalItem.locator('button', { hasText: 'Activar' });
+		const activateBtn = principalItem.getByRole('button', { name: 'Activar' });
 		await activateBtn.click();
 
 		// Modal se cierra y el botón del header refleja el portafolio principal
@@ -60,7 +60,7 @@ test.describe('Gestión de Multi-Portafolios E2E', () => {
 		await expect(dialogTitle).toBeVisible();
 
 		const itemParaEliminar = page.locator('.portfolio-item', { hasText: 'Fondo Inmobiliario 2026' });
-		const deleteBtn = itemParaEliminar.locator('button.delete-pill');
+		const deleteBtn = itemParaEliminar.getByRole('button', { name: 'Eliminar' });
 		await deleteBtn.click();
 
 		// Verificar mensaje de éxito

@@ -52,12 +52,11 @@ describe('BackupUseCases (Application)', () => {
 			const useCase = new ExportBackupUseCase(repo);
 
 			const result = await useCase.execute();
-			expect(result.ok).toBe(true);
 			if (!result.ok) return;
 
 			expect(result.value.app).toBe('InteresIt');
 			expect(result.value.version).toBe('2.2.0');
-			expect(result.value.portfolios.length).toBe(1);
+			expect(result.value.portfolios).toHaveLength(1);
 			expect(result.value.settings.montoInicial).toBe(185);
 			expect(repo.loadSettings).toHaveBeenCalled();
 			expect(repo.listPortfolios).toHaveBeenCalled();

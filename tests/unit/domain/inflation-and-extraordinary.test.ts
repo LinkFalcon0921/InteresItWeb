@@ -135,9 +135,11 @@ describe('Inflación (Fórmula de Fisher) y Aportes Extraordinarios', () => {
 				tasaInflacion: 4.0
 			});
 
+			expect(resultado.resumenPorEscenario).toHaveLength(1);
 			const summary = resultado.resumenPorEscenario[0];
-			expect(summary).toBeDefined();
+			expect(summary).not.toBeUndefined();
 			if (summary) {
+				expect(summary.escenarioId).toBe(esc.id);
 				// Fisher real rate: (1 + 0.12) / (1 + 0.04) - 1 = 7.69%
 				expect(summary.tasaRealAnual).toBe(7.69);
 

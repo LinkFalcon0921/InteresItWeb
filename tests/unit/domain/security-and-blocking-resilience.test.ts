@@ -31,7 +31,7 @@ describe('Auditoría de Seguridad, Resiliencia y Puntos de Bloqueo', () => {
 					diaCorte: 15,
 					escenarios: [escA, escB]
 				});
-			}).tothrow('El horizonte de proyección no puede superar los 30 años (10,958 días).');
+			}).toThrow('El horizonte de proyección no puede superar los 30 años (10,958 días).');
 		});
 
 		it('permite horizontes largos legítimos (ej. 30 años) sin bloqueo de memoria', () => {
