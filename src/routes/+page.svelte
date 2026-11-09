@@ -151,21 +151,10 @@
 						<div id="tour-pairs">
 							<PairComparisonSMUI state={simState} />
 						</div>
-						<ScenarioListSMUI state={simState} />
+						<ScenarioListSMUI state={simState} twoRowsInfinite={true} />
 					</div>
 				{:else if simState.activeTab === 'reporte'}
 					<div id="panel-reporte" role="tabpanel" tabindex="0" aria-labelledby="tab-reporte" class="tab-panel-animated">
-						<div class="report-actions-bar">
-							<Button
-								variant="raised"
-								onclick={() => {
-									isExportDialogOpen = true;
-								}}
-								class="export-action-btn"
-							>
-								<Label>📄 Configurar Exportación PDF / A4</Label>
-							</Button>
-						</div>
 						<ProjectionTableSMUI state={simState} />
 					</div>
 				{/if}
@@ -174,9 +163,7 @@
 	</div>
 
 	<!-- Drawer Móvil de Parámetros -->
-	{#if !isDesktop}
-		<ParametersDrawerSMUI state={simState} />
-	{/if}
+	<ParametersDrawerSMUI state={simState} />
 
 	<!-- Diálogo de Exportación -->
 	<ExportDialogSMUI
@@ -379,25 +366,66 @@
 		}
 	}
 
-	.report-actions-bar {
-		margin-bottom: 16px;
-		display: flex;
-		justify-content: flex-end;
-	}
-
-	:global(.export-action-btn) {
-		background: #004851 !important;
-		color: #ffffff !important;
-		border-radius: 8px !important;
-	}
-
 	@media (min-width: 961px) {
+		.terminal-shell {
+			height: 100vh;
+			overflow: hidden;
+		}
+
+		.terminal-main-layout {
+			height: calc(100vh - 65px);
+			overflow: hidden;
+			align-items: stretch;
+		}
+
+		.desktop-sidebar {
+			position: static;
+			height: 100%;
+			overflow-y: auto;
+			padding-right: 6px;
+			box-sizing: border-box;
+			scrollbar-width: thin;
+			scrollbar-color: #cbd5e1 transparent;
+		}
+
+		.desktop-sidebar::-webkit-scrollbar {
+			width: 6px;
+		}
+		.desktop-sidebar::-webkit-scrollbar-thumb {
+			background: #cbd5e1;
+			border-radius: 9999px;
+		}
+
+		.workspace-area {
+			height: 100%;
+			overflow-y: auto;
+			padding-right: 6px;
+			box-sizing: border-box;
+			scrollbar-width: thin;
+			scrollbar-color: #cbd5e1 transparent;
+		}
+
+		.workspace-area::-webkit-scrollbar {
+			width: 6px;
+		}
+		.workspace-area::-webkit-scrollbar-thumb {
+			background: #cbd5e1;
+			border-radius: 9999px;
+		}
+
 		:global(.parameters-drawer),
 		:global(.drawer-scrim) {
 			display: none !important;
 			visibility: hidden !important;
 			pointer-events: none !important;
 		}
+	}
+
+	:global(html.dark) .desktop-sidebar::-webkit-scrollbar-thumb,
+	:global(.dark) .desktop-sidebar::-webkit-scrollbar-thumb,
+	:global(html.dark) .workspace-area::-webkit-scrollbar-thumb,
+	:global(.dark) .workspace-area::-webkit-scrollbar-thumb {
+		background: #334155;
 	}
 
 	@media (max-width: 960px) {
@@ -411,32 +439,11 @@
 		}
 	}
 
-	:global(.dark) .terminal-main-layout {
-		background: #0b1120;
-	}
-
-	:global(.dark) .tabs-nav {
-		border-bottom-color: #26334e;
-	}
-
-	:global(.dark) .tab-btn {
-		color: #a3b0c6;
-	}
-
-	:global(.dark) .tab-btn:hover {
-		color: #7fd1d8;
-		background: rgba(127, 209, 216, 0.08);
-	}
-
-	:global(.dark) .tab-btn-active {
-		background: #7fd1d8 !important;
-		color: #0b1120 !important;
-	}
-
-	:global(.dark) :global(.export-action-btn) {
-		background: #7fd1d8 !important;
-		color: #0b1120 !important;
-	}
+	:global(.dark) .terminal-main-layout { background: #0b1120; }
+	:global(.dark) .tabs-nav { border-bottom-color: #26334e; }
+	:global(.dark) .tab-btn { color: #a3b0c6; }
+	:global(.dark) .tab-btn:hover { color: #7fd1d8; background: rgba(127, 209, 216, 0.08); }
+	:global(.dark) .tab-btn-active { background: #7fd1d8 !important; color: #0b1120 !important; }
 
 	.boundary-recovery-container {
 		min-height: 100vh;
@@ -521,37 +528,13 @@
 		color: #14201f;
 	}
 
-	:global(.dark) .boundary-recovery-container {
-		background: #0b1120;
-	}
-
-	:global(.dark) .recovery-card {
-		background: #131c30;
-		border-color: #26334e;
-	}
-
-	:global(.dark) .recovery-title {
-		color: #e7eef8;
-	}
-
-	:global(.dark) .recovery-desc {
-		color: #a3b0c6;
-	}
-
-	:global(.dark) .recovery-error-detail {
-		background: #0b1120;
-		border-color: #26334e;
-	}
-
-	:global(.dark) .recovery-btn-primary {
-		background: #7fd1d8;
-		color: #0b1120;
-	}
-
-	:global(.dark) .recovery-btn-secondary {
-		background: #1e293b;
-		color: #e7eef8;
-	}
+	:global(.dark) .boundary-recovery-container { background: #0b1120; }
+	:global(.dark) .recovery-card { background: #131c30; border-color: #26334e; }
+	:global(.dark) .recovery-title { color: #e7eef8; }
+	:global(.dark) .recovery-desc { color: #a3b0c6; }
+	:global(.dark) .recovery-error-detail { background: #0b1120; border-color: #26334e; }
+	:global(.dark) .recovery-btn-primary { background: #7fd1d8; color: #0b1120; }
+	:global(.dark) .recovery-btn-secondary { background: #1e293b; color: #e7eef8; }
 
 	@media print {
 		:global([role="dialog"]),

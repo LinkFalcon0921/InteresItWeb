@@ -5,9 +5,10 @@
 
 	interface Props {
 		state: SimulatorState;
+		twoRowsInfinite?: boolean;
 	}
 
-	let { state }: Props = $props();
+	let { state, twoRowsInfinite = false }: Props = $props();
 
 	const leaderId = $derived(state.simulationResult?.escenarioLiderId ?? '');
 	const summaries = $derived(state.simulationResult?.resumenPorEscenario ?? []);
@@ -39,7 +40,7 @@
 		{/if}
 	</div>
 
-	<div class="scenarios-grid">
+	<div class="scenarios-grid {twoRowsInfinite ? 'scenarios-grid--two-rows' : ''}">
 		{#each state.inversiones as inversion (inversion.id)}
 			<ScenarioCardSMUI
 				{state}
@@ -78,6 +79,44 @@
 		font-size: 0.75rem;
 		color: #5e6b6a;
 		font-weight: 500;
+	}
+
+		.scenarios-grid--two-rows {
+		display: grid;
+		grid-template-rows: repeat(2, auto);
+		grid-auto-flow: column;
+		grid-auto-columns: minmax(280px, 320px);
+		gap: 16px;
+		overflow-x: auto;
+		overflow-y: hidden;
+		padding-bottom: 12px;
+		scroll-snap-type: x mandatory;
+		-webkit-overflow-scrolling: touch;
+		scrollbar-width: thin;
+		scrollbar-color: #cbd5e1 transparent;
+	}
+	.scenarios-grid--two-rows::-webkit-scrollbar {
+		height: 8px;
+	}
+	.scenarios-grid--two-rows::-webkit-scrollbar-track {
+		background: #f1f5f9;
+		border-radius: 9999px;
+	}
+	.scenarios-grid--two-rows::-webkit-scrollbar-thumb {
+		background: #cbd5e1;
+		border-radius: 9999px;
+	}
+	.scenarios-grid--two-rows::-webkit-scrollbar-thumb:hover {
+		background: #94a3b8;
+	}
+	:global(html.dark) .scenarios-grid--two-rows::-webkit-scrollbar-track {
+		background: #1e293b;
+	}
+	:global(html.dark) .scenarios-grid--two-rows::-webkit-scrollbar-thumb {
+		background: #334155;
+	}
+	:global(html.dark) .scenarios-grid--two-rows::-webkit-scrollbar-thumb:hover {
+		background: #10b981;
 	}
 
 	.scenarios-grid {

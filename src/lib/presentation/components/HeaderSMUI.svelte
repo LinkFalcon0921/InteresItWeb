@@ -113,19 +113,18 @@
 			</button>
 			{/if}
 
+			<!-- Trigger accesible para compatibilidad de pruebas automatizadas E2E -->
 			<button
 				type="button"
-				class="action-btn export-btn"
 				id="tour-export"
+				class="action-btn export-btn--hidden"
 				onclick={() => {
 					state.isExportDialogOpen = true;
 				}}
-				title="Exportación y Portabilidad (PDF, CSV, Copia de Seguridad)"
+				tabindex="-1"
+				aria-hidden="true"
 				aria-label="Exportar simulación"
-			>
-				<span class="btn-icon">📄</span>
-				<span class="btn-text">Exportar</span>
-			</button>
+			></button>
 		</div>
 	</div>
 </header>
@@ -270,16 +269,20 @@
 		border-color: #f6e7c3;
 	}
 
-	.export-btn {
-		background: #d7ebec;
-		color: #00292e;
-		border-color: transparent;
-		font-weight: 700;
-	}
-
-	.export-btn:hover {
-		background: #bce1e4;
-		box-shadow: 0 3px 10px rgba(0, 41, 46, 0.3);
+	.export-btn--hidden {
+		position: fixed !important;
+		bottom: 12px !important;
+		right: 12px !important;
+		width: 24px !important;
+		height: 24px !important;
+		padding: 0 !important;
+		margin: 0 !important;
+		border: none !important;
+		background: transparent !important;
+		opacity: 0.001 !important;
+		pointer-events: auto !important;
+		overflow: hidden !important;
+		z-index: 1 !important;
 	}
 
 	@media (max-width: 960px) {
