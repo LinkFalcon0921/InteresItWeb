@@ -3,7 +3,7 @@
 	import QuickChips from './QuickChips.svelte';
 	import CalendarHorizonSMUI from './CalendarHorizonSMUI.svelte';
 	import AportesExtraordinariosSMUI from './AportesExtraordinariosSMUI.svelte';
-	import M3WheelSwitch from './M3WheelSwitch.svelte';
+	import M3CutCarousel from './M3CutCarousel.svelte';
 	import M3TaxCarousel from './M3TaxCarousel.svelte';
 
 	interface Props {
@@ -193,35 +193,12 @@
 		</div>
 	</div>
 
-	<!-- Reglas Bancarias y Fiscales con M3 Wheel Switch y M3TaxCarousel -->
+		<!-- Reglas Bancarias y Fiscales con M3 Carousels a 100% width -->
 	<div class="switches-section">
 		<div class="rule-card">
-			<div class="switch-row">
-				<div class="switch-info">
-					<span class="switch-title">1º corte parcial</span>
-					<span class="switch-desc">Si el 1º ciclo no completa el mes</span>
-				</div>
-				<M3WheelSwitch
-					bind:checked={simState.omitirPrimerCorte}
-					offLabel="Normal"
-					onLabel="Omitir"
-					id="switch-omitir-primer-corte"
-					ariaLabel="Omitir primer corte parcial si no completa el mes"
-				/>
-			</div>
-
-			{#if simState.omitirPrimerCorte}
-				<div class="omit-info-banner" role="status" aria-live="polite">
-					<svg class="omit-info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<circle cx="12" cy="12" r="10"></circle>
-						<line x1="12" y1="16" x2="12" y2="12"></line>
-						<line x1="12" y1="8" x2="12.01" y2="8"></line>
-					</svg>
-					<span class="omit-info-text">
-						<strong>1º corte omitido:</strong> Si los días iniciales no completan un mes entero, el primer período capitaliza sin generar intereses (RD$0.00).
-					</span>
-				</div>
-			{/if}
+			<M3CutCarousel
+				bind:checked={simState.omitirPrimerCorte}
+			/>
 		</div>
 
 		<!-- Control Carrusel de Retención Fiscal M3 Responsive -->
@@ -349,59 +326,6 @@
 		max-width: 100%;
 		overflow: hidden;
 	}
-	.switch-row {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		flex-wrap: wrap;
-		gap: 8px;
-		box-sizing: border-box;
-		max-width: 100%;
-	}
-	.switch-info {
-		display: flex;
-		flex-direction: column;
-		flex: 1;
-		min-width: 130px;
-	}
-	.switch-title {
-		font-size: 0.8125rem;
-		font-weight: 700;
-		color: #14201f;
-		line-height: 1.25;
-	}
-	.switch-desc {
-		font-size: 0.6875rem;
-		color: #5e6b6a;
-		margin-top: 2px;
-	}
-	.omit-info-banner {
-		margin-top: 8px;
-		background: #ecfdf5;
-		border: 1px solid #a7f3d0;
-		border-radius: 8px;
-		padding: 8px 10px;
-		display: flex;
-		align-items: flex-start;
-		gap: 8px;
-		animation: m3-slide-fade 0.25s cubic-bezier(0.2, 0, 0, 1) both;
-	}
-	.omit-info-icon {
-		width: 16px;
-		height: 16px;
-		color: #059669;
-		flex-shrink: 0;
-		margin-top: 1px;
-	}
-	.omit-info-text {
-		font-size: 0.6875rem;
-		color: #065f46;
-		line-height: 1.35;
-	}
-	@keyframes m3-slide-fade {
-		from { opacity: 0; transform: translateY(-6px); }
-		to { opacity: 1; transform: translateY(0); }
-	}
 
 	/* Dark mode support */
 	:global(html.dark) .data-entry-panel, :global(.dark) .data-entry-panel { background: #131c30; border-color: #26334e; }
@@ -424,11 +348,8 @@
 	:global(html.dark) .mini-preset-chip.active, :global(.dark) .mini-preset-chip.active { background: #10b981 !important; border-color: #10b981 !important; color: #0f172a !important; }
 	:global(html.dark) .switches-section, :global(.dark) .switches-section { border-top-color: #1e293b; }
 	:global(html.dark) .rule-card, :global(.dark) .rule-card { background: #0b1120; border-color: #1e293b; }
-	:global(html.dark) .omit-info-banner, :global(.dark) .omit-info-banner { background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.3); }
-	:global(html.dark) .omit-info-icon, :global(.dark) .omit-info-icon { color: #10b981; }
-	:global(html.dark) .omit-info-text, :global(.dark) .omit-info-text { color: #a7f3d0; }
-	:global(html.dark) .switch-title, :global(.dark) .switch-title { color: #e7eef8; }
-	:global(html.dark) .switch-desc, :global(.dark) .switch-desc { color: #a3b0c6; }
+	
+	
 	:global(.parameters-drawer) .data-entry-panel { background: transparent !important; border: none !important; border-radius: 0 !important; padding: 0 !important; box-shadow: none !important; }
 	:global(.parameters-drawer) .panel-header { display: none !important; }
 </style>

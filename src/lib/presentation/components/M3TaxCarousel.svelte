@@ -102,8 +102,11 @@
 			<!-- Elemento Céntrico Visor con Animación -->
 			<div
 				class="tax-display-center {activeOption.id === 'no-aplica' ? 'is-exempt' : 'is-taxed'}"
-				role="status"
-				aria-live="polite"
+				role="button"
+				tabindex="0"
+				onclick={nextOption}
+				onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), nextOption())}
+				aria-label={`Retención: ${activeOption.label}. Pulsa para siguiente opción`}
 			>
 				{#key activeOption.id}
 					<div class="tax-text-container">
@@ -178,10 +181,9 @@
 
 	.tax-main-row {
 		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		flex-wrap: wrap;
-		gap: 10px;
+		flex-direction: column;
+		width: 100%;
+		gap: 8px;
 	}
 
 	.tax-info {
@@ -202,23 +204,19 @@
 		font-weight: 500;
 	}
 
-	/* 3-element Carousel Box */
+	/* 3-element Carousel Box tomando el 100% del ancho */
 	.tax-carousel-box {
-		display: inline-flex;
+		display: flex;
 		align-items: center;
+		justify-content: space-between;
+		width: 100%;
 		background: #f1f5f9;
 		border: 1.5px solid #cbd5e1;
 		border-radius: 9999px;
 		padding: 3px;
+		box-sizing: border-box;
 		gap: 2px;
 		transition: all 0.2s ease;
-	}
-
-	@media (max-width: 480px) {
-		.tax-carousel-box {
-			width: 100%;
-			justify-content: space-between;
-		}
 	}
 
 	.tax-arrow-btn {
@@ -248,14 +246,16 @@
 	}
 
 	.tax-display-center {
-		min-width: 120px;
+		flex: 1;
+		min-width: 0;
 		padding: 4px 12px;
 		border-radius: 9999px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		text-align: center;
-		transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+		cursor: pointer;
+		transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 		user-select: none;
 	}
 
