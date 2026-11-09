@@ -36,7 +36,7 @@
 					<Cell numeric>Días</Cell>
 					<Cell numeric>Aporte</Cell>
 					{#each escenarios as esc (esc.id)}
-						<Cell numeric class={esc.id === leaderId ? 'leader-col-head' : ''}>
+						<Cell numeric class={esc.id === leaderId ? 'leader-col-head scenario-cell' : 'scenario-cell'}>
 							{esc.nombre} ({esc.tasaAnual}%)
 						</Cell>
 					{/each}
@@ -56,7 +56,7 @@
 
 						{#each escenarios as esc (esc.id)}
 							{@const res = periodo.resultadosPorEscenario.find((r) => r.escenarioId === esc.id)}
-							<Cell numeric class="balance-cell {esc.id === leaderId ? 'leader-col-cell' : ''}">
+							<Cell numeric class="balance-cell scenario-cell {esc.id === leaderId ? 'leader-col-cell' : ''}">
 								<div class="cell-stack">
 									<span class="cell-balance">{formatCurrency(res?.balanceFinal ?? 0)}</span>
 									<span class="cell-interest">+{formatCurrency(res?.interesNeto ?? 0)}</span>
@@ -73,6 +73,7 @@
 <style>
 	.projection-table-section {
 		margin-bottom: 24px;
+		width: 100%;
 	}
 
 	.table-header {
@@ -99,12 +100,30 @@
 		border-radius: 12px;
 		overflow-x: auto;
 		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+		width: 100%;
+		display: block;
 	}
 
 	:global(.custom-data-table) {
-		width: 100%;
+		display: block !important;
+		width: 100% !important;
+		min-width: 100% !important;
 		border-collapse: collapse;
 		font-variant-numeric: tabular-nums;
+		border: none !important;
+	}
+
+	:global(.custom-data-table .mdc-data-table__table-container) {
+		width: 100% !important;
+		min-width: 100% !important;
+		overflow-x: auto !important;
+	}
+
+	:global(.custom-data-table .mdc-data-table__table) {
+		width: 100% !important;
+		min-width: 100% !important;
+		table-layout: auto !important;
+		border-collapse: collapse;
 	}
 
 	:global(.custom-data-table th) {
@@ -139,6 +158,10 @@
 		background: #f6f8fb !important;
 		z-index: 11;
 		box-shadow: 2px 0 4px rgba(0, 0, 0, 0.04);
+	}
+
+	:global(.custom-data-table .scenario-cell) {
+		min-width: 140px;
 	}
 
 	:global(.period-label-cell) {

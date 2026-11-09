@@ -133,7 +133,7 @@
 			<!-- Contenido de las Pestañas -->
 			<div class="tab-panels">
 				{#if simState.activeTab === 'simulador'}
-					<div id="panel-simulador" role="tabpanel" tabindex="0" aria-labelledby="tab-simulador">
+					<div id="panel-simulador" role="tabpanel" tabindex="0" aria-labelledby="tab-simulador" class="tab-panel-animated">
 						<div id="tour-scenarios">
 							<ScenarioListSMUI state={simState} />
 						</div>
@@ -142,14 +142,14 @@
 						</div>
 					</div>
 				{:else if simState.activeTab === 'comparativa'}
-					<div id="panel-comparativa" role="tabpanel" tabindex="0" aria-labelledby="tab-comparativa">
+					<div id="panel-comparativa" role="tabpanel" tabindex="0" aria-labelledby="tab-comparativa" class="tab-panel-animated">
 						<div id="tour-pairs">
 							<PairComparisonSMUI state={simState} />
 						</div>
 						<ScenarioListSMUI state={simState} />
 					</div>
 				{:else if simState.activeTab === 'reporte'}
-					<div id="panel-reporte" role="tabpanel" tabindex="0" aria-labelledby="tab-reporte">
+					<div id="panel-reporte" role="tabpanel" tabindex="0" aria-labelledby="tab-reporte" class="tab-panel-animated">
 						<div class="report-actions-bar">
 							<Button
 								variant="raised"
@@ -344,6 +344,22 @@
 	.tab-btn-active {
 		color: #ffffff !important;
 		background: #004851 !important;
+	}
+
+	.tab-panel-animated {
+		animation: m3-tab-enter 0.28s cubic-bezier(0.2, 0, 0, 1) both;
+		will-change: transform, opacity;
+	}
+
+	@keyframes m3-tab-enter {
+		from {
+			opacity: 0;
+			transform: translateX(12px);
+		}
+		to {
+			opacity: 1;
+			transform: translateX(0);
+		}
 	}
 
 	.report-actions-bar {

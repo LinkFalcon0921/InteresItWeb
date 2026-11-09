@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { SimulatorState } from '../state/SimulatorState.svelte';
+	import M3DatePickerDialog from './M3DatePickerDialog.svelte';
 
 	interface Props {
 		state: SimulatorState;
@@ -9,6 +10,7 @@
 
 	let desdeInputElement = $state<HTMLInputElement | null>(null);
 	let hastaInputElement = $state<HTMLInputElement | null>(null);
+	let activeModal = $state<'inicio' | 'fin' | null>(null);
 
 	const HORIZON_PRESETS = [
 		{ label: '3m', months: 3 },
@@ -52,17 +54,17 @@
 		};
 	});
 
-	function openDatePicker(input: HTMLInputElement | null): void {
-		if (!input) return;
-		try {
-			if ('showPicker' in input && typeof input.showPicker === 'function') {
-				input.showPicker();
-				return;
-			}
-		} catch {
-			/* fallback */
+	function openDatePicker(type: 'inicio' | 'fin'): void {
+		activeModal = type;
+	}
+
+	function handleDateConfirmed(dateStr: string): void {
+		if (activeModal === 'inicio') {
+			simState.fechaInicio = dateStr;
+		} else if (activeModal === 'fin') {
+			simState.fechaFin = dateStr;
 		}
-		input.focus();
+		activeModal = null;
 	}
 </script>
 
@@ -95,8 +97,8 @@
 				class="m3-date-box"
 				role="button"
 				tabindex="0"
-				onclick={() => openDatePicker(desdeInputElement)}
-				onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && openDatePicker(desdeInputElement)}
+				onclick={() => openDatePicker('inicio')}
+				onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && openDatePicker('inicio')}
 				aria-label="Abrir selector de fecha de inicio"
 			>
 				<input
@@ -126,8 +128,8 @@
 				class="m3-date-box"
 				role="button"
 				tabindex="0"
-				onclick={() => openDatePicker(hastaInputElement)}
-				onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && openDatePicker(hastaInputElement)}
+				onclick={() => openDatePicker('fin')}
+				onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && openDatePicker('fin')}
 				aria-label="Abrir selector de fecha de término"
 			>
 				<input
@@ -165,6 +167,25 @@
 		</div>
 	</div>
 </div>
+
+<!-- M3 Material Date Picker Modals -->
+{#if activeModal === 'inicio'}
+	<M3DatePickerDialog
+		isOpen={true}
+		value={simState.fechaInicio}
+		title="Seleccionar Fecha de Inicio (Apertura)"
+		onSelect={handleDateConfirmed}
+		onClose={() => (activeModal = null)}
+	/>
+{:else if activeModal === 'fin'}
+	<M3DatePickerDialog
+		isOpen={true}
+		value={simState.fechaFin}
+		title="Seleccionar Fecha de Fin (Liquidación)"
+		onSelect={handleDateConfirmed}
+		onClose={() => (activeModal = null)}
+	/>
+{/if}
 
 <style>
 	.calendar-horizon-container {
