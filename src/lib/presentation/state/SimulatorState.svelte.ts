@@ -271,7 +271,7 @@ export class SimulatorState {
 				const portfolio = result.value;
 				this.currentPortfolioId = portfolio.id;
 				this.currentPortfolioName = portfolio.name;
-				this.applySettings(portfolio.settings);
+				this.applySettings(portfolio.settings, true);
 				await this.saveToStorage();
 				await this.refreshPortfolios();
 				return true;
@@ -512,16 +512,19 @@ export class SimulatorState {
 
 	public toggleTheme(): void {
 		this.isDarkMode = !this.isDarkMode;
-		if (typeof document !== 'undefined') {
-			if (this.isDarkMode) {
-				document.documentElement.classList.add('dark');
-			} else {
-				document.documentElement.classList.remove('dark');
-			}
+		if (typeof window !== 'undefined') {
+			try {
+				localStorage.setItem('interesit_theme', this.isDarkMode ? 'dark' : 'light');
+			} catch {}
 		}
+		this.syncThemeToDom();
 	}
 
-	private applySettings(settings: SettingsDTO): void {
+	private syncThemeToDom(): void {
+		// Theme sync handled globally
+	}
+
+	private applySettings(settings: SettingsDTO, isPortfolioSwitch = false): void {
 		this.montoInicial = settings.montoInicial;
 		this.aporteMensual = settings.aporteMensual;
 		this.fechaInicio = settings.fechaInicio;
@@ -529,7 +532,17 @@ export class SimulatorState {
 		this.diaCorte = settings.diaCorte;
 		this.omitirPrimerCorte = settings.omitirPrimerCorte;
 		this.aplicarImpuesto = settings.aplicarImpuesto;
-		this.isDarkMode = settings.isDarkMode;
+		
+		if (!isPortfolioSwitch) {
+			let savedTheme: string | null = null;
+			if (typeof window !== 'undefined') {
+				try {
+					savedTheme = localStorage.getItem('interesit_theme');
+				} catch {}
+			}
+			this.isDarkMode = savedTheme !== null ? savedTheme === 'dark' : settings.isDarkMode;
+			this.syncThemeToDom();
+		}
 		this.tasaInflacion = settings.tasaInflacion ?? 0;
 		this.aportesExtraordinarios = settings.aportesExtraordinarios
 			? settings.aportesExtraordinarios.map((a) => ({ ...a }))

@@ -428,4 +428,66 @@ describe('SimulatorState', () => {
 		expect(state.simulationResult?.resumenPorEscenario).toHaveLength(105);
 	});
 
+
+	it('preserves global app theme when switching portfolios', async () => {
+		const portfolioWithDark: PortfolioDTO = {
+			id: 'port-dark',
+			name: 'Portafolio Oscuro',
+			settings: {
+				id: 'port-dark',
+				montoInicial: 2000,
+				aporteMensual: 200,
+				fechaInicio: '2026-01-01',
+				fechaFin: '2026-12-31',
+				diaCorte: 20,
+				omitirPrimerCorte: true,
+				aplicarImpuesto: false,
+				isDarkMode: true,
+				inversiones: [
+					{ id: 'inv-1', nombre: 'A', tasaAnual: 10, color: 'blue' },
+					{ id: 'inv-2', nombre: 'B', tasaAnual: 12, color: 'emerald' }
+				]
+			},
+			createdAt: '2026-01-01T00:00:00Z',
+			updatedAt: '2026-01-01T00:00:00Z'
+		};
+
+		const repo: SettingsRepositoryPort = {
+			loadSettings: vi.fn(async () => ok({
+				id: 'current',
+				montoInicial: 1000,
+				aporteMensual: 100,
+				fechaInicio: '2026-01-01',
+				fechaFin: '2026-06-01',
+				diaCorte: 15,
+				omitirPrimerCorte: false,
+				aplicarImpuesto: true,
+				isDarkMode: false,
+				inversiones: [
+					{ id: 'inv-1', nombre: 'A', tasaAnual: 10, color: 'blue' },
+					{ id: 'inv-2', nombre: 'B', tasaAnual: 12, color: 'emerald' }
+				]
+			})),
+			saveSettings: vi.fn(async () => ok(undefined)),
+			listPortfolios: vi.fn(async () => ok([])),
+			loadPortfolio: vi.fn(async (id: string) => id === 'port-dark' ? ok(portfolioWithDark) : err(new Error('Not found'))),
+			savePortfolio: vi.fn(async () => ok(undefined)),
+			deletePortfolio: vi.fn(async () => ok(undefined)),
+			isTutorialCompleted: vi.fn(async () => ok(false)),
+			setTutorialCompleted: vi.fn(async () => ok(undefined))
+		};
+
+		const state = createTestState(repo);
+		// El usuario tiene modo claro seleccionado globalmente
+		state.isDarkMode = false;
+
+		// Al alternar hacia el portafolio que tiene isDarkMode: true en su DTO
+		const switched = await state.switchPortfolio('port-dark');
+		expect(switched).toBe(true);
+
+		// El tema global DEBE mantenerse en false (no debe sobreescribirse por el portafolio)
+		expect(state.isDarkMode).toBe(false);
+		expect(state.montoInicial).toBe(2000);
+		expect(state.omitirPrimerCorte).toBe(true);
+	});
 });

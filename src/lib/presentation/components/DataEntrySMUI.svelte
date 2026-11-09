@@ -88,7 +88,7 @@
 	<!-- Aporte Mensual (PMT) -->
 	<div class="field-group">
 		<label class="field-label" for="aporte-mensual-input">
-			<span>Aporte Recurrente ($PMT$)</span>
+			<span>Aporte Mensual ($PMT$)</span>
 			<span class="field-currency">Moneda: RD$</span>
 		</label>
 		<div class="m3-outlined-input">
@@ -104,7 +104,7 @@
 				oninput={handleAporteInput}
 			/>
 		</div>
-		<span class="field-helper-text">Depósito sistemático al corte de cada ciclo mensual</span>
+		<span class="field-helper-text">Depósito mensual recurrente en cada fecha de corte</span>
 		<QuickChips onAdjust={(d) => simState.adjustAporteMensual(d)} />
 	</div>
 
@@ -338,17 +338,25 @@
 		border: 1px solid #e2e8f0;
 		border-radius: 12px;
 		padding: 10px 12px;
+		box-sizing: border-box;
+		max-width: 100%;
+		overflow: hidden;
 		transition: all 0.2s ease;
 	}
 	.rule-card--tax {
 		padding: 6px 12px;
+		box-sizing: border-box;
+		max-width: 100%;
+		overflow: hidden;
 	}
 	.switch-row {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		flex-wrap: wrap;
-		gap: 10px;
+		gap: 8px;
+		box-sizing: border-box;
+		max-width: 100%;
 	}
 	.switch-info {
 		display: flex;

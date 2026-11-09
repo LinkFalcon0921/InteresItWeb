@@ -122,8 +122,10 @@
 		position: relative;
 		display: inline-grid;
 		grid-template-columns: 1fr 1fr;
-		width: 160px;
+		width: 154px;
+		max-width: 100%;
 		flex-shrink: 0;
+		overflow: hidden;
 		height: 36px;
 		border-radius: 9999px;
 		background: #f1f5f9;
@@ -183,7 +185,7 @@
 	}
 
 	.m3-wheel-slider--on {
-		transform: translateX(100%);
+		left: 50%;
 		background: #004851;
 		box-shadow: 0 3px 8px rgba(0, 72, 81, 0.25);
 		justify-content: flex-start;
@@ -253,11 +255,11 @@
 
 	.m3-wheel--checked .m3-wheel-item--on.m3-wheel-item--selected {
 		color: #ffffff;
-		padding-left: 18px;
+		padding-left: 14px;
 	}
 
 	.m3-wheel-item--off.m3-wheel-item--selected {
-		padding-left: 18px;
+		padding-left: 14px;
 	}
 
 	.m3-wheel-label {

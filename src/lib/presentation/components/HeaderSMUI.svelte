@@ -99,6 +99,7 @@
 				<span class="btn-text">{state.isDarkMode ? 'Claro' : 'Oscuro'}</span>
 			</button>
 
+			{#if !import.meta.env.PROD}
 			<button
 				type="button"
 				class="action-btn save-btn save-btn--disabled"
@@ -110,6 +111,7 @@
 				<span class="btn-icon">💾</span>
 				<span class="btn-text">Guardar</span>
 			</button>
+			{/if}
 
 			<button
 				type="button"
