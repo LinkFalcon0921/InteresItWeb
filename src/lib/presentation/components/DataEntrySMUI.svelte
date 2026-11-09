@@ -4,6 +4,7 @@
 	import CalendarHorizonSMUI from './CalendarHorizonSMUI.svelte';
 	import AportesExtraordinariosSMUI from './AportesExtraordinariosSMUI.svelte';
 	import M3WheelSwitch from './M3WheelSwitch.svelte';
+	import M3TaxCarousel from './M3TaxCarousel.svelte';
 
 	interface Props {
 		state: SimulatorState;
@@ -192,7 +193,7 @@
 		</div>
 	</div>
 
-	<!-- Reglas Bancarias y Fiscales con M3 Wheel Switch -->
+	<!-- Reglas Bancarias y Fiscales con M3 Wheel Switch y M3TaxCarousel -->
 	<div class="switches-section">
 		<div class="switch-row">
 			<div class="switch-info">
@@ -208,19 +209,10 @@
 			/>
 		</div>
 
-		<div class="switch-row">
-			<div class="switch-info">
-				<span class="switch-title">Retención Fiscal</span>
-				<span class="switch-desc">Deducción 10% ley República Dominicana</span>
-			</div>
-			<M3WheelSwitch
-				bind:checked={simState.aplicarImpuesto}
-				offLabel="Exento (0%)"
-				onLabel="10% RD"
-				id="switch-aplicar-impuesto"
-				ariaLabel="Aplicar retención fiscal del 10% ley República Dominicana"
-			/>
-		</div>
+		<!-- Control Carrusel de Retención Fiscal M3 Responsive -->
+		<M3TaxCarousel
+			bind:checked={simState.aplicarImpuesto}
+		/>
 	</div>
 
 	<!-- Aportes Extraordinarios Programados -->
@@ -324,8 +316,8 @@
 		flex-direction: column;
 		gap: 10px;
 	}
-	.switch-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 4px 0; }
-	.switch-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+	.switch-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 4px 0; }
+	.switch-info { display: flex; flex-direction: column; flex: 1; min-width: 140px; }
 	.switch-title { font-size: 0.8125rem; font-weight: 700; color: #14201f; line-height: 1.25; }
 	.switch-desc { font-size: 0.6875rem; color: #5e6b6a; margin-top: 2px; }
 
