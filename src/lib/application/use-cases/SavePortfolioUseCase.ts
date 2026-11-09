@@ -1,4 +1,4 @@
-import { err, ok, type Result } from '$domain';
+import { err, ok, SYSTEM_LIMITS, type Result } from '$domain';
 import type { PortfolioDTO } from '../dtos/PortfolioDTO';
 import type { SettingsRepositoryPort } from '../ports/SettingsRepositoryPort';
 
@@ -22,14 +22,22 @@ export class SavePortfolioUseCase {
 			return err(new Error('La configuración del portafolio es requerida.'));
 		}
 
-		const sanitizedPortfolio: PortfolioDTO = {
-			...portfolio,
-			id: portfolio.id.trim(),
-			name: portfolio.name.trim(),
-			updatedAt: new Date().toISOString()
-		};
-
 		try {
+			const listResult = await this.repository.listPortfolios();
+			if (listResult.ok) {
+				const isExisting = listResult.value.some((p) => p.id === portfolio.id.trim());
+				if (!isExisting && listResult.value.length >= SYSTEM_LIMITS.MAX_PORTFOLIOS) {
+					return err(new Error(`Límite alcanzado: no se pueden almacenar más de ${SYSTEM_LIMITS.MAX_PORTFOLIOS} portafolios en el sistema.`));
+				}
+			}
+
+			const sanitizedPortfolio: PortfolioDTO = {
+				...portfolio,
+				id: portfolio.id.trim(),
+				name: portfolio.name.trim(),
+				updatedAt: new Date().toISOString()
+			};
+
 			return await this.repository.savePortfolio(sanitizedPortfolio);
 		} catch (error) {
 			const errObj = error instanceof Error ? error : new Error(String(error));

@@ -3,6 +3,7 @@
 	import type { SimulatorState } from '../state/SimulatorState.svelte';
 	import type { InvestmentSettingDTO, ScenarioSummaryDTO } from '$application';
 	import { formatCurrency } from '../formatters/financialFormatters';
+	import { RateStepDelta, type RateStepDelta as RateStepDeltaType } from '../enums/RateStepDelta';
 
 	interface Props {
 		state: SimulatorState;
@@ -25,6 +26,13 @@
 		if (!(event.target instanceof HTMLInputElement)) return;
 		const target = event.target;
 		state.updateInversionNombre(inversion.id, target.value);
+	}
+
+	function adjustTasa(delta: RateStepDeltaType): void {
+		const raw = inversion.tasaAnual + delta;
+		const rounded = Math.round(raw * 100) / 100;
+		const clamped = Math.max(0, Math.min(100, rounded));
+		state.updateInversionTasa(inversion.id, clamped);
 	}
 </script>
 
@@ -62,31 +70,76 @@
 		</div>
 
 		<div class="rate-input-section">
-			<label class="rate-label" for="tasa-{inversion.id}">Tasa Anual Nominal</label>
-			<div class="rate-input-wrapper">
-				<input
-					id="tasa-{inversion.id}"
-					type="number"
-					step="0.05"
-					min="0"
-					max="100"
-					class="rate-input"
-					value={inversion.tasaAnual}
-					oninput={handleTasaInput}
-				/>
-				<span class="rate-suffix">%</span>
+			<div class="rate-input-main-row">
+				<label class="rate-label" for="tasa-{inversion.id}">Tasa Anual Nominal</label>
+				<div class="rate-input-wrapper">
+					<input
+						id="tasa-{inversion.id}"
+						type="number"
+						step="0.05"
+						min="0"
+						max="100"
+						class="rate-input"
+						value={inversion.tasaAnual}
+						oninput={handleTasaInput}
+					/>
+					<span class="rate-suffix">%</span>
+				</div>
+			</div>
+
+			<div class="rate-micro-steppers" role="group" aria-label="Ajuste rápido táctil de tasa">
+				<button
+					type="button"
+					class="rate-step-btn rate-step-dec"
+					onclick={() => adjustTasa(RateStepDelta.DecreaseHalf)}
+					title="Restar 0.50% tasa"
+					aria-label="Restar 0.50% tasa de {inversion.nombre}"
+				>
+					-0.5%
+				</button>
+				<button
+					type="button"
+					class="rate-step-btn rate-step-dec"
+					onclick={() => adjustTasa(RateStepDelta.DecreaseQuarter)}
+					title="Restar 0.25% tasa"
+					aria-label="Restar 0.25% tasa de {inversion.nombre}"
+				>
+					-0.25%
+				</button>
+				<button
+					type="button"
+					class="rate-step-btn rate-step-inc"
+					onclick={() => adjustTasa(RateStepDelta.IncreaseQuarter)}
+					title="Sumar 0.25% tasa"
+					aria-label="Sumar 0.25% tasa a {inversion.nombre}"
+				>
+					+0.25%
+				</button>
+				<button
+					type="button"
+					class="rate-step-btn rate-step-inc"
+					onclick={() => adjustTasa(RateStepDelta.IncreaseHalf)}
+					title="Sumar 0.50% tasa"
+					aria-label="Sumar 0.50% tasa a {inversion.nombre}"
+				>
+					+0.5%
+				</button>
 			</div>
 		</div>
 
 		<div class="card-metrics">
 			<div class="metric-block">
 				<span class="metric-label">Saldo Proyectado</span>
-				<span class="metric-value balance-value">{formatCurrency(summary?.balanceFinal ?? 0)}</span>
+				<span class="metric-value balance-value" title={formatCurrency(summary?.balanceFinal ?? 0)}>
+					{formatCurrency(summary?.balanceFinal ?? 0)}
+				</span>
 			</div>
 
 			<div class="metric-block">
 				<span class="metric-label">Ganancia Neta</span>
-				<span class="metric-value yield-value">+{formatCurrency(summary?.rendimientoNeto ?? 0)}</span>
+				<span class="metric-value yield-value" title={`+${formatCurrency(summary?.rendimientoNeto ?? 0)}`}>
+					+{formatCurrency(summary?.rendimientoNeto ?? 0)}
+				</span>
 			</div>
 		</div>
 	</Paper>
@@ -203,12 +256,92 @@
 
 	.rate-input-section {
 		background: #f6f8fb;
-		padding: 8px 12px;
-		border-radius: 8px;
+		padding: 10px 12px;
+		border-radius: 10px;
 		margin-bottom: 14px;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	.rate-input-main-row {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
+		width: 100%;
+	}
+
+	.rate-micro-steppers {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 5px;
+		width: 100%;
+	}
+
+	.rate-step-btn {
+		appearance: none;
+		border: 1px solid #d5dedc;
+		background: #ffffff;
+		color: #14201f;
+		font-size: 0.75rem;
+		font-weight: 700;
+		padding: 6px 2px;
+		min-height: 36px;
+		border-radius: 7px;
+		cursor: pointer;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
+		user-select: none;
+		touch-action: manipulation;
+	}
+
+	.rate-step-btn:hover {
+		border-color: #004851;
+		color: #004851;
+		background: rgba(0, 72, 81, 0.05);
+	}
+
+	.rate-step-btn:active {
+		transform: scale(0.94);
+		background: rgba(0, 72, 81, 0.1);
+	}
+
+	.rate-step-inc {
+		color: #004851;
+		font-weight: 800;
+	}
+
+	.rate-step-inc:hover {
+		border-color: #10b981;
+		color: #059669;
+		background: rgba(16, 185, 129, 0.08);
+	}
+
+	:global(html.dark) .rate-step-btn,
+	:global(.dark) .rate-step-btn {
+		background: #1e293b;
+		border-color: #334155;
+		color: #e2e8f0;
+	}
+
+	:global(html.dark) .rate-step-btn:hover,
+	:global(.dark) .rate-step-btn:hover {
+		border-color: #7fd1d8;
+		color: #7fd1d8;
+		background: rgba(127, 209, 216, 0.1);
+	}
+
+	:global(html.dark) .rate-step-inc,
+	:global(.dark) .rate-step-inc {
+		color: #34d399;
+	}
+
+	:global(html.dark) .rate-step-inc:hover,
+	:global(.dark) .rate-step-inc:hover {
+		border-color: #34d399;
+		background: rgba(52, 211, 153, 0.12);
 	}
 
 	.rate-label {
@@ -247,15 +380,19 @@
 
 	.card-metrics {
 		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 12px;
+		grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+		gap: 8px 12px;
 		border-top: 1px solid #edf2f0;
-		padding-top: 12px;
+		padding-top: 10px;
+		width: 100%;
+		box-sizing: border-box;
 	}
 
 	.metric-block {
 		display: flex;
 		flex-direction: column;
+		min-width: 0;
+		overflow: hidden;
 	}
 
 	.metric-label {
@@ -263,12 +400,20 @@
 		color: #5e6b6a;
 		font-weight: 500;
 		margin-bottom: 2px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	.metric-value {
-		font-size: 1.0625rem;
+		font-size: clamp(0.8125rem, 1.2vw, 0.9375rem);
 		font-weight: 800;
 		font-variant-numeric: tabular-nums;
+		letter-spacing: -0.025em;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		line-height: 1.25;
 	}
 
 	.balance-value {

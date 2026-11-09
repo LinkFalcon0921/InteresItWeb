@@ -169,4 +169,182 @@ test.describe('Simulador Financiero E2E', () => {
 		const heroCard = page.locator('#tour-hero');
 		await expect(heroCard).toBeVisible();
 	});
+
+	test("debe soportar navegacion ergonomica en tablets y foldables mediante la barra inferior fija", async ({ page }) => {
+		await page.setViewportSize({ width: 768, height: 1024 });
+
+		const bottomNav = page.locator(".bottom-nav-bar");
+		await expect(bottomNav).toBeVisible();
+
+		const bottomComparativa = page.locator("#bottom-nav-comparativa");
+		await bottomComparativa.click();
+		await expect(page.locator("#panel-comparativa")).toBeVisible();
+
+		const bottomReporte = page.locator("#bottom-nav-reporte");
+		await bottomReporte.click();
+		await expect(page.locator("#panel-reporte")).toBeVisible();
+
+		const bottomParams = page.locator("#bottom-nav-params");
+		await bottomParams.click();
+		const drawer = page.locator(".parameters-drawer");
+		await expect(drawer).toBeVisible();
+
+		const closeDrawerBtn = page.locator(".close-drawer-btn");
+		await closeDrawerBtn.click();
+		await expect(drawer).not.toBeVisible();
+	});
+
+	test("debe permitir ajustar tasas de escenarios con una sola mano usando los micro-controles +/-", async ({ page }) => {
+		await page.setViewportSize({ width: 360, height: 740 });
+
+		const firstCard = page.locator(".scenario-card-wrapper").first();
+		const rateInput = firstCard.locator(".rate-input");
+		const initialVal = parseFloat(await rateInput.inputValue());
+
+		const plusQuarterBtn = firstCard.locator(".rate-step-btn", { hasText: "+0.25%" });
+		await expect(plusQuarterBtn).toBeVisible();
+		await plusQuarterBtn.click();
+
+		const updatedVal = parseFloat(await rateInput.inputValue());
+		expect(updatedVal).toBeCloseTo(initialVal + 0.25, 2);
+
+		const minusHalfBtn = firstCard.locator(".rate-step-btn", { hasText: "-0.5%" });
+		await expect(minusHalfBtn).toBeVisible();
+		await minusHalfBtn.click();
+
+		const finalVal = parseFloat(await rateInput.inputValue());
+		expect(finalVal).toBeCloseTo(initialVal + 0.25 - 0.5, 2);
+	});
+
+	test('debe mantener arquitectura de scroll limpia en escritorio sin scroll anidado en workspace', async ({ page }) => {
+		await page.setViewportSize({ width: 1280, height: 720 });
+
+		// 1. Verificar que el sidebar de parámetros esté en posición sticky
+		const sidebar = page.locator('.desktop-sidebar');
+		await expect(sidebar).toBeVisible();
+		const sidebarPosition = await sidebar.evaluate((el) => window.getComputedStyle(el).position);
+		expect(sidebarPosition).toBe('sticky');
+
+		// 2. Verificar que workspace-area no tenga overflow-y auto ni scroll anidado
+		const workspace = page.locator('.workspace-area');
+		const workspaceOverflow = await workspace.evaluate((el) => window.getComputedStyle(el).overflowY);
+		expect(workspaceOverflow).toBe('visible');
+
+		// 3. Verificar que terminal-shell no limite la altura con overflow: hidden
+		const shell = page.locator('.terminal-shell');
+		const shellOverflow = await shell.evaluate((el) => window.getComputedStyle(el).overflowY);
+		expect(shellOverflow).not.toBe('hidden');
+
+		// 4. Scroll natural en el body para navegar por el dashboard
+		await page.evaluate(() => window.scrollTo(0, 400));
+		const scrollY = await page.evaluate(() => window.scrollY);
+		expect(scrollY).toBeGreaterThan(0);
+
+		// 5. El sidebar permanece visible en viewport gracias a sticky
+		await expect(sidebar).toBeInViewport();
+	});
+	test('debe manejar montos millonarios sin desbordamiento de texto y ordenar escenarios de izquierda a derecha (1 2 3 / 4 5 6)', async ({ page }) => {
+		await page.setViewportSize({ width: 1366, height: 768 });
+		await page.goto('/');
+
+		// 1. Ingresar montos millonarios
+		const montoInput = page.locator('#monto-inicial-input');
+		await montoInput.fill('50000000');
+		const aporteInput = page.locator('#aporte-mensual-input');
+		await aporteInput.fill('1000000');
+
+		// 2. Agregar 2 escenarios más para tener 4
+		const addBtn = page.locator('#btn-add-scenario');
+		await addBtn.click();
+		await addBtn.click();
+
+		// 3. Verificar que los escenarios se posicionen de izquierda a derecha
+		const cards = page.locator('.scenario-card-wrapper');
+		await expect(cards).toHaveCount(4);
+
+		const box0 = await cards.nth(0).boundingBox();
+		const box1 = await cards.nth(1).boundingBox();
+		const box2 = await cards.nth(2).boundingBox();
+		const box3 = await cards.nth(3).boundingBox();
+
+		expect(box0).not.toBeNull();
+		expect(box1).not.toBeNull();
+		expect(box2).not.toBeNull();
+		expect(box3).not.toBeNull();
+
+		if (box0 && box1 && box2 && box3) {
+			// Escenario 1 y 2 están en la misma fila horizontal
+			expect(Math.abs(box0.y - box1.y)).toBeLessThan(10);
+			// Escenario 2 está a la derecha del Escenario 1
+			expect(box1.x).toBeGreaterThan(box0.x);
+			// Escenario 3 está a la derecha del Escenario 2
+			expect(box2.x).toBeGreaterThan(box1.x);
+			// Escenario 4 pasa a la siguiente fila por debajo
+			expect(box3.y).toBeGreaterThan(box0.y + 100);
+		}
+
+		// 4. Verificar que no haya desbordamiento horizontal en las métricas de saldo y ganancia
+		const balanceEls = page.locator('.metric-value');
+		const count = await balanceEls.count();
+		expect(count).toBeGreaterThan(0);
+
+		for (let i = 0; i < count; i++) {
+			const el = balanceEls.nth(i);
+			const isVisible = await el.isVisible();
+			expect(isVisible).toBe(true);
+		}
+	});
+	test('debe abrir el selector de fecha en desktop sin sobreposición de hero ni banners y permitir editar la fecha', async ({ page }) => {
+		await page.setViewportSize({ width: 1366, height: 768 });
+		await page.goto('/');
+
+		// 1. Abrir pestaña de Comparativa
+		await page.click('#tab-comparativa');
+		await expect(page.locator('#panel-comparativa')).toBeVisible();
+
+		// 2. Hacer clic en la tarjeta de fecha 'Desde'
+		const dateCard = page.locator('.m3-date-card').first();
+		await dateCard.click();
+
+		// 3. Verificar que el diálogo se abra y esté portaleado directamente en el body
+		const scrim = page.locator('.m3-dialog-scrim');
+		await expect(scrim).toBeVisible();
+
+		const isDirectChildOfBody = await scrim.evaluate((el) => el.parentElement === document.body);
+		expect(isDirectChildOfBody).toBe(true);
+
+		// 4. Verificar que el header del diálogo, días y botones de acción no estén cubiertos por el hero ni el banner
+		const dialog = page.locator('.m3-date-picker-card');
+		await expect(dialog).toBeVisible();
+
+		const hitHeader = await page.evaluate(() => {
+			const d = document.querySelector('.m3-date-picker-card');
+			if (!d) return false;
+			const rect = d.getBoundingClientRect();
+			const el = document.elementFromPoint(rect.x + rect.width / 2, rect.y + 35);
+			return !!el?.closest('.m3-date-picker-card');
+		});
+		expect(hitHeader).toBe(true);
+
+		const hitActions = await page.evaluate(() => {
+			const d = document.querySelector('.m3-date-picker-card');
+			if (!d) return false;
+			const rect = d.getBoundingClientRect();
+			const el = document.elementFromPoint(rect.right - 40, rect.bottom - 20);
+			return !!el?.closest('.m3-date-picker-card');
+		});
+		expect(hitActions).toBe(true);
+
+		// 5. Seleccionar un día y confirmar con OK
+		const day15 = page.locator('.m3-day-cell', { hasText: '15' }).first();
+		await day15.click();
+
+		const okBtn = page.locator('.m3-action-btn--confirm');
+		await okBtn.click();
+
+		// 6. El diálogo se cierra y la fecha queda actualizada
+		await expect(scrim).toHaveCount(0);
+		const updatedText = await dateCard.locator('.date-text').textContent();
+		expect(updatedText).toContain('15');
+	});
 });

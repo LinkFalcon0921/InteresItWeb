@@ -1,0 +1,75 @@
+.app-btn {
+	min-height: 38px !important;
+	box-sizing: border-box !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	border-radius: 8px !important;
+	font-family: inherit !important;
+	font-weight: 600 !important;
+	letter-spacing: 0.01em !important;
+	text-transform: none !important;
+	padding: 7px 16px !important;
+	transition: all 0.2s ease !important;
+}
+
+.app-btn--primary {
+	background-color: #004851 !important;
+	color: #ffffff !important;
+}
+
+.app-btn--primary:hover:not(:disabled) {
+	background-color: #00363d !important;
+}
+
+.app-btn--secondary {
+	border: 1px solid #004851 !important;
+	color: #004851 !important;
+	background-color: transparent !important;
+}
+
+.app-btn--secondary:hover:not(:disabled) {
+	background-color: rgba(0, 72, 81, 0.08) !important;
+}
+
+.app-btn--text {
+	color: #004851 !important;
+	background-color: transparent !important;
+}
+
+.app-btn--text:hover:not(:disabled) {
+	background-color: rgba(0, 72, 81, 0.06) !important;
+}
+
+.app-btn:disabled {
+	opacity: 0.55 !important;
+	cursor: not-allowed !important;
+}
+
+html.dark .app-btn--primary {
+	background-color: #7fd1d8 !important;
+	color: #0b1120 !important;
+}
+
+html.dark .app-btn--primary:hover:not(:disabled) {
+	background-color: #9fe2e7 !important;
+}
+
+html.dark .app-btn--secondary {
+	border-color: #7fd1d8 !important;
+	color: #7fd1d8 !important;
+}
+
+html.dark .app-btn--secondary:hover:not(:disabled) {
+	background-color: rgba(127, 209, 216, 0.12) !important;
+}
+
+html.dark .app-btn--text {
+	color: #7fd1d8 !important;
+}
+
+@media (max-width: 600px) {
+	.app-btn {
+		min-height: 40px !important;
+	}
+}

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Button, { Label } from '@smui/button';
+	import { base } from '$app/paths';
 	import type { SimulatorState } from '../state/SimulatorState.svelte';
 
 	interface Props {
@@ -37,7 +38,16 @@
 			</button>
 
 			<div class="brand-logo">
-				<div class="logo-badge">II</div>
+				<picture class="brand-logo-picture">
+					<source srcset="{base}/imgs/app_logo.webp" type="image/webp" />
+					<img
+						src="{base}/imgs/app_logo.webp"
+						alt="InteresIt Logo"
+						class="brand-logo-img"
+						width="40"
+						height="40"
+					/>
+				</picture>
 				<div>
 					<h1 class="brand-title">InteresIt</h1>
 					<span class="brand-subtitle">Terminal Financiera Multi-Escenario</span>
@@ -117,7 +127,7 @@
 			<button
 				type="button"
 				id="tour-export"
-				class="action-btn export-btn--hidden"
+				class="action-btn export-btn--hidden export-action-btn"
 				onclick={() => {
 					state.isExportDialogOpen = true;
 				}}
@@ -171,17 +181,27 @@
 	.brand-logo {
 		display: flex;
 		align-items: center;
-		gap: 10px;
+		gap: 12px;
 	}
 
-	.logo-badge {
-		background: #d7ebec;
-		color: #00292e;
-		font-weight: 900;
-		font-size: 1.1rem;
-		padding: 4px 8px;
-		border-radius: 8px;
-		letter-spacing: -0.05em;
+	.brand-logo-picture {
+		display: flex;
+		align-items: center;
+		flex-shrink: 0;
+	}
+
+	.brand-logo-img {
+		width: 40px;
+		height: 40px;
+		object-fit: contain;
+		border-radius: 10px;
+		flex-shrink: 0;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+		transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+	}
+
+	.brand-logo-img:hover {
+		transform: scale(1.05);
 	}
 
 	.brand-title {
@@ -285,7 +305,7 @@
 		z-index: 1 !important;
 	}
 
-	@media (max-width: 960px) {
+	@media (max-width: 1023px) {
 		.mobile-menu-btn {
 			display: inline-flex;
 			align-items: center;
@@ -334,9 +354,10 @@
 			font-size: 1.1rem;
 		}
 
-		.logo-badge {
-			font-size: 0.95rem;
-			padding: 3px 6px;
+		.brand-logo-img {
+			width: 32px;
+			height: 32px;
+			border-radius: 8px;
 		}
 
 		.actions-section {

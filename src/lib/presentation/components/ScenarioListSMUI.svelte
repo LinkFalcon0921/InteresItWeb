@@ -5,10 +5,13 @@
 
 	interface Props {
 		state: SimulatorState;
-		twoRowsInfinite?: boolean;
+		twoColumnsFlexible?: boolean;
+		twoRowsInfinite?: boolean; // Compatibilidad retroactiva
 	}
 
-	let { state, twoRowsInfinite = false }: Props = $props();
+	let { state, twoColumnsFlexible = true, twoRowsInfinite = false }: Props = $props();
+
+	const isTwoColumns = $derived(twoColumnsFlexible || twoRowsInfinite);
 
 	const leaderId = $derived(state.simulationResult?.escenarioLiderId ?? '');
 	const summaries = $derived(state.simulationResult?.resumenPorEscenario ?? []);
@@ -40,7 +43,7 @@
 		{/if}
 	</div>
 
-	<div class="scenarios-grid {twoRowsInfinite ? 'scenarios-grid--two-rows' : ''}">
+	<div class="scenarios-grid {isTwoColumns ? 'scenarios-grid--two-columns' : ''}">
 		{#each state.inversiones as inversion (inversion.id)}
 			<ScenarioCardSMUI
 				{state}
@@ -81,48 +84,25 @@
 		font-weight: 500;
 	}
 
-		.scenarios-grid--two-rows {
+	.scenarios-grid,
+	.scenarios-grid--two-columns {
 		display: grid;
-		grid-template-rows: repeat(2, auto);
-		grid-auto-flow: column;
-		grid-auto-columns: minmax(280px, 320px);
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+		grid-auto-flow: row;
+		grid-auto-rows: auto;
 		gap: 16px;
-		overflow-x: auto;
-		overflow-y: hidden;
-		padding-bottom: 12px;
-		scroll-snap-type: x mandatory;
-		-webkit-overflow-scrolling: touch;
-		scrollbar-width: thin;
-		scrollbar-color: #cbd5e1 transparent;
-	}
-	.scenarios-grid--two-rows::-webkit-scrollbar {
-		height: 8px;
-	}
-	.scenarios-grid--two-rows::-webkit-scrollbar-track {
-		background: #f1f5f9;
-		border-radius: 9999px;
-	}
-	.scenarios-grid--two-rows::-webkit-scrollbar-thumb {
-		background: #cbd5e1;
-		border-radius: 9999px;
-	}
-	.scenarios-grid--two-rows::-webkit-scrollbar-thumb:hover {
-		background: #94a3b8;
-	}
-	:global(html.dark) .scenarios-grid--two-rows::-webkit-scrollbar-track {
-		background: #1e293b;
-	}
-	:global(html.dark) .scenarios-grid--two-rows::-webkit-scrollbar-thumb {
-		background: #334155;
-	}
-	:global(html.dark) .scenarios-grid--two-rows::-webkit-scrollbar-thumb:hover {
-		background: #10b981;
+		width: 100%;
+		box-sizing: border-box;
+		overflow-x: visible;
+		overflow-y: visible;
 	}
 
-	.scenarios-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-		gap: 16px;
+	@media (max-width: 480px) {
+		.scenarios-grid,
+		.scenarios-grid--two-columns {
+			grid-template-columns: 1fr;
+			gap: 12px;
+		}
 	}
 
 	:global(.add-scenario-btn) {

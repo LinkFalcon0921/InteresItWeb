@@ -25,7 +25,8 @@ import {
 	type AporteExtraordinarioDTO,
 	ShareUrlCodec
 } from '$application';
-import { generateProjectionCSV } from '$domain';
+import { generateProjectionCSV, SYSTEM_LIMITS } from '$domain';
+import { NavigationTab } from '../enums/NavigationTab';
 
 export class SimulatorState {
 	public montoInicial = $state<number>(185);
@@ -43,7 +44,7 @@ export class SimulatorState {
 		{ id: 'inv-2', nombre: 'Escenario 2', tasaAnual: 12, color: 'blue' }
 	]);
 
-	public activeTab = $state<'simulador' | 'comparativa' | 'reporte'>('simulador');
+	public activeTab = $state<NavigationTab>(NavigationTab.Simulador);
 	public isDrawerOpen = $state<boolean>(false);
 	private _customErrorMessage = $state<string>('');
 	public isLoading = $state<boolean>(false);
@@ -106,6 +107,10 @@ export class SimulatorState {
 		this._customErrorMessage = value;
 	}
 
+	public get limits(): typeof SYSTEM_LIMITS {
+		return SYSTEM_LIMITS;
+	}
+
 	public pairMatrixResult = $derived.by<PairMatrixDTO | null>(() => {
 		const summaries = this.simulationResult?.resumenPorEscenario;
 		if (!summaries || summaries.length === 0) {
@@ -136,10 +141,11 @@ export class SimulatorState {
 	}
 
 	public setHorizonMonths(months: number): void {
+		const cappedMonths = Math.min(Math.max(1, months), SYSTEM_LIMITS.MAX_PERIODS);
 		const startDate = new Date(this.fechaInicio + 'T00:00:00');
 		if (Number.isNaN(startDate.getTime())) return;
 
-		const target = new Date(startDate.getFullYear(), startDate.getMonth() + months, startDate.getDate());
+		const target = new Date(startDate.getFullYear(), startDate.getMonth() + cappedMonths, startDate.getDate());
 		const y = target.getFullYear();
 		const m = String(target.getMonth() + 1).padStart(2, '0');
 		const d = String(target.getDate()).padStart(2, '0');
@@ -147,7 +153,7 @@ export class SimulatorState {
 	}
 
 	public addInversion(nombre?: string, tasaAnual?: number): void {
-		if (this.inversiones.length >= 200) return;
+		if (this.inversiones.length >= SYSTEM_LIMITS.MAX_SCENARIOS) return;
 		const nextIdx = this.inversiones.length + 1;
 		const colorPalette = ['emerald', 'blue', 'cyan', 'amber', 'purple', 'rose', 'teal', 'indigo'];
 		const nextColor = colorPalette[(nextIdx - 1) % colorPalette.length] ?? 'teal';
@@ -314,6 +320,10 @@ export class SimulatorState {
 
 	public async createPortfolio(name: string): Promise<boolean> {
 		if (!this.savePortfolioUseCase) return false;
+		if (this.portfolios.length >= SYSTEM_LIMITS.MAX_PORTFOLIOS) {
+			this.errorMessage = `Límite alcanzado: no se pueden crear más de ${SYSTEM_LIMITS.MAX_PORTFOLIOS} portafolios.`;
+			return false;
+		}
 		const trimmedName = name.trim();
 		if (!trimmedName) {
 			this.errorMessage = 'El nombre del nuevo portafolio no puede estar vacío.';
@@ -520,15 +530,21 @@ export class SimulatorState {
 		this.syncThemeToDom();
 	}
 
-	private syncThemeToDom(): void {
-		// Theme sync handled globally
+	public syncThemeToDom(): void {
+		if (typeof document !== 'undefined') {
+			document.documentElement.classList.toggle('dark', this.isDarkMode);
+			document.body.classList.toggle('dark', this.isDarkMode);
+		}
 	}
 
 	private applySettings(settings: SettingsDTO, isPortfolioSwitch = false): void {
 		this.montoInicial = settings.montoInicial;
 		this.aporteMensual = settings.aporteMensual;
 		this.fechaInicio = settings.fechaInicio;
-		this.fechaFin = settings.fechaFin;
+		const startParts = (settings.fechaInicio || '').split('-').map(Number);
+		const maxYear = (startParts[0] ?? 2026) + SYSTEM_LIMITS.MAX_HORIZON_YEARS;
+		const maxDateStr = `${maxYear}-${String(startParts[1] ?? 1).padStart(2, '0')}-${String(startParts[2] ?? 1).padStart(2, '0')}`;
+		this.fechaFin = settings.fechaFin > maxDateStr ? maxDateStr : settings.fechaFin;
 		this.diaCorte = settings.diaCorte;
 		this.omitirPrimerCorte = settings.omitirPrimerCorte;
 		this.aplicarImpuesto = settings.aplicarImpuesto;
@@ -540,7 +556,11 @@ export class SimulatorState {
 					savedTheme = localStorage.getItem('interesit_theme');
 				} catch {}
 			}
-			this.isDarkMode = savedTheme !== null ? savedTheme === 'dark' : settings.isDarkMode;
+			this.isDarkMode =
+				savedTheme !== null
+					? savedTheme === 'dark'
+					: settings.isDarkMode ||
+						(typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 			this.syncThemeToDom();
 		}
 		this.tasaInflacion = settings.tasaInflacion ?? 0;

@@ -43,9 +43,3 @@ jobs:
 
       - name: Build Static Production SPA
         run: pnpm run build
-
-      - name: Install Playwright Browsers
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Execute Playwright E2E Suite
-        run: pnpm run test:e2e

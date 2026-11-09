@@ -1,4 +1,5 @@
 import { ParseInputError } from '../errors/DomainErrors';
+import { SYSTEM_LIMITS } from '../finance/systemLimits';
 import { SettingsParser } from './SettingsParser';
 import { err, ok, type Result } from './Result';
 import type { BackupDTO } from '$application/dtos/BackupDTO';
@@ -81,6 +82,9 @@ export class BackupParser {
 		const rawPortfolios = raw['portfolios'];
 		if (!Array.isArray(rawPortfolios) || rawPortfolios.length === 0) {
 			return err(new ParseInputError('portfolios', 'La copia de seguridad debe contener al menos un portafolio válido.'));
+		}
+		if (rawPortfolios.length > SYSTEM_LIMITS.MAX_PORTFOLIOS) {
+			return err(new ParseInputError('portfolios', `La copia de seguridad no puede exceder el límite de ${SYSTEM_LIMITS.MAX_PORTFOLIOS} portafolios para prevenir agotamiento de memoria.`));
 		}
 
 		const validatedPortfolios: PortfolioDTO[] = [];

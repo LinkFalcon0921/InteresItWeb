@@ -490,4 +490,25 @@ describe('SimulatorState', () => {
 		expect(state.montoInicial).toBe(2000);
 		expect(state.omitirPrimerCorte).toBe(true);
 	});
+
+	it('protege los límites del sistema en frontend: limita horizonte a 30 años y portafolios a 50', async () => {
+		const state = createTestState();
+		state.fechaInicio = '2026-01-01';
+
+		// 1. setHorizonMonths no puede exceder 360 meses (30 años)
+		state.setHorizonMonths(600); // 50 años solicitados
+		expect(state.fechaFin).toBe('2056-01-01'); // Debe ser clamped a 30 años
+
+		// 2. createPortfolio rechaza crear si ya hay 50 portafolios
+		state.portfolios = Array.from({ length: 50 }, (_, i) => ({
+			id: `p-${i}`,
+			name: `Port ${i}`,
+			updatedAt: '',
+			escenariosCount: 2,
+			montoInicial: 100
+		}));
+		const created = await state.createPortfolio('Portafolio 51');
+		expect(created).toBe(false);
+		expect(state.errorMessage).toContain('50 portafolios');
+	});
 });

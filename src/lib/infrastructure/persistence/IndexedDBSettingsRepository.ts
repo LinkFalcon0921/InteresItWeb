@@ -2,6 +2,7 @@ import {
 	err,
 	ok,
 	SettingsParser,
+	SYSTEM_LIMITS,
 	type Result
 } from '$domain';
 import {
@@ -370,6 +371,9 @@ export class IndexedDBSettingsRepository implements SettingsRepositoryPort {
 					createdAt: existing?.createdAt || portfolio.createdAt
 				};
 			} else {
+				if (portfolios.length >= SYSTEM_LIMITS.MAX_PORTFOLIOS) {
+					return err(new Error(`Límite alcanzado: no se pueden almacenar más de ${SYSTEM_LIMITS.MAX_PORTFOLIOS} portafolios en el sistema.`));
+				}
 				portfolios.push(portfolio);
 			}
 

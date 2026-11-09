@@ -99,6 +99,8 @@
 		border: 1px solid #d5dedc;
 		border-radius: 12px;
 		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+
 		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 		width: 100%;
 		display: block;
@@ -149,7 +151,7 @@
 		left: 0;
 		background: #ffffff;
 		z-index: 10;
-		box-shadow: 2px 0 4px rgba(0, 0, 0, 0.04);
+		box-shadow: 3px 0 8px rgba(0, 0, 0, 0.08);
 	}
 
 	:global(.custom-data-table th.sticky-col) {
@@ -157,7 +159,7 @@
 		left: 0;
 		background: #f6f8fb !important;
 		z-index: 11;
-		box-shadow: 2px 0 4px rgba(0, 0, 0, 0.04);
+		box-shadow: 3px 0 8px rgba(0, 0, 0, 0.08);
 	}
 
 	:global(.custom-data-table .scenario-cell) {
@@ -226,9 +228,10 @@
 		color: #a3b0c6;
 	}
 
+	:global(html.dark) .table-scroll-container,
 	:global(.dark) .table-scroll-container {
-		background: #131c30;
-		border-color: #26334e;
+		background: #131c30 !important;
+		border-color: #26334e !important;
 	}
 
 	:global(.dark) :global(.custom-data-table th) {

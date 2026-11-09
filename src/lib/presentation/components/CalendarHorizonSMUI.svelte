@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { SYSTEM_LIMITS } from '$domain';
 	import type { SimulatorState } from '../state/SimulatorState.svelte';
 	import M3DatePickerDialog from './M3DatePickerDialog.svelte';
 
@@ -37,6 +38,18 @@
 		return `${day} ${monthName} ${year}`;
 	}
 
+	function getMaxEndDateFor(startDateStr: string): string {
+		const parts = (startDateStr || '').split('-').map(Number);
+		const y = parts[0];
+		const m = parts[1];
+		const d = parts[2];
+		if (!y || !m || !d || Number.isNaN(y)) return '';
+		const targetYear = y + SYSTEM_LIMITS.MAX_HORIZON_YEARS;
+		return `${targetYear}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+	}
+
+	const maxAllowedFechaFin = $derived.by(() => getMaxEndDateFor(simState.fechaInicio));
+
 	const horizonStats = $derived.by(() => {
 		const start = new Date(simState.fechaInicio + 'T00:00:00');
 		const end = new Date(simState.fechaFin + 'T00:00:00');
@@ -47,6 +60,14 @@
 		const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
 		if (diffDays <= 0) {
 			return { isValid: false, text: 'Fecha término posterior', days: diffDays, months: 0 };
+		}
+		if (diffDays > SYSTEM_LIMITS.MAX_HORIZON_DAYS) {
+			return {
+				isValid: false,
+				text: `Excede máx. ${SYSTEM_LIMITS.MAX_HORIZON_YEARS} años (${diffDays.toLocaleString('es-DO')} d)`,
+				days: diffDays,
+				months: 0
+			};
 		}
 		const totalMonths = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
 		const years = Math.floor(totalMonths / 12);
@@ -76,8 +97,17 @@
 	function handleDateConfirmed(dateStr: string): void {
 		if (activeModal === 'inicio') {
 			simState.fechaInicio = dateStr;
+			const maxEnd = getMaxEndDateFor(dateStr);
+			if (maxEnd && simState.fechaFin > maxEnd) {
+				simState.fechaFin = maxEnd;
+			}
 		} else if (activeModal === 'fin') {
-			simState.fechaFin = dateStr;
+			const maxEnd = maxAllowedFechaFin;
+			if (maxEnd && dateStr > maxEnd) {
+				simState.fechaFin = maxEnd;
+			} else {
+				simState.fechaFin = dateStr;
+			}
 		}
 		activeModal = null;
 	}
@@ -168,6 +198,8 @@
 					bind:this={hastaInputElement}
 					id="fecha-fin-input"
 					type="date"
+					min={simState.fechaInicio}
+					max={maxAllowedFechaFin}
 					class="accessible-date-input"
 					bind:value={simState.fechaFin}
 					onclick={(e) => {
@@ -206,6 +238,7 @@
 		isOpen={true}
 		value={simState.fechaInicio}
 		title="Seleccionar Fecha de Inicio"
+		maxDate={simState.fechaFin}
 		onSelect={handleDateConfirmed}
 		onClose={() => (activeModal = null)}
 	/>
@@ -214,6 +247,8 @@
 		isOpen={true}
 		value={simState.fechaFin}
 		title="Seleccionar Fecha de Término"
+		minDate={simState.fechaInicio}
+		maxDate={maxAllowedFechaFin}
 		onSelect={handleDateConfirmed}
 		onClose={() => (activeModal = null)}
 	/>

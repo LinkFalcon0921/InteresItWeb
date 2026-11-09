@@ -55,11 +55,11 @@
 						</div>
 
 						<div class="pair-difference">
-							<span class="diff-amount {pair.diferenciaBalance >= 0 ? 'diff-positive' : 'diff-negative'}">
+							<span class="diff-amount {pair.diferenciaBalance >= 0 ? 'diff-positive' : 'diff-negative'}" title={formatDifference(pair.diferenciaBalance)}>
 								{formatDifference(pair.diferenciaBalance)}
 							</span>
-							<span class="diff-rate-label">
-								Diferencial Rendimiento: {formatDifference(pair.diferenciaRendimiento)}
+							<span class="diff-rate-label" title={`Rendimiento: ${formatDifference(pair.diferenciaRendimiento)}`}>
+								Rendimiento: {formatDifference(pair.diferenciaRendimiento)}
 							</span>
 						</div>
 					</div>
@@ -138,38 +138,51 @@
 
 	.pairs-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
 		gap: 12px;
+		width: 100%;
+		box-sizing: border-box;
 	}
 
 	:global(.pair-paper) {
-		padding: 14px 18px !important;
+		padding: 12px 16px !important;
 		border-radius: 12px !important;
 		border: 1px solid #d5dedc !important;
 		background: #ffffff !important;
+		min-width: 0 !important;
+		overflow: hidden !important;
+		box-sizing: border-box !important;
 	}
 
 	.pair-row {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 12px;
+		gap: 10px;
+		min-width: 0;
+		width: 100%;
 	}
 
 	.pair-names {
 		display: flex;
 		flex-direction: column;
 		gap: 2px;
+		min-width: 0;
+		flex-shrink: 0;
 	}
 
 	.scenario-name-a {
 		font-weight: 700;
-		font-size: 0.875rem;
+		font-size: 0.8125rem;
 		color: #14201f;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: 120px;
 	}
 
 	.vs-label {
-		font-size: 0.6875rem;
+		font-size: 0.625rem;
 		color: #5e6b6a;
 		font-weight: 600;
 		text-transform: uppercase;
@@ -177,20 +190,33 @@
 
 	.scenario-name-b {
 		font-weight: 600;
-		font-size: 0.8125rem;
+		font-size: 0.75rem;
 		color: #5e6b6a;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: 120px;
 	}
 
 	.pair-difference {
 		text-align: right;
 		display: flex;
 		flex-direction: column;
+		min-width: 0;
+		overflow: hidden;
+		flex: 1;
+		align-items: flex-end;
 	}
 
 	.diff-amount {
-		font-size: 1.125rem;
+		font-size: clamp(0.8125rem, 1.8vw, 0.9375rem);
 		font-weight: 800;
 		font-variant-numeric: tabular-nums;
+		letter-spacing: -0.02em;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: 100%;
 	}
 
 	.diff-positive {
@@ -205,6 +231,10 @@
 		font-size: 0.6875rem;
 		color: #5e6b6a;
 		font-weight: 500;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: 100%;
 	}
 
 	.empty-notice {

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { onDestroy } from 'svelte';
+
 	interface Props {
 		checked?: boolean;
 		offLabel?: string;
@@ -22,11 +24,14 @@
 	}: Props = $props();
 
 	let isSpinning = $state(false);
+	let spinTimer: ReturnType<typeof setTimeout> | undefined;
 
 	function triggerSpin(): void {
+		if (spinTimer) clearTimeout(spinTimer);
 		isSpinning = true;
-		setTimeout(() => {
+		spinTimer = setTimeout(() => {
 			isSpinning = false;
+			spinTimer = undefined;
 		}, 400);
 	}
 
@@ -57,6 +62,13 @@
 			setChecked(true);
 		}
 	}
+
+	onDestroy(() => {
+		if (spinTimer) {
+			clearTimeout(spinTimer);
+			spinTimer = undefined;
+		}
+	});
 </script>
 
 <div

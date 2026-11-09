@@ -224,16 +224,12 @@ export const ssr = false;
 export const trailingSlash = 'always';
 ```
 
-### 7.2 Flujo de GitHub Actions (`.github/workflows/deploy.yml`)
-- Ejecución en Node 24 (`node-version: 24`).
-- Pasos:
-  1. `actions/checkout@v4`
-  2. `actions/setup-node@v4` con caché de `npm` o `pnpm`.
-  3. `npm ci`
-  4. `npm run test` (Vitest)
-  5. `npm run build`
-  6. `actions/upload-pages-artifact@v3` (sube la carpeta `build`)
-  7. `actions/deploy-pages@v4`
+### 7.2 Flujo de GitHub Actions y Puerta de Calidad Previa al Deploy
+- Workflows orquestados en Node 24 (`node-version: 24`) con `pnpm`:
+  1. **`ci.yml` (CI Quality Gate):** Ejecuta verificación de límites de líneas (`check:lines`), tipos/diagnósticos Svelte (`svelte-check`), tests unitarios con Vitest y build estático de producción en `push` y `pull_request`.
+  2. **`playwright.yml` (Playwright Tests — Previo al Deploy):** Ejecuta la suite E2E de Playwright (`test:e2e`) en Chromium headless y preserva las evidencias y reportes como artefactos por 2 días (`retention-days: 2`).
+  3. **`deploy.yml` (Deploy to GitHub Pages):** Se dispara automáticamente mediante `workflow_run` tras la finalización exitosa de `Playwright Tests` en la rama `main` (o manualmente vía `workflow_dispatch`). Construye con el `BASE_PATH` de Pages, sube el artefacto y reemplaza los datos de producción vía `actions/deploy-pages@v4`.
+  4. **`deploy-development.yml`:** Genera y empaqueta el artefacto de staging para previsualización en la rama `develop`.
 
 ---
 

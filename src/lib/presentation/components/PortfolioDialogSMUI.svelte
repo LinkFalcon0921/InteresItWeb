@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { onDestroy } from 'svelte';
+	import { SYSTEM_LIMITS } from '$domain';
 	import AppButton from './AppButton.svelte';
 	import AppDialog from './AppDialog.svelte';
 	import AppSpinner from './AppSpinner.svelte';
@@ -21,6 +23,22 @@
 	let statusMessage = $state('');
 	let isErrorStatus = $state(false);
 	let isProcessing = $state(false);
+	let feedbackTimer: ReturnType<typeof setTimeout> | undefined;
+
+	function setFeedbackTimer(fn: () => void, ms: number): void {
+		if (feedbackTimer) clearTimeout(feedbackTimer);
+		feedbackTimer = setTimeout(() => {
+			feedbackTimer = undefined;
+			fn();
+		}, ms);
+	}
+
+	onDestroy(() => {
+		if (feedbackTimer) {
+			clearTimeout(feedbackTimer);
+			feedbackTimer = undefined;
+		}
+	});
 
 	async function handleSwitch(id: string): Promise<void> {
 		if (!simState || id === simState.currentPortfolioId) return;
@@ -32,7 +50,7 @@
 		if (success) {
 			isErrorStatus = false;
 			statusMessage = 'Portafolio cargado con éxito.';
-			setTimeout(() => {
+			setFeedbackTimer(() => {
 				statusMessage = '';
 				onClose();
 			}, 600);
@@ -44,6 +62,11 @@
 
 	async function handleCreate(): Promise<void> {
 		if (!simState) return;
+		if (simState.portfolios.length >= SYSTEM_LIMITS.MAX_PORTFOLIOS) {
+			isErrorStatus = true;
+			statusMessage = `Límite alcanzado: no se pueden crear más de ${SYSTEM_LIMITS.MAX_PORTFOLIOS} portafolios.`;
+			return;
+		}
 		const name = newPortfolioName.trim();
 		if (!name) return;
 		isProcessing = true;
@@ -55,7 +78,7 @@
 			newPortfolioName = '';
 			isErrorStatus = false;
 			statusMessage = 'Portafolio creado y activado.';
-			setTimeout(() => {
+			setFeedbackTimer(() => {
 				statusMessage = '';
 				onClose();
 			}, 600);
@@ -84,7 +107,7 @@
 			renamingPortfolioId = null;
 			editedName = '';
 			statusMessage = 'Portafolio renombrado.';
-			setTimeout(() => {
+			setFeedbackTimer(() => {
 				if (statusMessage === 'Portafolio renombrado.') statusMessage = '';
 			}, 1500);
 		} else {
@@ -145,10 +168,10 @@
 				<input
 					type="text"
 					class="text-input"
-					placeholder="Nombre del nuevo portafolio..."
+					placeholder={simState && simState.portfolios.length >= SYSTEM_LIMITS.MAX_PORTFOLIOS ? `Límite máximo de ${SYSTEM_LIMITS.MAX_PORTFOLIOS} portafolios alcanzado` : 'Nombre del nuevo portafolio...'}
 					maxlength="80"
 					bind:value={newPortfolioName}
-					disabled={isProcessing}
+					disabled={isProcessing || Boolean(simState && simState.portfolios.length >= SYSTEM_LIMITS.MAX_PORTFOLIOS)}
 					onkeydown={(e) => {
 						if (e.key === 'Enter') handleCreate();
 					}}
@@ -156,7 +179,7 @@
 				<AppButton
 					variant="primary"
 					onclick={handleCreate}
-					disabled={isProcessing || !newPortfolioName.trim()}
+					disabled={isProcessing || !newPortfolioName.trim() || Boolean(simState && simState.portfolios.length >= SYSTEM_LIMITS.MAX_PORTFOLIOS)}
 					class="create-btn"
 				>
 					{#if isProcessing}
@@ -172,7 +195,7 @@
 		<section class="list-section" aria-label="Lista de portafolios guardados">
 			<div class="list-header-row">
 				<span class="section-label">Portafolios Guardados</span>
-				<span class="count-badge">{simState.portfolios.length}</span>
+				<span class="count-badge">{simState.portfolios.length} / {SYSTEM_LIMITS.MAX_PORTFOLIOS}</span>
 			</div>
 
 			<div class="portfolio-list">

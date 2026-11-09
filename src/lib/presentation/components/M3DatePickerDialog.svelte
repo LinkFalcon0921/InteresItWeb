@@ -1,13 +1,16 @@
 <script lang="ts">
+	import { portal } from "../actions/portal";
 	interface Props {
 		isOpen: boolean;
 		value: string; // Formato YYYY-MM-DD
 		title?: string;
+		minDate?: string;
+		maxDate?: string;
 		onSelect: (dateStr: string) => void;
 		onClose: () => void;
 	}
 
-	let { isOpen, value, title = 'Seleccionar fecha', onSelect, onClose }: Props = $props();
+	let { isOpen, value, title = 'Seleccionar fecha', minDate, maxDate, onSelect, onClose }: Props = $props();
 
 	const MONTH_NAMES = [
 		'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -59,6 +62,7 @@
 			date: Date;
 			isToday: boolean;
 			isSelected: boolean;
+			isDisabled: boolean;
 		}
 
 		const cells: DayCell[] = [];
@@ -68,6 +72,10 @@
 			d1.getMonth() === d2.getMonth() &&
 			d1.getDate() === d2.getDate();
 
+		const minDateTime = minDate ? new Date(minDate + 'T00:00:00').getTime() : -Infinity;
+		const maxDateTime = maxDate ? new Date(maxDate + 'T23:59:59').getTime() : Infinity;
+		const isOutOfRange = (d: Date) => d.getTime() < minDateTime || d.getTime() > maxDateTime;
+
 		for (let i = firstDayIndex - 1; i >= 0; i--) {
 			const dayNum = daysInPrevMonth - i;
 			const cellDate = new Date(viewingYear, viewingMonth - 1, dayNum);
@@ -76,7 +84,8 @@
 				isCurrentMonth: false,
 				date: cellDate,
 				isToday: isSameDay(cellDate, today),
-				isSelected: isSameDay(cellDate, selectedDate)
+				isSelected: isSameDay(cellDate, selectedDate),
+				isDisabled: isOutOfRange(cellDate)
 			});
 		}
 
@@ -87,7 +96,8 @@
 				isCurrentMonth: true,
 				date: cellDate,
 				isToday: isSameDay(cellDate, today),
-				isSelected: isSameDay(cellDate, selectedDate)
+				isSelected: isSameDay(cellDate, selectedDate),
+				isDisabled: isOutOfRange(cellDate)
 			});
 		}
 
@@ -99,7 +109,8 @@
 				isCurrentMonth: false,
 				date: cellDate,
 				isToday: isSameDay(cellDate, today),
-				isSelected: isSameDay(cellDate, selectedDate)
+				isSelected: isSameDay(cellDate, selectedDate),
+				isDisabled: isOutOfRange(cellDate)
 			});
 		}
 
@@ -125,12 +136,18 @@
 	}
 
 	function handleDayClick(date: Date): void {
+		const minDateTime = minDate ? new Date(minDate + 'T00:00:00').getTime() : -Infinity;
+		const maxDateTime = maxDate ? new Date(maxDate + 'T23:59:59').getTime() : Infinity;
+		if (date.getTime() < minDateTime || date.getTime() > maxDateTime) return;
 		selectedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 		viewingYear = date.getFullYear();
 		viewingMonth = date.getMonth();
 	}
 
 	function handleConfirm(): void {
+		const minDateTime = minDate ? new Date(minDate + 'T00:00:00').getTime() : -Infinity;
+		const maxDateTime = maxDate ? new Date(maxDate + 'T23:59:59').getTime() : Infinity;
+		if (selectedDate.getTime() < minDateTime || selectedDate.getTime() > maxDateTime) return;
 		const y = selectedDate.getFullYear();
 		const m = String(selectedDate.getMonth() + 1).padStart(2, '0');
 		const d = String(selectedDate.getDate()).padStart(2, '0');
@@ -149,6 +166,7 @@
 
 {#if isOpen}
 	<div
+		use:portal
 		class="m3-dialog-scrim"
 		role="presentation"
 		onclick={onClose}
@@ -209,10 +227,11 @@
 					<button
 						type="button"
 						role="gridcell"
-						class="m3-day-cell {cell.isCurrentMonth ? '' : 'm3-day--dimmed'} {cell.isToday ? 'm3-day--today' : ''} {cell.isSelected ? 'm3-day--selected' : ''}"
+						disabled={cell.isDisabled}
+						class="m3-day-cell {cell.isCurrentMonth ? '' : 'm3-day--dimmed'} {cell.isToday ? 'm3-day--today' : ''} {cell.isSelected ? 'm3-day--selected' : ''} {cell.isDisabled ? 'm3-day--disabled' : ''}"
 						aria-label="{cell.day} de {MONTH_NAMES[cell.date.getMonth()]} {cell.date.getFullYear()}"
 						aria-selected={cell.isSelected}
-						onclick={() => handleDayClick(cell.date)}
+						onclick={() => !cell.isDisabled && handleDayClick(cell.date)}
 					>
 						<span class="m3-day-num">{cell.day}</span>
 					</button>
@@ -284,6 +303,7 @@
 	}
 	.m3-day-cell:hover:not(.m3-day--selected) { background: #f1f5f9; }
 	.m3-day--dimmed { color: #cbd5e1; opacity: 0.45; }
+	.m3-day--disabled { color: #cbd5e1 !important; opacity: 0.25 !important; cursor: not-allowed !important; pointer-events: none !important; }
 	.m3-day--today:not(.m3-day--selected) { border: 1.5px solid #2563eb; color: #2563eb; font-weight: 700; }
 	.m3-day--selected { background: #2563eb !important; color: #ffffff !important; font-weight: 700; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35); }
 	.m3-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px 16px; border-top: 1px solid #f1f5f9; }

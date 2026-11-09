@@ -160,7 +160,7 @@
 		color: #e7eef8;
 	}
 
-	@media (min-width: 961px) {
+	@media (min-width: 1024px) {
 		.drawer-scrim,
 		.parameters-drawer {
 			display: none !important;

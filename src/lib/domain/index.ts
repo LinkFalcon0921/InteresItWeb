@@ -28,5 +28,6 @@ export * from './parsers/BackupParser';
 export * from './export/csvExport';
 
 // Finance Core
+export * from './finance/systemLimits';
 export * from './finance/simular';
 export * from './finance/pares';

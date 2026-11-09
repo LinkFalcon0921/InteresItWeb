@@ -24,6 +24,18 @@
 		<link rel="stylesheet" href="%sveltekit.assets%/smui-dark.css" media="screen and (prefers-color-scheme: dark)" />
 
 		<style>
+			html,
+			body {
+				min-height: 100%;
+				margin: 0;
+				padding: 0;
+				background-color: #f5f7f6;
+			}
+			html.dark,
+			body.dark {
+				background-color: #0b1120 !important;
+				color: #e7eef8 !important;
+			}
 			@media print {
 				[role="dialog"],
 				.mdc-dialog,

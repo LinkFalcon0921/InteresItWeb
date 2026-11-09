@@ -1,4 +1,5 @@
 import { InvalidDateRangeError, InvalidScenarioError } from '../errors/DomainErrors';
+import { SYSTEM_LIMITS } from './systemLimits';
 import { ScenarioRole } from '../enums/ScenarioRole';
 import { CalendarDate } from '../value-objects/CalendarDate';
 import { CutoffDay } from '../value-objects/CutoffDay';
@@ -54,11 +55,15 @@ export function simular(params: SimularParams): SimulationResult {
 		throw new InvalidDateRangeError();
 	}
 
+	if (fechaInicio.daysBetween(fechaFin) > SYSTEM_LIMITS.MAX_HORIZON_DAYS) {
+		throw new InvalidDateRangeError(`El horizonte de proyección no puede superar los ${SYSTEM_LIMITS.MAX_HORIZON_YEARS} años (${SYSTEM_LIMITS.MAX_HORIZON_DAYS.toLocaleString('es-DO')} días).`);
+	}
+
 	if (!params.escenarios || params.escenarios.length === 0) {
 		throw new InvalidScenarioError('Debe proporcionar al menos un escenario de inversión.');
 	}
-	if (params.escenarios.length > 200) {
-		throw new InvalidScenarioError('No se pueden simular más de 200 escenarios de inversión simultáneos.');
+	if (params.escenarios.length > SYSTEM_LIMITS.MAX_SCENARIOS) {
+		throw new InvalidScenarioError(`No se pueden simular más de ${SYSTEM_LIMITS.MAX_SCENARIOS} escenarios de inversión simultáneos.`);
 	}
 
 	const inflacion = typeof params.tasaInflacion === 'number'
@@ -83,6 +88,10 @@ export function simular(params: SimularParams): SimulationResult {
 	const periodos: PeriodCalculation[] = [];
 
 	while (currentDate.isBefore(fechaFin)) {
+		if (periodIndex >= SYSTEM_LIMITS.MAX_PERIODS) {
+			break;
+		}
+
 		let stepEnd = diaCorte.nextCutoffAfter(currentDate);
 		if (stepEnd.isAfter(fechaFin)) {
 			stepEnd = fechaFin;

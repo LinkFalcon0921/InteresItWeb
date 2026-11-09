@@ -10,6 +10,9 @@
 		HeaderSMUI,
 		HeroCardSMUI,
 		ParametersDrawerSMUI,
+		BottomNavBarSMUI,
+		NavigationTab,
+		ResponsiveBreakpoint,
 		PairComparisonSMUI,
 		PortfolioDialogSMUI,
 		ProjectionTableSMUI,
@@ -20,25 +23,28 @@
 
 	// PATRÓN ELEGIDO PARA UI-001/UI-002: (b) Montaje condicional responsivo con matchMedia.
 	// Garantiza exactamente UNA sola instancia de DataEntrySMUI en el DOM en cualquier momento:
-	// - Desktop (>960px): DataEntrySMUI se monta en <aside class="desktop-sidebar">. ParametersDrawerSMUI no se monta.
-	// - Móvil (<=960px): <aside class="desktop-sidebar"> no monta DataEntrySMUI. ParametersDrawerSMUI monta DataEntrySMUI
+	// - Desktop (>=1200px): DataEntrySMUI se monta en <aside class="desktop-sidebar">. ParametersDrawerSMUI no se monta.
+	// - Móvil, Foldable y Tablet (<1200px): <aside class="desktop-sidebar"> no monta DataEntrySMUI. ParametersDrawerSMUI monta DataEntrySMUI
 	//   únicamente cuando state.isDrawerOpen es true. Con el drawer cerrado, reachable inputs = 0.
 	// - Al redimensionar entre viewports, los valores se preservan 100% íntegros a través de SimulatorState.
-	let isDesktop = $state(typeof window !== 'undefined' ? window.innerWidth > 960 : true);
+	let isDesktop = $state(
+		typeof window !== 'undefined' ? window.innerWidth >= ResponsiveBreakpoint.Desktop : true
+	);
 
 	let isExportDialogOpen = $state(false);
 	let snackbar: Snackbar | null = $state(null);
 
 	onMount(() => {
 		if (typeof window !== 'undefined') {
-			const mql = window.matchMedia('(min-width: 961px)');
+			const mql = window.matchMedia(`(min-width: ${ResponsiveBreakpoint.Desktop}px)`);
 			const updateLayout = () => {
-				const desktopNow = window.innerWidth > 960;
+				const desktopNow = window.innerWidth >= ResponsiveBreakpoint.Desktop;
 				isDesktop = desktopNow;
 				if (desktopNow && simState.isDrawerOpen) {
 					simState.isDrawerOpen = false;
 				}
 			};
+			simState.syncThemeToDom();
 			updateLayout();
 			mql.addEventListener('change', updateLayout);
 			window.addEventListener('resize', updateLayout);
@@ -48,6 +54,7 @@
 					simState.loadFromUrlHash(window.location.hash);
 				} else {
 					await simState.loadFromStorage();
+					simState.syncThemeToDom();
 				}
 			})();
 
@@ -71,11 +78,15 @@
 		}
 	});
 
-	type TabType = 'simulador' | 'comparativa' | 'reporte';
-	const tabs: Array<{ id: TabType; label: string; icon: string }> = [
-		{ id: 'simulador', label: 'Simulador', icon: '📊' },
-		{ id: 'comparativa', label: 'Rendimientos Comparados', icon: '⚖️' },
-		{ id: 'reporte', label: 'Tabla de Proyección', icon: '📋' }
+	interface TabDefinition {
+		readonly id: NavigationTab;
+		readonly label: string;
+		readonly icon: string;
+	}
+	const tabs: readonly TabDefinition[] = [
+		{ id: NavigationTab.Simulador, label: 'Simulador', icon: '📊' },
+		{ id: NavigationTab.Comparativa, label: 'Rendimientos Comparados', icon: '⚖️' },
+		{ id: NavigationTab.Reporte, label: 'Tabla de Proyección', icon: '📋' }
 	];
 </script>
 
@@ -137,7 +148,7 @@
 
 			<!-- Contenido de las Pestañas -->
 			<div class="tab-panels">
-				{#if simState.activeTab === 'simulador'}
+				{#if simState.activeTab === NavigationTab.Simulador}
 					<div id="panel-simulador" role="tabpanel" tabindex="0" aria-labelledby="tab-simulador" class="tab-panel-animated">
 						<div id="tour-scenarios">
 							<ScenarioListSMUI state={simState} />
@@ -146,14 +157,14 @@
 							<ProjectionTableSMUI state={simState} />
 						</div>
 					</div>
-				{:else if simState.activeTab === 'comparativa'}
+				{:else if simState.activeTab === NavigationTab.Comparativa}
 					<div id="panel-comparativa" role="tabpanel" tabindex="0" aria-labelledby="tab-comparativa" class="tab-panel-animated">
 						<div id="tour-pairs">
 							<PairComparisonSMUI state={simState} />
 						</div>
-						<ScenarioListSMUI state={simState} twoRowsInfinite={true} />
+						<ScenarioListSMUI state={simState} />
 					</div>
-				{:else if simState.activeTab === 'reporte'}
+				{:else if simState.activeTab === NavigationTab.Reporte}
 					<div id="panel-reporte" role="tabpanel" tabindex="0" aria-labelledby="tab-reporte" class="tab-panel-animated">
 						<ProjectionTableSMUI state={simState} />
 					</div>
@@ -164,6 +175,7 @@
 
 	<!-- Drawer Móvil de Parámetros -->
 	<ParametersDrawerSMUI state={simState} />
+	<BottomNavBarSMUI state={simState} />
 
 	<!-- Diálogo de Exportación -->
 	<ExportDialogSMUI
@@ -242,8 +254,12 @@
 </svelte:boundary>
 
 <style>
+	:global(html),
 	:global(body) {
+		min-height: 100%;
+		width: 100%;
 		margin: 0;
+		padding: 0;
 		background: #f5f7f6;
 		color: #14201f;
 		font-family: 'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -251,17 +267,27 @@
 	}
 
 	:global(body.dark),
-	:global(html.dark) {
-		background: #0b1120;
-		color: #e7eef8;
+	:global(html.dark),
+	:global(html.dark body) {
+		background: #0b1120 !important;
+		color: #e7eef8 !important;
 	}
 
 	.terminal-shell {
 		min-height: 100vh;
 		display: flex;
 		flex-direction: column;
+		width: 100%;
 		max-width: 100vw;
 		overflow-x: hidden;
+		background: #f5f7f6;
+		color: #14201f;
+	}
+
+	:global(html.dark) .terminal-shell,
+	:global(.dark) .terminal-shell {
+		background: #0b1120 !important;
+		color: #e7eef8 !important;
 	}
 
 	.terminal-main-layout {
@@ -269,20 +295,48 @@
 		margin: 0 auto;
 		width: 100%;
 		box-sizing: border-box;
-		padding: 20px;
+		padding: 20px 20px 48px 20px;
 		display: grid;
 		grid-template-columns: 340px 1fr;
 		gap: 24px;
 		align-items: start;
+		flex: 1 0 auto;
 	}
 
 	.desktop-sidebar {
 		position: sticky;
 		top: 76px;
+		z-index: 20;
+		max-height: calc(100vh - 96px);
+		overflow-y: auto;
+		padding-right: 6px;
+		box-sizing: border-box;
+		scrollbar-width: thin;
+		scrollbar-color: #cbd5e1 transparent;
+	}
+
+	.desktop-sidebar::-webkit-scrollbar {
+		width: 6px;
+	}
+
+	.desktop-sidebar::-webkit-scrollbar-thumb {
+		background: #cbd5e1;
+		border-radius: 9999px;
+	}
+
+	:global(html.dark) .desktop-sidebar,
+	:global(.dark) .desktop-sidebar {
+		scrollbar-color: #334155 transparent;
+	}
+
+	:global(html.dark) .desktop-sidebar::-webkit-scrollbar-thumb,
+	:global(.dark) .desktop-sidebar::-webkit-scrollbar-thumb {
+		background: #334155;
 	}
 
 	.workspace-area {
 		min-width: 0;
+		overflow: visible;
 	}
 
 	.error-banner {
@@ -366,53 +420,7 @@
 		}
 	}
 
-	@media (min-width: 961px) {
-		.terminal-shell {
-			height: 100vh;
-			overflow: hidden;
-		}
-
-		.terminal-main-layout {
-			height: calc(100vh - 65px);
-			overflow: hidden;
-			align-items: stretch;
-		}
-
-		.desktop-sidebar {
-			position: static;
-			height: 100%;
-			overflow-y: auto;
-			padding-right: 6px;
-			box-sizing: border-box;
-			scrollbar-width: thin;
-			scrollbar-color: #cbd5e1 transparent;
-		}
-
-		.desktop-sidebar::-webkit-scrollbar {
-			width: 6px;
-		}
-		.desktop-sidebar::-webkit-scrollbar-thumb {
-			background: #cbd5e1;
-			border-radius: 9999px;
-		}
-
-		.workspace-area {
-			height: 100%;
-			overflow-y: auto;
-			padding-right: 6px;
-			box-sizing: border-box;
-			scrollbar-width: thin;
-			scrollbar-color: #cbd5e1 transparent;
-		}
-
-		.workspace-area::-webkit-scrollbar {
-			width: 6px;
-		}
-		.workspace-area::-webkit-scrollbar-thumb {
-			background: #cbd5e1;
-			border-radius: 9999px;
-		}
-
+	@media (min-width: 1024px) {
 		:global(.parameters-drawer),
 		:global(.drawer-scrim) {
 			display: none !important;
@@ -421,21 +429,18 @@
 		}
 	}
 
-	:global(html.dark) .desktop-sidebar::-webkit-scrollbar-thumb,
-	:global(.dark) .desktop-sidebar::-webkit-scrollbar-thumb,
-	:global(html.dark) .workspace-area::-webkit-scrollbar-thumb,
-	:global(.dark) .workspace-area::-webkit-scrollbar-thumb {
-		background: #334155;
-	}
-
-	@media (max-width: 960px) {
+	@media (max-width: 1023px) {
 		.terminal-main-layout {
 			grid-template-columns: 1fr;
-			padding: 16px;
+			padding: 16px 16px 88px 16px;
 		}
 
 		.desktop-sidebar {
 			display: none;
+		}
+
+		.workspace-area {
+			padding-bottom: 0;
 		}
 	}
 

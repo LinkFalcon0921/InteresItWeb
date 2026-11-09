@@ -148,7 +148,8 @@
 		align-items: center;
 		gap: 8px;
 		background: rgba(255, 255, 255, 0.12);
-		padding: 4px 10px;
+		padding: 6px 14px;
+		min-height: 36px;
 		border-radius: 9999px;
 		font-size: 0.75rem;
 		font-weight: 600;
@@ -174,7 +175,8 @@
 		background: rgba(255, 255, 255, 0.08);
 		color: #ffffff;
 		border-radius: 9999px;
-		padding: 4px 10px;
+		padding: 6px 14px;
+		min-height: 36px;
 		font-size: 0.75rem;
 		font-weight: 600;
 		cursor: pointer;
@@ -210,7 +212,8 @@
 
 	.balance-amount {
 		margin: 0;
-		font-size: 2.75rem;
+		font-size: clamp(1.5rem, 4vw, 2.75rem);
+		overflow-wrap: anywhere;
 		font-weight: 800;
 		letter-spacing: -0.03em;
 		font-variant-numeric: tabular-nums;
@@ -245,6 +248,8 @@
 	}
 
 	.yield-badge {
+		max-width: 100%;
+		box-sizing: border-box;
 		display: inline-flex;
 		align-items: center;
 		gap: 6px;

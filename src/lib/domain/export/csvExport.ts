@@ -27,7 +27,11 @@ function formatDecimal(val: number): string {
 }
 
 function escapeCsvCell(cell: string | number): string {
-	const str = String(cell);
+	let str = String(cell);
+	// Mitigar inyección de fórmulas en hojas de cálculo (CSV Injection - CWE-1236)
+	if (/^[=+\-@\t\r]/.test(str)) {
+		str = `'${str}`;
+	}
 	if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
 		return `"${str.replace(/"/g, '""')}"`;
 	}
