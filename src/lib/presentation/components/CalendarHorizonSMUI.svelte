@@ -22,6 +22,21 @@
 		{ label: '10 años', months: 120 }
 	] as const;
 
+	const MONTH_NAMES_ES = [
+		'ene', 'feb', 'mar', 'abr', 'may', 'jun',
+		'jul', 'ago', 'sep', 'oct', 'nov', 'dic'
+	];
+
+	function formatDateDisplay(isoDate: string): string {
+		if (!isoDate || !isoDate.includes('-')) return isoDate || 'Seleccionar';
+		const parts = isoDate.split('-');
+		const year = parts[0];
+		const monthIdx = parseInt(parts[1] ?? '1', 10) - 1;
+		const day = parts[2];
+		const monthName = MONTH_NAMES_ES[monthIdx] ?? parts[1];
+		return `${day} ${monthName} ${year}`;
+	}
+
 	const horizonStats = $derived.by(() => {
 		const start = new Date(simState.fechaInicio + 'T00:00:00');
 		const end = new Date(simState.fechaFin + 'T00:00:00');
@@ -31,7 +46,7 @@
 		const diffMs = end.getTime() - start.getTime();
 		const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
 		if (diffDays <= 0) {
-			return { isValid: false, text: 'Fecha término debe ser posterior', days: diffDays, months: 0 };
+			return { isValid: false, text: 'Fecha término posterior', days: diffDays, months: 0 };
 		}
 		const totalMonths = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
 		const years = Math.floor(totalMonths / 12);
@@ -39,7 +54,7 @@
 
 		let formatted = '';
 		if (years > 0 && remMonths > 0) {
-			formatted = `${years} año${years > 1 ? 's' : ''} y ${remMonths}m`;
+			formatted = `${years}a y ${remMonths}m`;
 		} else if (years > 0) {
 			formatted = `${years} año${years > 1 ? 's' : ''}`;
 		} else {
@@ -48,7 +63,7 @@
 
 		return {
 			isValid: true,
-			text: `${formatted} (${diffDays.toLocaleString('es-DO')} días)`,
+			text: `${formatted} (${diffDays.toLocaleString('es-DO')} d)`,
 			days: diffDays,
 			months: totalMonths
 		};
@@ -69,6 +84,7 @@
 </script>
 
 <div class="calendar-horizon-container">
+	<!-- Encabezado con título y badge de duración -->
 	<div class="horizon-header">
 		<div class="horizon-title-group">
 			<svg class="m3-calendar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -85,70 +101,86 @@
 		</span>
 	</div>
 
-	<!-- Date Pickers Grid M3 Expressive -->
+	<!-- Grilla simétrica de fechas Material 3 -->
 	<div class="dates-grid">
-		<!-- Fecha Inicio -->
-		<div class="m3-field-wrapper">
-			<label class="m3-field-label" for="fecha-inicio-input">
-				<span class="label-title">Fecha Inicio</span>
-				<span class="field-hint">Apertura</span>
-			</label>
+		<!-- Fecha Inicio (Apertura) -->
+		<div class="date-slot">
+			<div class="date-slot-label">
+				<span class="slot-title">Desde</span>
+				<span class="slot-badge">Apertura</span>
+			</div>
 			<div
-				class="m3-date-box"
+				class="m3-date-card"
 				role="button"
 				tabindex="0"
 				onclick={() => openDatePicker('inicio')}
 				onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && openDatePicker('inicio')}
-				aria-label="Abrir selector de fecha de inicio"
+				aria-label="Fecha de inicio: {formatDateDisplay(simState.fechaInicio)}"
 			>
+				<span class="date-text">{formatDateDisplay(simState.fechaInicio)}</span>
+				<div class="date-icon-box" aria-hidden="true">
+					<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+						<rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+						<line x1="16" y1="2" x2="16" y2="6"></line>
+						<line x1="8" y1="2" x2="8" y2="6"></line>
+						<line x1="3" y1="10" x2="21" y2="10"></line>
+					</svg>
+				</div>
 				<input
 					bind:this={desdeInputElement}
 					id="fecha-inicio-input"
 					type="date"
-					class="m3-date-native"
+					class="accessible-date-input"
 					bind:value={simState.fechaInicio}
+					onclick={(e) => {
+						e.preventDefault();
+						openDatePicker('inicio');
+					}}
 					aria-required="true"
 				/>
-				<svg class="m3-picker-indicator" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-					<rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-					<line x1="16" y1="2" x2="16" y2="6"></line>
-					<line x1="8" y1="2" x2="8" y2="6"></line>
-					<line x1="3" y1="10" x2="21" y2="10"></line>
-				</svg>
 			</div>
 		</div>
 
-		<!-- Fecha Fin -->
-		<div class="m3-field-wrapper">
-			<label class="m3-field-label" for="fecha-fin-input">
-				<span class="label-title">Fecha Término</span>
-				<span class="field-hint">Liquidación</span>
-			</label>
+		<!-- Fecha Término (Liquidación) -->
+		<div class="date-slot">
+			<div class="date-slot-label">
+				<span class="slot-title">Hasta</span>
+				<span class="slot-badge">Liquidación</span>
+			</div>
 			<div
-				class="m3-date-box"
+				class="m3-date-card"
 				role="button"
 				tabindex="0"
 				onclick={() => openDatePicker('fin')}
 				onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && openDatePicker('fin')}
-				aria-label="Abrir selector de fecha de término"
+				aria-label="Fecha de término: {formatDateDisplay(simState.fechaFin)}"
 			>
+				<span class="date-text">{formatDateDisplay(simState.fechaFin)}</span>
+				<div class="date-icon-box" aria-hidden="true">
+					<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+						<rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+						<line x1="16" y1="2" x2="16" y2="6"></line>
+						<line x1="8" y1="2" x2="8" y2="6"></line>
+						<line x1="3" y1="10" x2="21" y2="10"></line>
+					</svg>
+				</div>
 				<input
 					bind:this={hastaInputElement}
 					id="fecha-fin-input"
 					type="date"
-					class="m3-date-native"
+					class="accessible-date-input"
 					bind:value={simState.fechaFin}
+					onclick={(e) => {
+						e.preventDefault();
+						openDatePicker('fin');
+					}}
 					aria-required="true"
 				/>
-				<svg class="m3-picker-indicator" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-					<circle cx="12" cy="12" r="10"></circle>
-					<polyline points="12 6 12 12 16 14"></polyline>
-				</svg>
 			</div>
 		</div>
 	</div>
 
-	<!-- M3 Expressive Horizon Presets -->
+	<!-- Presets de Horizonte Rápido M3 Expressive -->
 	<div class="presets-section">
 		<span class="presets-label">Horizonte Rápido:</span>
 		<div class="presets-chips" role="group" aria-label="Horizontes predefinidos">
@@ -168,12 +200,12 @@
 	</div>
 </div>
 
-<!-- M3 Material Date Picker Modals -->
+<!-- Modal Material 3 Expressive Date Picker -->
 {#if activeModal === 'inicio'}
 	<M3DatePickerDialog
 		isOpen={true}
 		value={simState.fechaInicio}
-		title="Seleccionar Fecha de Inicio (Apertura)"
+		title="Seleccionar Fecha de Inicio"
 		onSelect={handleDateConfirmed}
 		onClose={() => (activeModal = null)}
 	/>
@@ -181,7 +213,7 @@
 	<M3DatePickerDialog
 		isOpen={true}
 		value={simState.fechaFin}
-		title="Seleccionar Fecha de Fin (Liquidación)"
+		title="Seleccionar Fecha de Término"
 		onSelect={handleDateConfirmed}
 		onClose={() => (activeModal = null)}
 	/>
@@ -195,6 +227,8 @@
 		padding: 12px;
 		margin-bottom: 14px;
 		transition: border-color 0.2s ease, box-shadow 0.2s ease;
+		box-sizing: border-box;
+		max-width: 100%;
 	}
 	.calendar-horizon-container:hover { border-color: #cbd5e1; }
 	.horizon-header {
@@ -217,6 +251,7 @@
 		align-items: center;
 		gap: 4px;
 		font-variant-numeric: tabular-nums;
+		white-space: nowrap;
 	}
 	.status-dot { width: 6px; height: 6px; border-radius: 50%; }
 	.duration-valid { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
@@ -224,27 +259,30 @@
 	.duration-invalid { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
 	.duration-invalid .status-dot { background: #ef4444; }
 	.dates-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-	@media (max-width: 400px) { .dates-grid { grid-template-columns: 1fr; } }
-	.m3-field-wrapper { display: flex; flex-direction: column; min-width: 0; }
-	.m3-field-label {
+	@media (max-width: 360px) { .dates-grid { grid-template-columns: 1fr; } }
+	.date-slot { display: flex; flex-direction: column; min-width: 0; }
+	.date-slot-label {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		font-size: 0.6875rem;
-		font-weight: 600;
-		color: #4f5d5c;
 		margin-bottom: 5px;
-		min-height: 20px;
+		line-height: 1.2;
 		white-space: nowrap;
 	}
-	.label-title {
-		font-weight: 700;
-		white-space: nowrap;
+	.slot-title { font-size: 0.75rem; font-weight: 700; color: #334155; }
+	.slot-badge {
+		font-size: 0.625rem;
+		font-weight: 600;
+		color: #64748b;
+		background: #e2e8f0;
+		padding: 1px 6px;
+		border-radius: 9999px;
 	}
-	.field-hint { font-size: 0.625rem; color: #64748b; }
-	.m3-date-box {
+	.m3-date-card {
+		position: relative;
 		display: flex;
 		align-items: center;
+		justify-content: space-between;
 		background: #ffffff;
 		border: 1.5px solid #d5dedc;
 		border-radius: 10px;
@@ -254,24 +292,49 @@
 		max-height: 42px;
 		box-sizing: border-box;
 		cursor: pointer;
-		transition: all 0.15s ease;
+		user-select: none;
+		transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+		overflow: hidden;
 	}
-	.m3-date-box:hover { border-color: #004851; transform: translateY(-1px); }
-	.m3-date-box:focus-within { border-color: #004851; box-shadow: 0 0 0 3px rgba(0, 72, 81, 0.15); }
-	.m3-date-native {
-		width: 100%;
-		border: none;
-		outline: none;
-		background: transparent;
-		font-family: inherit;
+	.m3-date-card:hover {
+		border-color: #004851;
+		background: #ffffff;
+		transform: translateY(-1px);
+		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+	}
+	.m3-date-card:focus-within {
+		border-color: #004851;
+		box-shadow: 0 0 0 3px rgba(0, 72, 81, 0.15);
+	}
+	.date-text {
 		font-size: 0.8125rem;
-		font-weight: 600;
-		color: #14201f;
-		font-variant-numeric: tabular-nums;
-		cursor: pointer;
-		padding: 6px 0;
+		font-weight: 700;
+		color: #0f172a;
+		letter-spacing: -0.01em;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
-	.m3-picker-indicator { width: 14px; height: 14px; color: #64748b; flex-shrink: 0; pointer-events: none; }
+	.date-icon-box {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: #004851;
+		flex-shrink: 0;
+		margin-left: 6px;
+	}
+	.accessible-date-input {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+		cursor: pointer;
+		margin: 0;
+		padding: 0;
+		border: none;
+	}
 	.presets-section {
 		margin-top: 10px;
 		padding-top: 8px;
@@ -280,7 +343,7 @@
 		flex-direction: column;
 		gap: 6px;
 	}
-	.presets-label { font-size: 0.6875rem; font-weight: 600; color: #64748b; }
+	.presets-label { font-size: 0.6875rem; font-weight: 700; color: #64748b; }
 	.presets-chips { display: flex; flex-wrap: wrap; gap: 4px; }
 	.m3-chip {
 		appearance: none;
@@ -299,19 +362,30 @@
 		justify-content: center;
 		transition: all 0.15s ease;
 	}
-	.m3-chip:hover { background: #f1f5f9; border-color: #004851; color: #004851; transform: translateY(-1px); }
+	.m3-chip:hover {
+		background: #f1f5f9;
+		border-color: #004851;
+		color: #004851;
+		transform: translateY(-1px);
+	}
 	.m3-chip:active { transform: scale(0.95); }
-	.m3-chip--active { background: #004851 !important; border-color: #004851 !important; color: #ffffff !important; }
+	.m3-chip--active {
+		background: #004851 !important;
+		border-color: #004851 !important;
+		color: #ffffff !important;
+	}
 
-	/* Dark mode support */
+	/* Tema Oscuro */
 	:global(html.dark) .calendar-horizon-container, :global(.dark) .calendar-horizon-container { background: #0f172a; border-color: #1e293b; }
 	:global(html.dark) .horizon-title, :global(.dark) .horizon-title { color: #e2e8f0; }
 	:global(html.dark) .m3-calendar-icon, :global(.dark) .m3-calendar-icon { color: #10b981; }
-	:global(html.dark) .m3-field-label, :global(.dark) .m3-field-label { color: #94a3b8; }
-	:global(html.dark) .m3-date-box, :global(.dark) .m3-date-box { background: #0b1120; border-color: #26334e; }
-	:global(html.dark) .m3-date-box:hover, :global(.dark) .m3-date-box:hover { border-color: #10b981; }
-	:global(html.dark) .m3-date-box:focus-within, :global(.dark) .m3-date-box:focus-within { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); }
-	:global(html.dark) .m3-date-native, :global(.dark) .m3-date-native { color: #f1f5f9; color-scheme: dark; }
+	:global(html.dark) .slot-title, :global(.dark) .slot-title { color: #cbd5e1; }
+	:global(html.dark) .slot-badge, :global(.dark) .slot-badge { background: #1e293b; color: #94a3b8; }
+	:global(html.dark) .m3-date-card, :global(.dark) .m3-date-card { background: #0b1120; border-color: #26334e; }
+	:global(html.dark) .m3-date-card:hover, :global(.dark) .m3-date-card:hover { border-color: #10b981; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15); }
+	:global(html.dark) .m3-date-card:focus-within, :global(.dark) .m3-date-card:focus-within { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); }
+	:global(html.dark) .date-text, :global(.dark) .date-text { color: #f8fafc; }
+	:global(html.dark) .date-icon-box, :global(.dark) .date-icon-box { color: #10b981; }
 	:global(html.dark) .duration-valid, :global(.dark) .duration-valid { background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.3); }
 	:global(html.dark) .duration-invalid, :global(.dark) .duration-invalid { background: rgba(239, 68, 68, 0.15); color: #f87171; border-color: rgba(239, 68, 68, 0.3); }
 	:global(html.dark) .presets-section, :global(.dark) .presets-section { border-top-color: #1e293b; }
