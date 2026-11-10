@@ -224,12 +224,14 @@
 										onclick={() => submitRename(p.id)}
 										disabled={isProcessing || !editedName.trim()}
 										title="Guardar nombre"
+										aria-label="Guardar nombre"
 									>✓</button>
 									<button
 										type="button"
 										class="mini-btn"
 										onclick={cancelRename}
 										title="Cancelar"
+										aria-label="Cancelar"
 									>✕</button>
 								</div>
 							{:else}
