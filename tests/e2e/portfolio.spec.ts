@@ -41,7 +41,7 @@ test.describe('Gestión de Multi-Portafolios E2E', () => {
 		const renameInput = page.locator('input.rename-input');
 		await renameInput.fill('Fondo Inmobiliario 2026');
 
-		const confirmRenameBtn = page.getByRole('button', { name: 'Guardar nombre' });
+		const confirmRenameBtn = page.locator('button.confirm-rename-btn');
 		await confirmRenameBtn.click();
 
 		// Verificar que el nombre se actualizó en la lista
