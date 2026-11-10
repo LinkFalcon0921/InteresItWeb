@@ -227,9 +227,9 @@ export const trailingSlash = 'always';
 ### 7.2 Flujo Unificado de CI/CD en GitHub Actions (`ci-cd.yml`)
 - Pipeline consolidado y orquestado en Node 24 (`node-version: 24`) con `pnpm@11` gestionado vía `packageManager` en `package.json`:
   1. **Job `quality-gate` (Lint, Test & Quality Gate):** Ejecuta en paralelo mínimo la verificación de límites de líneas (`check:lines`), tipos/diagnósticos Svelte (`svelte-check`), tests unitarios con Vitest y build estático de producción en `push` (`main`, `develop`), `pull_request` (`main`) y `workflow_dispatch`.
-  2. **Job `e2e-tests` (Playwright E2E Suite):** Se ejecuta tras aprobarse el `quality-gate` (`needs: quality-gate`), corriendo la suite E2E de Playwright (`test:e2e`) en Chromium headless y preservando evidencias y trazas como artefactos por 2 días.
+  2. **Job `e2e-tests` (Playwright E2E Suite):** Se ejecuta tras aprobarse el `quality-gate` (`needs: quality-gate`) en `main`, PRs dirigidos a `main` y `workflow_dispatch`, corriendo la suite E2E de Playwright (`test:e2e`) en Chromium headless y preservando evidencias y trazas como artefactos por 2 días.
   3. **Job `deploy-pages` (Deploy a GitHub Pages):** Se activa exclusivamente en la rama `main` tras la aprobación de `e2e-tests` (`needs: e2e-tests`). Construye con el `BASE_PATH` de Pages, sube el artefacto y despliega automáticamente vía `actions/deploy-pages@v4`.
-  4. **Job `deploy-staging` (Artifact de Staging):** Se activa exclusivamente en la rama `develop` tras la aprobación de `e2e-tests` (`needs: e2e-tests`), empaquetando el artefacto estático de staging (`/InteresItWeb/dev`) para previsualización.
+  4. **Job `deploy-staging` (Artifact de Staging):** Se activa en la rama `develop` tras aprobarse el `quality-gate` (`needs: quality-gate`) para acelerar el ciclo de feedback continuo, empaquetando el artefacto estático de staging (`/InteresItWeb/dev`) para previsualización.
 
 ---
 
