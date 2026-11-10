@@ -90,10 +90,7 @@ export class ShareUrlCodec {
 				binary += String.fromCharCode(byte);
 			}
 		}
-		if (typeof btoa === 'function') {
-			return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-		}
-		return Buffer.from(binary, 'binary').toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+		return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 	}
 
 	public static fromUrlSafeBase64(base64: string): string {
@@ -101,12 +98,7 @@ export class ShareUrlCodec {
 		while (standard.length % 4 !== 0) {
 			standard += '=';
 		}
-		let binary = '';
-		if (typeof atob === 'function') {
-			binary = atob(standard);
-		} else {
-			binary = Buffer.from(standard, 'base64').toString('binary');
-		}
+		const binary = atob(standard);
 		const bytes = new Uint8Array(binary.length);
 		for (let i = 0; i < binary.length; i++) {
 			bytes[i] = binary.charCodeAt(i);

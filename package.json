@@ -24,7 +24,6 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.65.0",
-    "pnpm": "^11.24.0",
     "@smui/button": "^9.0.6",
     "@smui/card": "^9.0.6",
     "@smui/chips": "^9.0.6",
@@ -45,8 +44,10 @@
     "@sveltejs/adapter-static": "^3.0.8",
     "@sveltejs/kit": "^2.16.0",
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "@types/node": "^26.6.6",
     "@vitest/coverage-v8": "^5.1.0",
     "fake-indexeddb": "^6.2.7",
+    "pnpm": "^11.24.0",
     "sass": "^1.80.0",
     "smui-theme": "^9.0.6",
     "svelte": "^5.20.0",

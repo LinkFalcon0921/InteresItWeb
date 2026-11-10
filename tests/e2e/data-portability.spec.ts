@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { Buffer } from 'node:buffer';
 
 test.describe('Portabilidad de Datos & Exportación E2E', () => {
 	test.beforeEach(async ({ page }) => {
