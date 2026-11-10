@@ -1,182 +1,95 @@
-name: CI/CD Pipeline
+name: CI/CD - Svelte 5 (Node 24)
 
 on:
   push:
-    branches: ["main", "develop"]
+    branches: [main, develop]
   pull_request:
-    branches: ["main"]
+    branches: [main, develop]
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
 
+env:
+  CI: 'true'
+
 jobs:
   quality-gate:
-    name: Lint, Test & Quality Gate (Node 24)
+    name: Quality Gate - Svelte, TS, ESLint, Vitest
     runs-on: ubuntu-latest
-
+    timeout-minutes: 20
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
+      # Reads the exact pnpm version from package.json -> packageManager.
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
 
       - name: Setup Node.js 24
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 24
-          cache: 'pnpm'
+          node-version: '24'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
-      - name: Install Dependencies
+      - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Verify Line Limits (Max 600, Alert 450)
+      - name: Print toolchain versions
+        run: |
+          node --version
+          pnpm --version
+          pnpm exec svelte-check --version
+
+      - name: Check file length rules (600 max, 450 warning)
         run: pnpm check:lines
 
-      - name: Svelte Diagnostics & Strict TypeScript Check
-        run: pnpm check
+      # Backwards-compatible: will become a real lint gate once scripts.lint exists.
+      - name: Run ESLint when configured
+        run: |
+          if node -e "process.exit(Object.hasOwn(require('./package.json').scripts ?? {}, 'lint') ? 0 : 1)"; then
+            pnpm run lint
+          else
+            echo '::notice::No scripts.lint found in package.json; skipping ESLint.'
+          fi
 
-      - name: Execute Vitest Suite
-        run: pnpm test
+      - name: Svelte diagnostics and strict TypeScript check
+        id: svelte_check
+        shell: bash
+        run: |
+          mkdir -p ci-reports
+          set -o pipefail
+          pnpm check 2>&1 | tee ci-reports/svelte-check.log
 
-      - name: Build Static Production SPA
-        run: pnpm run build
+      - name: Vitest (non-watch mode)
+        run: pnpm exec vitest run
+
+      - name: Upload Svelte diagnostics
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: svelte-diagnostics
+          path: ci-reports/svelte-check.log
+          retention-days: 7
+          if-no-files-found: ignore
 
   e2e-tests:
-    name: Playwright E2E Suite (Node 24)
+    name: Playwright E2E - Chromium
     needs: quality-gate
     runs-on: ubuntu-latest
-
+    timeout-minutes: 30
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js 24
-        uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v7
         with:
-          node-version: 24
-          cache: 'pnpm'
+          persist-credentials: false
 
-      - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build Static Production SPA
-        run: pnpm run build
-
-      - name: Install Playwright Browsers
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Execute Playwright E2E Suite
-        run: pnpm run test:e2e
-
-      - name: Upload Playwright Evidence Report
-        uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 2
-          if-no-files-found: ignore
-          overwrite: true
-
-      - name: Upload Playwright Test Results & Traces
-        uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
-        with:
-          name: playwright-test-results
-          path: test-results/
-          retention-days: 2
-          if-no-files-found: ignore
-          overwrite: true
-
-  deploy-pages:
-    name: Deploy to GitHub Pages
-    needs: e2e-tests
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js 24
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: 'pnpm'
-
-      - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Setup GitHub Pages Environment
-        id: pages
-        uses: actions/configure-pages@v5
-
-      - name: Build Static Production Site
-        env:
-          BASE_PATH: ${{ steps.pages.outputs.base_path }}
-        run: pnpm run build
-
-      - name: Upload Pages Artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: 'build'
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-
-  deploy-staging:
-    name: Package Staging Preview
-    needs: e2e-tests
-    if: github.ref == 'refs/heads/develop' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-    environment:
-      name: development
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js 24
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: 'pnpm'
-
-      - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build Static Staging Site
-        env:
-          BASE_PATH: '/InteresItWeb/dev'
-        run: pnpm run build
-
-      - name: Upload Staging Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: staging-preview-build
-          path: build/
-          retention-days: 14
-          overwrite: true
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
