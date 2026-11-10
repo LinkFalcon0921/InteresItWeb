@@ -109,7 +109,7 @@ describe('Domain Parsers Unit Tests', () => {
 			expect(parsed.ok).toBe(true);
 			if (parsed.ok) {
 				expect(parsed.value.montoInicial.amount).toBe(185);
-				expect(parsed.value.inversiones.length).toBe(2);
+				expect(parsed.value.inversiones).toHaveLength(2);
 				expect(parsed.value.fechaInicio.iso).toBe('2026-04-17');
 				expect(parsed.value.diaCorte.value).toBe(16);
 				expect(parsed.value.isDarkMode).toBe(true);
@@ -121,7 +121,7 @@ describe('Domain Parsers Unit Tests', () => {
 			expect(parsed.ok).toBe(true);
 			if (parsed.ok) {
 				expect(parsed.value.montoInicial.amount).toBe(185);
-				expect(parsed.value.inversiones.length).toBe(2);
+				expect(parsed.value.inversiones).toHaveLength(2);
 			}
 		});
 

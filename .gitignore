@@ -30,3 +30,8 @@ pnpm-debug.log*
 # External and temporary caches
 ~/.gemini/
 ~/.antigravity/
+
+# Test outputs
+test-results/
+playwright-report/
+reports/

@@ -1,11 +1,21 @@
 import { InvalidDateRangeError, InvalidScenarioError } from '../errors/DomainErrors';
+import { SYSTEM_LIMITS } from './systemLimits';
 import { ScenarioRole } from '../enums/ScenarioRole';
 import { CalendarDate } from '../value-objects/CalendarDate';
 import { CutoffDay } from '../value-objects/CutoffDay';
 import { Money } from '../value-objects/Money';
+import { InflationRate } from '../value-objects/InflationRate';
 import { InvestmentScenario } from '../entities/InvestmentScenario';
+import { AporteExtraordinario } from '../entities/AporteExtraordinario';
 import type { PeriodCalculation, ScenarioPeriodResult } from '../entities/PeriodCalculation';
 import type { SimulationResult, ScenarioSummary } from '../entities/SimulationResult';
+
+export interface ExtraordinarioInput {
+	readonly id: string;
+	readonly monto: Money | number;
+	readonly fecha: CalendarDate | string;
+	readonly descripcion?: string;
+}
 
 export interface SimularParams {
 	readonly capitalInicial: Money | number;
@@ -16,6 +26,8 @@ export interface SimularParams {
 	readonly escenarios: readonly InvestmentScenario[];
 	readonly omitirPrimerCorte?: boolean;
 	readonly aplicarImpuestoRD?: boolean;
+	readonly tasaInflacion?: InflationRate | number;
+	readonly aportesExtraordinarios?: readonly (AporteExtraordinario | ExtraordinarioInput)[];
 }
 
 export function simular(params: SimularParams): SimulationResult {
@@ -43,12 +55,25 @@ export function simular(params: SimularParams): SimulationResult {
 		throw new InvalidDateRangeError();
 	}
 
+	if (fechaInicio.daysBetween(fechaFin) > SYSTEM_LIMITS.MAX_HORIZON_DAYS) {
+		throw new InvalidDateRangeError(`El horizonte de proyección no puede superar los ${SYSTEM_LIMITS.MAX_HORIZON_YEARS} años (${SYSTEM_LIMITS.MAX_HORIZON_DAYS.toLocaleString('es-DO')} días).`);
+	}
+
 	if (!params.escenarios || params.escenarios.length === 0) {
 		throw new InvalidScenarioError('Debe proporcionar al menos un escenario de inversión.');
 	}
-	if (params.escenarios.length > 20) {
-		throw new InvalidScenarioError('No se pueden simular más de 20 escenarios de inversión simultáneos.');
+	if (params.escenarios.length > SYSTEM_LIMITS.MAX_SCENARIOS) {
+		throw new InvalidScenarioError(`No se pueden simular más de ${SYSTEM_LIMITS.MAX_SCENARIOS} escenarios de inversión simultáneos.`);
 	}
+
+	const inflacion = typeof params.tasaInflacion === 'number'
+		? InflationRate.fromPercentage(params.tasaInflacion)
+		: (params.tasaInflacion ?? InflationRate.zero());
+
+	const aportesExtraordinarios: AporteExtraordinario[] = (params.aportesExtraordinarios ?? []).map((a) => {
+		if (a instanceof AporteExtraordinario) return a;
+		return AporteExtraordinario.create(a.id, a.monto, a.fecha, a.descripcion);
+	});
 
 	const omitirPrimerCorte = params.omitirPrimerCorte ?? false;
 	const aplicarImpuestoRD = params.aplicarImpuestoRD ?? false;
@@ -59,15 +84,21 @@ export function simular(params: SimularParams): SimulationResult {
 	let currentDate = fechaInicio;
 	let periodIndex = 0;
 	let totalAportadoNum = 0;
+	let totalExtraordinarioNum = 0;
 	const periodos: PeriodCalculation[] = [];
 
 	while (currentDate.isBefore(fechaFin)) {
+		if (periodIndex >= SYSTEM_LIMITS.MAX_PERIODS) {
+			break;
+		}
+
 		let stepEnd = diaCorte.nextCutoffAfter(currentDate);
 		if (stepEnd.isAfter(fechaFin)) {
 			stepEnd = fechaFin;
 		}
 
 		const days = currentDate.daysBetween(stepEnd);
+		const daysFromStart = fechaInicio.daysBetween(stepEnd);
 		const isFirstMonth = periodIndex === 0;
 		let isSkipped = false;
 
@@ -78,6 +109,21 @@ export function simular(params: SimularParams): SimulationResult {
 			}
 		}
 
+		// Calcular aportes extraordinarios que caen en este ciclo
+		let extraInPeriod = 0;
+		for (const extra of aportesExtraordinarios) {
+			const fallsInPeriod = periodIndex === 0
+				? (extra.fecha.equals(currentDate) || extra.fecha.isAfter(currentDate)) &&
+				  (extra.fecha.isBefore(stepEnd) || extra.fecha.equals(stepEnd))
+				: extra.fecha.isAfter(currentDate) &&
+				  (extra.fecha.isBefore(stepEnd) || extra.fecha.equals(stepEnd));
+
+			if (fallsInPeriod) {
+				extraInPeriod += extra.monto.amount;
+			}
+		}
+
+		const aporteTotalPeriodo = pmt.amount + extraInPeriod;
 		const resultadosPorEscenario: ScenarioPeriodResult[] = [];
 
 		for (let idx = 0; idx < numEscenarios; idx++) {
@@ -99,12 +145,15 @@ export function simular(params: SimularParams): SimulationResult {
 				}
 			}
 
-			const nuevoBalance = balAnterior + interesNetoNum + pmt.amount;
+			const nuevoBalance = balAnterior + interesNetoNum + aporteTotalPeriodo;
 			rawBalances[idx] = nuevoBalance;
 
 			if (idx === 0) {
 				totalAportadoNum += pmt.amount;
+				totalExtraordinarioNum += extraInPeriod;
 			}
+
+			const balanceReal = inflacion.calculatePurchasingPower(nuevoBalance, daysFromStart);
 
 			resultadosPorEscenario.push({
 				escenarioId: scenario.id,
@@ -112,7 +161,9 @@ export function simular(params: SimularParams): SimulationResult {
 				interesBruto: Money.fromNumber(interesBrutoNum),
 				interesNeto: Money.fromNumber(interesNetoNum),
 				aporte: pmt,
+				aporteExtraordinario: Money.fromNumber(extraInPeriod),
 				balanceFinal: Money.fromNumber(nuevoBalance),
+				balanceReal,
 				isSkipped
 			});
 		}
@@ -131,7 +182,9 @@ export function simular(params: SimularParams): SimulationResult {
 	}
 
 	const totalAportado = Money.fromNumber(totalAportadoNum);
-	const totalInvertido = capital.add(totalAportado);
+	const totalExtraordinario = Money.fromNumber(totalExtraordinarioNum);
+	const totalInvertido = capital.add(totalAportado).add(totalExtraordinario);
+	const totalHorizonDays = fechaInicio.daysBetween(fechaFin);
 
 	const scenarioSummariesUnsorted: ScenarioSummary[] = params.escenarios.map((scenario, idx) => {
 		const finalBalNum = rawBalances[idx] ?? capital.amount;
@@ -141,10 +194,15 @@ export function simular(params: SimularParams): SimulationResult {
 			: Money.zero();
 		const interesTotalMoney = rendimientoMoney;
 
+		const balanceReal = inflacion.calculatePurchasingPower(finalBalMoney, totalHorizonDays);
+		const tasaRealAnual = inflacion.calculateRealRate(scenario.tasaAnual.percentage);
+
 		return {
 			escenarioId: scenario.id,
 			nombre: scenario.nombre,
 			balanceFinal: finalBalMoney,
+			balanceReal,
+			tasaRealAnual,
 			interesTotalNeto: interesTotalMoney,
 			rendimientoNeto: rendimientoMoney,
 			rol: ScenarioRole.Neutral
@@ -189,7 +247,9 @@ export function simular(params: SimularParams): SimulationResult {
 		capitalInicial: capital,
 		aporteMensual: pmt,
 		totalAportado,
+		totalExtraordinario,
 		totalInvertido,
+		tasaInflacion: inflacion,
 		periodos,
 		resumenPorEscenario,
 		escenarioLiderId,

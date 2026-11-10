@@ -2,13 +2,68 @@
 <html lang="es">
 	<head>
 		<meta charset="utf-8" />
-		<link rel="icon" type="image/webp" href="%sveltekit.assets%/imgs/app_logo.webp" />
-		<link rel="manifest" href="%sveltekit.assets%/manifest.json" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>InteresIt — Terminal Financiera Multi-Escenario</title>
+		<meta name="description" content="Terminal financiera y simulador de interés compuesto multi-escenario con cortes bancarios exactos y retención fiscal de República Dominicana." />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 		<meta name="theme-color" content="#004851" />
-		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+		<meta name="color-scheme" content="light dark" />
+
+		<!-- Iconos y Manifest PWA -->
+		<link rel="icon" type="image/webp" href="%sveltekit.assets%/imgs/app_logo.webp" />
+		<link rel="apple-touch-icon" href="%sveltekit.assets%/imgs/app_logo.webp" />
+		<link rel="manifest" href="%sveltekit.assets%/manifest.json" />
+
+		<!-- OpenGraph / Social -->
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content="InteresIt — Terminal Financiera Multi-Escenario" />
+		<meta property="og:description" content="Simula y compara hasta 20 instrumentos de inversión con cortes bancarios exactos y retención fiscal del 10% RD." />
+		<meta property="og:image" content="%sveltekit.assets%/imgs/app_logo.png" />
+
+		<!-- Hojas de Estilos SMUI Precompiladas -->
 		<link rel="stylesheet" href="%sveltekit.assets%/smui.css" media="(prefers-color-scheme: light)" />
 		<link rel="stylesheet" href="%sveltekit.assets%/smui-dark.css" media="screen and (prefers-color-scheme: dark)" />
+
+		<style>
+			html,
+			body {
+				min-height: 100%;
+				margin: 0;
+				padding: 0;
+				background-color: #f5f7f6;
+			}
+			html.dark,
+			body.dark {
+				background-color: #0b1120 !important;
+				color: #e7eef8 !important;
+			}
+			@media print {
+				[role="dialog"],
+				.mdc-dialog,
+				.mdc-dialog__scrim,
+				.mdc-drawer-scrim,
+				.drawer-scrim,
+				.parameters-drawer,
+				.modal-backdrop,
+				.modal-card,
+				.app-dialog-backdrop,
+				.app-dialog-card,
+				.terminal-header,
+				.tabs-nav,
+				.report-actions-bar,
+				.desktop-sidebar,
+				.mdc-snackbar {
+					display: none !important;
+					visibility: hidden !important;
+				}
+				tr,
+				.custom-data-table tr,
+				#tour-hero {
+					break-inside: avoid !important;
+					page-break-inside: avoid !important;
+				}
+			}
+		</style>
+
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

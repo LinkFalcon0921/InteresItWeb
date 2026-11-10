@@ -17,6 +17,12 @@ export class InvalidInterestRateError extends DomainError {
 	}
 }
 
+export class InvalidInflationRateError extends DomainError {
+	constructor(message = 'La tasa de inflación debe ser un porcentaje numérico entre 0 y 100.') {
+		super(message);
+	}
+}
+
 export class InvalidCalendarDateError extends DomainError {
 	constructor(message = 'La fecha debe tener un formato ISO válido YYYY-MM-DD.') {
 		super(message);

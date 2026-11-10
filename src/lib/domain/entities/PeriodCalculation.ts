@@ -7,7 +7,9 @@ export interface ScenarioPeriodResult {
 	readonly interesBruto: Money;
 	readonly interesNeto: Money;
 	readonly aporte: Money;
+	readonly aporteExtraordinario?: Money;
 	readonly balanceFinal: Money;
+	readonly balanceReal?: Money;
 	readonly isSkipped: boolean;
 }
 

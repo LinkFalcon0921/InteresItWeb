@@ -1,0 +1,95 @@
+name: CI/CD - Svelte 5 (Node 24)
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+env:
+  CI: 'true'
+
+jobs:
+  quality-gate:
+    name: Quality Gate - Svelte, TS, ESLint, Vitest
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # Reads the exact pnpm version from package.json -> packageManager.
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Print toolchain versions
+        run: |
+          node --version
+          pnpm --version
+          pnpm exec svelte-check --version
+
+      - name: Check file length rules (600 max, 450 warning)
+        run: pnpm check:lines
+
+      # Backwards-compatible: will become a real lint gate once scripts.lint exists.
+      - name: Run ESLint when configured
+        run: |
+          if node -e "process.exit(Object.hasOwn(require('./package.json').scripts ?? {}, 'lint') ? 0 : 1)"; then
+            pnpm run lint
+          else
+            echo '::notice::No scripts.lint found in package.json; skipping ESLint.'
+          fi
+
+      - name: Svelte diagnostics and strict TypeScript check
+        id: svelte_check
+        shell: bash
+        run: |
+          mkdir -p ci-reports
+          set -o pipefail
+          pnpm check 2>&1 | tee ci-reports/svelte-check.log
+
+      - name: Vitest (non-watch mode)
+        run: pnpm exec vitest run
+
+      - name: Upload Svelte diagnostics
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: svelte-diagnostics
+          path: ci-reports/svelte-check.log
+          retention-days: 7
+          if-no-files-found: ignore
+
+  e2e-tests:
+    name: Playwright E2E - Chromium
+    needs: quality-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6

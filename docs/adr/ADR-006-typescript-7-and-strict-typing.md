@@ -7,11 +7,11 @@ Aceptado
 El código original carecía de tipado estático, utilizando coerción implícita (`parseFloat(el.value) || 0`) sin reportar errores al usuario. Se requiere una estrategia de seguridad de tipos para evitar errores en tiempo de ejecución.
 
 ## Decisión
-1. Adoptar **TypeScript 7** en modo estricto (`strict: true`, `noImplicitAny: true`, `exactOptionalPropertyTypes: true`).
+1. Adoptar el compilador **TypeScript 5.7+** con configuración estricta anticipando y adhiriendo formalmente a los estándares de **TypeScript 7** (`strict: true`, `noImplicitAny: true`, `exactOptionalPropertyTypes: true`, `verbatimModuleSyntax: true`).
 2. Prohibir terminantemente el uso de `any`, conversiones forzadas (`as SomeType`), `as const` para silenciar tipos y non-null assertions (`!`).
 3. Toda deserialización o lectura de inputs del usuario debe pasar por **funciones parser** que reciben `unknown` y retornan tipos discriminados `Result<T, E>`.
-4. Los valores finitos del dominio se representan exclusivamente con **string enums** en archivos `.ts` independientes.
-5. Si durante la fase de instalación de herramientas de Fase 2 surgiera alguna incompatibilidad temporal de plugins oficiales con TS 7.0, se documentará un fallback temporal controlado con TS 6.0/5.8 sin comprometer el estándar de tipado estricto.
+4. Los valores finitos del dominio se representan exclusivamente con **string enums** o uniones discriminadas en archivos `.ts` independientes.
+5. El baseline de herramientas actual opera con TypeScript 5.7.x en el toolchain Node 24 / SvelteKit, aplicando rigurosamente todas las reglas y restricciones de tipo que serán obligatorias en TS 7.0, garantizando una transición sin cambios sintácticos ni breaking changes.
 
 ## Consecuencias
 ### Positivas

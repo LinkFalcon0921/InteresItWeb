@@ -18,24 +18,27 @@ Su propósito central es proyectar el crecimiento del capital en el tiempo calcu
 1. **Entradas Principales:**
    - **Capital Inicial ($P$):** Monto inicial base de la inversión ($\ge 0$).
    - **Aporte Mensual ($PMT$):** Suma aportada en cada ciclo de corte mensual ($\ge 0$).
+   - **Aportes Extraordinarios Programados:** Depósitos puntuales adicionales programados para fechas calendario específicas (ej. bonificaciones, regalía pascual RD, aguinaldos) que se integran en el ciclo correspondiente según su fecha.
    - **Horizonte de Inversión:** Fecha de inicio (`Desde`), Fecha de fin (`Hasta`) donde `Desde < Hasta`.
    - **Día de Corte Mensual (`diaCorte`):** Entero entre `1` y `31` que simula el día del mes en que la entidad financiera corta el saldo y capitaliza intereses.
    - **Omitir 1º Corte (`omitirPrimerCorte`):** Booleano. Si se activa y el intervalo entre la fecha de inicio y el primer corte es menor al número total de días del mes en curso, no se capitalizan intereses en ese primer ciclo parcial (simulando depósitos tardíos en el mes).
    - **Inversiones dinámicas ($N \le 20$):** Cada una con nombre, tasa nominal anual (%) y color identificador.
    - **Retención Fiscal República Dominicana (`aplicarImpuesto`):** Deducción por ley del 10% sobre los intereses brutos ganados en cada período:
      $$\text{Interés Neto} = \text{Interés Bruto} \times 0.90$$
+   - **Tasa de Inflación Estimada Anual ($i$):** Porcentaje opcional ($\ge 0$) para calcular la tasa real y el poder adquisitivo deflactado según la Ecuación de Fisher.
 
-2. **Fórmulas de Capitalización Mensual:**
-   - Tasa mensual nominal:
-     $$r_{\text{mensual}} = \frac{\text{tasaAnual} / 100}{12}$$
-   - Interés bruto ganado en el ciclo de $d$ días (donde $30.4167$ es el promedio de días por mes comercial/real):
-     $$I_{\text{bruto}} = \text{balance} \times r_{\text{mensual}} \times \left(\frac{d}{30.4167}\right)$$
+2. **Fórmulas de Capitalización y Convención de Días (ADR-004 Base 365):**
+   - Interés bruto ganado en un período de $d$ días calendario exactos:
+     $$I_{\text{bruto}} = \text{balance} \times \left(\frac{\text{tasaAnual}}{100}\right) \times \left(\frac{d}{365}\right)$$
    - Interés efectivo:
      $$I = \begin{cases} 0 & \text{si es omitido por primer corte} \\ I_{\text{bruto}} \times 0.90 & \text{si aplica impuesto (10% RD)} \\ I_{\text{bruto}} & \text{sin impuesto} \end{cases}$$
-   - Balance acumulado:
-     $$\text{balance}_{t} = \text{balance}_{t-1} + I + PMT$$
+   - Balance acumulado al final del período $t$:
+     $$\text{balance}_{t} = \text{balance}_{t-1} + I + PMT + \sum \text{AportesExtraordinarios}_{t}$$
    - Rendimiento neto acumulado (ganancia total neta):
-     $$\text{Ganancia Total} = \text{Balance Final} - (P + \sum PMT)$$
+     $$\text{Ganancia Total} = \text{Balance Final} - \left(P + \sum PMT + \sum \text{AportesExtraordinarios}\right)$$
+   - **Fórmula de Fisher para Rendimiento e Inflación:**
+     $$r_{\text{real}} = \frac{1 + r_{\text{nominal}}}{1 + i} - 1$$
+     $$\text{Balance Real (Poder Adquisitivo)} = \frac{\text{Balance Final}}{\left(1 + \frac{i}{100}\right)^{\frac{d_{\text{total}}}{365}}}$$
 
 3. **Manejo de Fechas:**
    - La fecha de corte avanza iterativamente calculando el día de corte exacto para cada mes subsiguiente.
@@ -221,16 +224,12 @@ export const ssr = false;
 export const trailingSlash = 'always';
 ```
 
-### 7.2 Flujo de GitHub Actions (`.github/workflows/deploy.yml`)
-- Ejecución en Node 24 (`node-version: 24`).
-- Pasos:
-  1. `actions/checkout@v4`
-  2. `actions/setup-node@v4` con caché de `npm` o `pnpm`.
-  3. `npm ci`
-  4. `npm run test` (Vitest)
-  5. `npm run build`
-  6. `actions/upload-pages-artifact@v3` (sube la carpeta `build`)
-  7. `actions/deploy-pages@v4`
+### 7.2 Flujo Unificado de CI/CD en GitHub Actions (`ci-cd.yml`)
+- Pipeline consolidado y orquestado en Node 24 (`node-version: 24`) con `pnpm@11` gestionado vía `packageManager` en `package.json`:
+  1. **Job `quality-gate` (Lint, Test & Quality Gate):** Ejecuta en paralelo mínimo la verificación de límites de líneas (`check:lines`), tipos/diagnósticos Svelte (`svelte-check`), tests unitarios con Vitest y build estático de producción en `push` (`main`, `develop`), `pull_request` (`main`) y `workflow_dispatch`.
+  2. **Job `e2e-tests` (Playwright E2E Suite):** Se ejecuta tras aprobarse el `quality-gate` (`needs: quality-gate`), corriendo la suite E2E de Playwright (`test:e2e`) en Chromium headless y preservando evidencias y trazas como artefactos por 2 días.
+  3. **Job `deploy-pages` (Deploy a GitHub Pages):** Se activa exclusivamente en la rama `main` tras la aprobación de `e2e-tests` (`needs: e2e-tests`). Construye con el `BASE_PATH` de Pages, sube el artefacto y despliega automáticamente vía `actions/deploy-pages@v4`.
+  4. **Job `deploy-staging` (Artifact de Staging):** Se activa exclusivamente en la rama `develop` tras la aprobación de `e2e-tests` (`needs: e2e-tests`), empaquetando el artefacto estático de staging (`/InteresItWeb/dev`) para previsualización.
 
 ---
 

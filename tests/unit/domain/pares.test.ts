@@ -64,7 +64,6 @@ describe('Pairwise Comparison (pares.ts) Unit Tests', () => {
 		expect(comparisons).toHaveLength(1);
 
 		const comp = comparisons[0];
-		expect(comp).toBeDefined();
 		expect(comp?.escenarioA.escenarioId).toBe('esc-1');
 		expect(comp?.escenarioB.escenarioId).toBe('esc-2');
 		expect(comp?.diferenciaBalance.amount).toBe(15.5);

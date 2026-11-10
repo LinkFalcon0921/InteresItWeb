@@ -10,9 +10,11 @@ export * from './value-objects/Money';
 export * from './value-objects/InterestRate';
 export * from './value-objects/CalendarDate';
 export * from './value-objects/CutoffDay';
+export * from './value-objects/InflationRate';
 
 // Entities
 export * from './entities/InvestmentScenario';
+export * from './entities/AporteExtraordinario';
 export * from './entities/PeriodCalculation';
 export * from './entities/SimulationResult';
 
@@ -20,7 +22,12 @@ export * from './entities/SimulationResult';
 export * from './parsers/Result';
 export * from './parsers/FinancialInputParser';
 export * from './parsers/SettingsParser';
+export * from './parsers/BackupParser';
+
+// Export & Serializers
+export * from './export/csvExport';
 
 // Finance Core
+export * from './finance/systemLimits';
 export * from './finance/simular';
 export * from './finance/pares';
